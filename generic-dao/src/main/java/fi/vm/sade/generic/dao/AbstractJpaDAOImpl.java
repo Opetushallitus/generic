@@ -55,7 +55,7 @@ public abstract class AbstractJpaDAOImpl<E, ID> implements JpaDAO<E, ID> {
 	 */
 	public void insert(E entity) {
 		entityManager.persist(entity);
-		//entityManager.flush();
+		entityManager.flush();
 	}
 	
 	/*
