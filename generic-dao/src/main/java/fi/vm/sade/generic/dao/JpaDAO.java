@@ -1,12 +1,12 @@
 /**
- * 
+ *
  */
 package fi.vm.sade.generic.dao;
 
 
 /**
  * Interface of generic DAO.
- * 
+ *
  * @author tommiha
  *
  */
