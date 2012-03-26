@@ -29,44 +29,44 @@ import fi.vm.sade.dbunit.annotation.DataSetLocation;
  *
  */
 public class CleanInsertTestExecutionListener extends
-		TransactionalTestExecutionListener {
+        TransactionalTestExecutionListener {
 
-	protected final Logger log = LoggerFactory.getLogger(getClass());
-	
-	/* (non-Javadoc)
-	 * @see org.springframework.test.context.TestExecutionListener#beforeTestMethod(org.springframework.test.context.TestContext)
-	 */
-	public void beforeTestMethod(TestContext testContext) throws Exception {
-		super.beforeTestMethod(testContext);
-		
-		// location of the data set
-		String dataSetResourcePath = null;
-	
-		// first, the annotation on the test class
-		DataSetLocation dsLocation = testContext.getTestInstance().getClass()
-				.getAnnotation(DataSetLocation.class);
-		
-		if (dsLocation != null) {
-			// found the annotation
-			dataSetResourcePath = dsLocation.value();
-			log.info("Annotated test, using data set: " + dataSetResourcePath);
-		}
-	
-		if (dataSetResourcePath != null) {
-			Resource dataSetResource = testContext.getApplicationContext()
-					.getResource(dataSetResourcePath);
-			IDataSet dataSet = new FlatXmlDataSetBuilder().build(dataSetResource.getInputStream());
-			DataSource dataSource = testContext.getApplicationContext().getBean(DataSource.class);
-			Connection conn = DataSourceUtils.getConnection(dataSource);
-			IDatabaseConnection dbConn = new DatabaseConnection(conn);
-			try {
-				DatabaseOperation.CLEAN_INSERT.execute(dbConn, dataSet);
-				log.info("Performed data set initialization.");
-			} finally {
-				DataSourceUtils.releaseConnection(conn, dataSource);
-			}
-		} else {
-			log.info(testContext.getClass().getName() + " does not have any data set, no data injection.");
-		}
-	}
+    protected final Logger log = LoggerFactory.getLogger(getClass());
+
+    /* (non-Javadoc)
+     * @see org.springframework.test.context.TestExecutionListener#beforeTestMethod(org.springframework.test.context.TestContext)
+     */
+    public void beforeTestMethod(TestContext testContext) throws Exception {
+        super.beforeTestMethod(testContext);
+
+        // location of the data set
+        String dataSetResourcePath = null;
+
+        // first, the annotation on the test class
+        DataSetLocation dsLocation = testContext.getTestInstance().getClass()
+                .getAnnotation(DataSetLocation.class);
+
+        if (dsLocation != null) {
+            // found the annotation
+            dataSetResourcePath = dsLocation.value();
+            log.info("Annotated test, using data set: " + dataSetResourcePath);
+        }
+
+        if (dataSetResourcePath != null) {
+            Resource dataSetResource = testContext.getApplicationContext()
+                    .getResource(dataSetResourcePath);
+            IDataSet dataSet = new FlatXmlDataSetBuilder().build(dataSetResource.getInputStream());
+            DataSource dataSource = testContext.getApplicationContext().getBean(DataSource.class);
+            Connection conn = DataSourceUtils.getConnection(dataSource);
+            IDatabaseConnection dbConn = new DatabaseConnection(conn);
+            try {
+                DatabaseOperation.CLEAN_INSERT.execute(dbConn, dataSet);
+                log.info("Performed data set initialization.");
+            } finally {
+                DataSourceUtils.releaseConnection(conn, dataSource);
+            }
+        } else {
+            log.info(testContext.getClass().getName() + " does not have any data set, no data injection.");
+        }
+    }
 }

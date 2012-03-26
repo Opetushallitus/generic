@@ -3,17 +3,10 @@
  */
 package fi.vm.sade.dbunit.annotation;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-import fi.vm.sade.dbunit.listener.CleanInsertTestExecutionListener;
+import java.lang.annotation.*;
 
 /**
- * Defines where to find DBUnit data set file. {@link CleanInsertTestExecutionListener} 
+ * Defines where to find DBUnit data set file. {@link fi.vm.sade.dbunit.listener.CleanInsertTestExecutionListener}
  * uses this annotation to populate the database.
  * 
  * @author tommiha
@@ -24,5 +17,5 @@ import fi.vm.sade.dbunit.listener.CleanInsertTestExecutionListener;
 @Inherited
 @Documented
 public @interface DataSetLocation {
-	public String value();
+    String value();
 }

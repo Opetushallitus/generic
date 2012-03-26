@@ -8,7 +8,7 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>generic-test-support</artifactId>
+    <artifactId>generic-build-support</artifactId>
     <name>${artifactId}</name>
     <packaging>jar</packaging>
 
@@ -19,23 +19,6 @@
 
     <dependencies>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.10</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <version>2.20.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-firefox-driver</artifactId>
-            <version>2.20.0</version>
-        </dependency>
-
     </dependencies>
+
 </project>

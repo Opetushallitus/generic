@@ -1,76 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>fi.vm.sade.generic</groupId>
-	<artifactId>generic</artifactId>
-	<packaging>pom</packaging>
-	<name>Generic :: Parent</name>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>fi.vm.sade.generic</groupId>
+    <artifactId>generic</artifactId>
+    <packaging>pom</packaging>
+    <name>Generic :: Parent</name>
 
-	<parent>
-		<groupId>fi.vm.sade.generic</groupId>
-		<artifactId>build-parent</artifactId>
-		<version>1.0-SNAPSHOT</version>
-	</parent>
-	
-	<distributionManagement>
-		<site>
-			<id>website</id>
-			<url>scp://webhost.company.com/www/website</url>
-		</site>
-	</distributionManagement>
+    <parent>
+        <groupId>fi.vm.sade.generic</groupId>
+        <artifactId>build-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
 
-	<modules>
-		<module>generic-dao</module>
-		<module>generic-service</module>
+    <distributionManagement>
+        <site>
+            <id>website</id>
+            <url>scp://webhost.company.com/www/website</url>
+        </site>
+    </distributionManagement>
+
+    <modules>
+        <module>generic-build-support</module>
+        <module>generic-dao</module>
+        <module>generic-service</module>
         <module>dbunit-support</module>
         <module>generic-test-support</module>
-		<module>transaction-osgi</module>
-	</modules>
-	
-	<!-- Here comes all the dependencies used in modules. Versions can be managed from properties. -->
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.dbunit</groupId>
-				<artifactId>dbunit</artifactId>
-				<version>${dbunit.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-test</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-core</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-context</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-jdbc</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-tx</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-api</artifactId>
-				<version>${slf4j.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>javax.persistence</groupId>
-				<artifactId>com.springsource.javax.persistence</artifactId>
-				<version>${jpa-api.version}</version>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+        <module>transaction-osgi</module>
+    </modules>
+
+    <!-- Here comes all the dependencies used in modules. Versions can be managed from properties. -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.dbunit</groupId>
+                <artifactId>dbunit</artifactId>
+                <version>${dbunit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-tx</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.persistence</groupId>
+                <artifactId>com.springsource.javax.persistence</artifactId>
+                <version>${jpa-api.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
 </project>
