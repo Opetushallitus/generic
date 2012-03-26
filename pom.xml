@@ -20,7 +20,6 @@
     </distributionManagement>
 
     <modules>
-        <module>generic-build-support</module>
         <module>generic-dao</module>
         <module>generic-service</module>
         <module>dbunit-support</module>
