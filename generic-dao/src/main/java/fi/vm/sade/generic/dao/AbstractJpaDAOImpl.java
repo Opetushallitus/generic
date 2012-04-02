@@ -58,7 +58,7 @@ public abstract class AbstractJpaDAOImpl<E, ID> implements JpaDAO<E, ID> {
         entityManager.flush();
         return entity;
     }
-
+    
     /*
      * (non-Javadoc)
      * @see fi.vm.sade.jdbc.dao.JpaDAO#remove(java.io.Serializable)
