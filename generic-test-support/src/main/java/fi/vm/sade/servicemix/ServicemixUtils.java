@@ -10,7 +10,7 @@ import java.util.Date;
  */
 public class ServicemixUtils {
 
-    private static File smxBinDir = new File("target/servers/apache-servicemix-4.4.1/bin");
+    private static File smxHomeDir = new File("target/servers/apache-servicemix-4.4.1");
     public static final int WAIT_MS = 1000;
     public static final int WAIT_MILLIS_BEFORE_TOUCH_DEPLOY = 10000;
     public static final int LOG_TAIL_SLEEP_MILLIS = 100;
@@ -35,10 +35,10 @@ public class ServicemixUtils {
     public ServicemixUtils(String[] args) {
         if (args != null) {
             if (args.length > 0) {
-                smxBinDir = new File(args[0]);
+                smxHomeDir = new File(args[0]);
             }
         }
-        System.out.println("[[ServicemixUtils, smxBinDir: "+ smxBinDir.getAbsolutePath()+"]]");
+        System.out.println("[[ServicemixUtils, smxHomeDir: "+ smxHomeDir.getAbsolutePath()+"]]");
     }
 
     /*
@@ -114,15 +114,15 @@ public class ServicemixUtils {
         this.startedString = "Application context successfully refreshed (OsgiBundleXmlApplicationContext(bundle=" + waitforBundle;
         tailLogDaemon();
         touchDeployFiles();
-        exec(smxBinDir, smxcommand("servicemix"), false, "SMX");
+        exec(smxHomeDir, smxcommand("servicemix"), false, "SMX");
     }
 
     public void smxStop() throws IOException {
-        exec(smxBinDir, smxcommand("stop"), true, "SMXSTOP");
+        exec(smxHomeDir, smxcommand("stop"), true, "SMXSTOP");
     }
 
     private void exec(File dir, String command, boolean markStoppedAfter, final String prefix) throws IOException {
-        System.out.println("executing: "+command+" (smxBinDir: "+dir.getAbsolutePath()+")");
+        System.out.println("executing: "+command+" (dir: "+dir.getAbsolutePath()+")");
 //        System.setIn(new ByteArrayInputStream(new byte[0]));
         Process p = Runtime.getRuntime().exec(command.split(" "), null, dir);
 //        out = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
@@ -200,9 +200,9 @@ public class ServicemixUtils {
 
     private String smxcommand(final String cmd) {
         if (isWindows()) {
-            return "cmd /c " + cmd + ".bat";
+            return "cmd /c bin\\" + cmd + ".bat";
         } else {
-            return "./" + cmd; // TODO: sh/bash?
+            return "bin/" + cmd; // TODO: sh/bash?
         }
     }
 
@@ -217,7 +217,7 @@ public class ServicemixUtils {
                 try {
                     boolean running = true;
                     long updateInterval = LOG_TAIL_SLEEP_MILLIS;
-                    File file = new File(smxBinDir, "../data/log/servicemix.log");
+                    File file = new File(smxHomeDir, "data/log/servicemix.log");
                     long filePointer = file.length(); // start tailing at the end
                     while (!shutDown && running) {
                         Thread.sleep(updateInterval);
@@ -257,7 +257,7 @@ public class ServicemixUtils {
             public void run() {
                 try {
                     Thread.sleep(WAIT_MILLIS_BEFORE_TOUCH_DEPLOY);
-                    File smxDeployDir = new File(smxBinDir, "../deploy");
+                    File smxDeployDir = new File(smxHomeDir, "deploy");
                     File[] files = smxDeployDir.listFiles();
                     for (File file : files) {
                         if (file.isFile()) {

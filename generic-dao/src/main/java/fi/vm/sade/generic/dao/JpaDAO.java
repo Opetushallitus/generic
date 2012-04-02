@@ -29,7 +29,7 @@ public interface JpaDAO<E, ID> {
      * Creates a new record to the database.
      * @param entity
      */
-    void insert(E entity);
+    E insert(E entity);
 
     /**
      * Removes existing record from the database.

@@ -14,30 +14,30 @@ public interface CRUDService<E, ID> {
      * @param key
      * @return
      */
-    E read(ID key);
+//    E read(ID key);
 
     /**
      * Updates an existing record.
      * @param entity
      */
-    void update(E entity);
+//    void update(E entity);
 
     /**
      * Creates a new record to the database.
      * @param entity
      */
-    void insert(E entity);
+//    void insert(E entity);
 
     /**
      * Removes existing record from the database.
      * @param entity
      */
-    void delete(E entity);
+//    void delete(E entity);
 
     /**
      * Removes existing record from the database with ID.
      * @param entity
      */
-    void deleteById(ID id);
+//    void deleteById(ID id);
 
 }

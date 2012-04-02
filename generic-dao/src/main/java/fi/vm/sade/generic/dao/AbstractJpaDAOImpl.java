@@ -53,9 +53,10 @@ public abstract class AbstractJpaDAOImpl<E, ID> implements JpaDAO<E, ID> {
      * (non-Javadoc)
      * @see fi.vm.sade.jdbc.dao.JpaDAO#insert(java.io.Serializable)
      */
-    public void insert(E entity) {
+    public E insert(E entity) {
         entityManager.persist(entity);
         entityManager.flush();
+        return entity;
     }
 
     /*
