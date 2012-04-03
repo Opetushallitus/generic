@@ -3,14 +3,19 @@
  */
 package fi.vm.sade.generic.service;
 
+import fi.vm.sade.generic.common.ValidationException;
 import fi.vm.sade.generic.dao.JpaDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author tommiha
@@ -41,13 +46,13 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, JPACLASS, IDCLASS> imple
      * (non-Javadoc)
      * @see fi.vm.sade.generic.service.CRUDService#update(java.lang.Object)
      */
-    protected void update(DTOCLASS dto) {
+    protected void update(DTOCLASS dto) throws ValidationException {
         JPACLASS entity = convertToJPA(dto);
         if (entity == null) {
             throw new RuntimeException("Entity is null.");
         }
-
         log.debug("Updating record: " + entity);
+        validate(entity);
         dao.update(entity);
     }
 
@@ -55,9 +60,10 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, JPACLASS, IDCLASS> imple
      * (non-Javadoc)
      * @see fi.vm.sade.generic.service.CRUDService#insert(java.lang.Object)
      */
-    protected DTOCLASS insert(DTOCLASS dto) {
+    protected DTOCLASS insert(DTOCLASS dto) throws ValidationException {
         JPACLASS entity = convertToJPA(dto);
         log.debug("Inserting record: " + entity);
+        validate(entity);
         entity = dao.insert(entity);
         return convertToDTO(entity);
     }
@@ -107,5 +113,20 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, JPACLASS, IDCLASS> imple
         }
         return result;
     }
+
+    protected void validate(JPACLASS entity) throws ValidationException {
+        ValidatorFactory validatorFactory = ValidatorFactoryBean.getInstance();
+        Validator validator = validatorFactory.getValidator();
+        Set<ConstraintViolation<JPACLASS>> validationResult = validator.validate(entity);
+        log.debug("validate, validator: "+validator+", validationResult: " + validationResult);
+        if (validationResult.size() > 0) {
+            ValidationException validationException = new ValidationException();
+            for (ConstraintViolation<JPACLASS> violation : validationResult) {
+                validationException.addValidationMessage(violation.getMessage());
+            }
+            throw validationException;
+        }
+    }
+
 
 }
