@@ -14,6 +14,7 @@ public class ServicemixUtils {
     public static final int WAIT_MS = 1000;
     public static final int WAIT_MILLIS_BEFORE_TOUCH_DEPLOY = 10000;
     public static final int LOG_TAIL_SLEEP_MILLIS = 100;
+    public static final int SMX_WAIT_LOG_INTERVAL = 10;
 
     private boolean ready = false;
     private boolean installed = false;
@@ -163,7 +164,7 @@ public class ServicemixUtils {
         while (!shutDown && !ready && !stopped && !installed) {
             try {
                 if (!"true".equals(System.getenv("SMX_WAIT_QUIET"))) {
-                    if (i % 10 == 0) { // logita vain joka kymmenes kierros
+                    if (i % SMX_WAIT_LOG_INTERVAL == 0) { // logita vain joka kymmenes kierros
                         System.out.println("[[wait for: "+info+"...]]");
                     }
                 }
