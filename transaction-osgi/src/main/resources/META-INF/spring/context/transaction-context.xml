@@ -9,10 +9,18 @@
         <property name="forceShutdown" value="true"></property>
     </bean>
 
-    <osgi:service id="transactionManager" interface="javax.transaction.TransactionManager" ref="transactionManagerProvider"/>
+    <osgi:service id="transactionManager" interface="javax.transaction.TransactionManager" ref="transactionManagerProvider">
+        <osgi:service-properties>
+            <entry key="provider" value="atomikos" />
+        </osgi:service-properties>
+    </osgi:service>
 
     <bean id="userTransactionProvider" class="com.atomikos.icatch.jta.J2eeUserTransaction"/>
 
-    <osgi:service id="userTransaction" interface="javax.transaction.UserTransaction" ref="userTransactionProvider"/>
+    <osgi:service id="userTransaction" interface="javax.transaction.UserTransaction" ref="userTransactionProvider">
+        <osgi:service-properties>
+            <entry key="provider" value="atomikos" />
+        </osgi:service-properties>
+    </osgi:service>
 
 </beans>
