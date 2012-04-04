@@ -22,6 +22,7 @@ public class ServicemixUtils {
     private BufferedWriter out;
     private String startedString = "[startedStringNotNeededByDefault]";
     public boolean shutDown = false;
+    public String errorLine;
 
     @Deprecated
     public static void main(String[] args) throws Exception {
@@ -160,7 +161,9 @@ public class ServicemixUtils {
     private void waitUntilReadyOrStoppedOrInstalled(String info) {
         while (!shutDown && !ready && !stopped && !installed) {
             try {
-                System.out.println("[[wait for: "+info+"...]]");
+                if (!"true".equals(System.getenv("SMX_WAIT_QUIET"))) {
+                    System.out.println("[[wait for: "+info+"...]]");
+                }
                 Thread.sleep(WAIT_MS);
             } catch (Exception e) {
                 throw new Error(e);
@@ -177,13 +180,11 @@ public class ServicemixUtils {
                 try {
                     String line;
                     while ((line = in.readLine()) != null) {
-                        if (line.contains("Unresolved constraint in bundle")) {
-                            hasErrors = true;
-                        }
+                        System.out.println(prefix + line);
+                        checkError(line);
                         if (line.contains(startedString)) {
                             ready = true;
                         }
-                        System.out.println(prefix + line);
                     }
                 } catch (Exception e) {
                     throw new Error(e);
@@ -196,6 +197,17 @@ public class ServicemixUtils {
         };
         thread.setDaemon(true);
         thread.start();
+    }
+
+    private void checkError(String line) throws IOException {
+        if (line.contains("Unresolved constraint in bundle")
+                || line.contains("Unsatisfied requirements")) {
+            System.out.println("ERROR encountered in srevicemix, stopping... - line was: "+line);
+            hasErrors = true;
+            errorLine = line;
+            smxStop();
+            throw new RuntimeException("ERROR IN SERVICEMIX: "+line);
+        }
     }
 
     private String smxcommand(final String cmd) {
@@ -233,6 +245,7 @@ public class ServicemixUtils {
                             String line = null;
                             while ((line = raf.readLine()) != null) {
                                 System.out.println("[SMX-LOG] " + line);
+                                checkError(line);
                                 if (line.contains(startedString)) {
                                     ready = true;
                                 }
