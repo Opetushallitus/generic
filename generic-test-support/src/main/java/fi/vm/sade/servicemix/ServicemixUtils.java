@@ -201,7 +201,9 @@ public class ServicemixUtils {
 
     private void checkError(String line) throws IOException {
         if (line.contains("Unresolved constraint in bundle")
-                || line.contains("Unsatisfied requirements")) {
+                || line.contains("Unsatisfied requirements")
+                || line.contains("OutOfMemoryError")
+        ) {
             System.out.println("ERROR encountered in srevicemix, stopping... - line was: "+line);
             hasErrors = true;
             errorLine = line;
