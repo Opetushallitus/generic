@@ -209,6 +209,7 @@ public class ServicemixUtils {
                 || line.contains("Unsatisfied requirements")
                 || line.contains("OutOfMemoryError")
                 || line.contains("Address already in use")
+                || line.contains("java.lang.Exception: No valid revisions in bundle archive directory:") // occurs in bamboo sometimes
         ) {
             System.out.println("ERROR encountered in srevicemix, stopping... - line was: "+line);
             hasErrors = true;
