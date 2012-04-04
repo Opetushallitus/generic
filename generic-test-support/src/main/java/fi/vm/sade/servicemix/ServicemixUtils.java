@@ -203,6 +203,7 @@ public class ServicemixUtils {
         if (line.contains("Unresolved constraint in bundle")
                 || line.contains("Unsatisfied requirements")
                 || line.contains("OutOfMemoryError")
+                || line.contains("Address already in use")
         ) {
             System.out.println("ERROR encountered in srevicemix, stopping... - line was: "+line);
             hasErrors = true;
