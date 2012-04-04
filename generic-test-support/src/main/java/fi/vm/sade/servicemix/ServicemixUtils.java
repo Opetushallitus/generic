@@ -159,15 +159,19 @@ public class ServicemixUtils {
     */
 
     private void waitUntilReadyOrStoppedOrInstalled(String info) {
+        int i = 0;
         while (!shutDown && !ready && !stopped && !installed) {
             try {
                 if (!"true".equals(System.getenv("SMX_WAIT_QUIET"))) {
-                    System.out.println("[[wait for: "+info+"...]]");
+                    if (i % 10 == 0) { // logita vain joka kymmenes kierros
+                        System.out.println("[[wait for: "+info+"...]]");
+                    }
                 }
                 Thread.sleep(WAIT_MS);
             } catch (Exception e) {
                 throw new Error(e);
             }
+            i++;
         }
         System.out.println("[[wait done for: "+info+" (ready: "+ ready +", stopped: "+stopped+", installed: "+ installed +")]]");
     }
