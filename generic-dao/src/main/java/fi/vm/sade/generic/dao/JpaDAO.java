@@ -4,6 +4,8 @@
 package fi.vm.sade.generic.dao;
 
 
+import java.util.List;
+
 /**
  * Interface of generic DAO.
  *
@@ -36,4 +38,9 @@ public interface JpaDAO<E, ID> {
      * @param entity
      */
     void remove(E entity);
+
+    /**
+     * finds all objects of dao's type from db
+     */
+    List<E> findAll();
 }

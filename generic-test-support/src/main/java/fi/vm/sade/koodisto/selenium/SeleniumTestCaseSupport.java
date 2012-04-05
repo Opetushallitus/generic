@@ -32,17 +32,20 @@ public abstract class SeleniumTestCaseSupport extends TestCase {
         System.out.println("selenium using ophServerUrl: " + ophServerUrl);
     }
 
+    public SeleniumTestCaseSupport(WebDriver driver) {
+        this.driver = driver;
+    }
+
     @Override
     protected void tearDown() throws Exception {
         driver.quit();
         super.tearDown();
     }
 
-    protected void waitForPageSourceContains(final String relativeUrl, final String expectedContains) {
+    public void waitForPageSourceContains(final String relativeUrl, final String expectedContains) {
         (new WebDriverWait(driver, TIME_OUT_IN_SECONDS, SLEEP_IN_MILLIS)).until(new ExpectedCondition<Boolean>() {
             public Boolean apply(WebDriver d) {
-                String url = ophServerUrl + relativeUrl;
-                driver.get(url);
+                String url = openRelative(relativeUrl);
                 boolean contains = driver.getPageSource().contains(expectedContains);
                 System.out.println(this.getClass().getSimpleName() + " - url: " + url + ", expectedContains: " + expectedContains + ", contains: " + contains);
 //                if (!contains) {
@@ -51,6 +54,12 @@ public abstract class SeleniumTestCaseSupport extends TestCase {
                 return contains;
             }
         });
+    }
+
+    public String openRelative(String relativeUrl) {
+        String url = ophServerUrl + relativeUrl;
+        driver.get(url);
+        return url;
     }
 
 }

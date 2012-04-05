@@ -1,18 +1,18 @@
 /**
- * 
+ *
  */
 package fi.vm.sade.generic.dao;
 
-import java.lang.reflect.ParameterizedType;
-
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import java.lang.reflect.ParameterizedType;
+import java.util.List;
 
 /**
  * Abstract implementation of JpaDAO.
- * 
- * @author tommiha
  *
+ * @author tommiha
  */
 public abstract class AbstractJpaDAOImpl<E, ID> implements JpaDAO<E, ID> {
 
@@ -57,12 +57,22 @@ public abstract class AbstractJpaDAOImpl<E, ID> implements JpaDAO<E, ID> {
         entityManager.persist(entity);
         return entity;
     }
-    
+
     /*
-     * (non-Javadoc)
-     * @see fi.vm.sade.jdbc.dao.JpaDAO#remove(java.io.Serializable)
-     */
+    * (non-Javadoc)
+    * @see fi.vm.sade.jdbc.dao.JpaDAO#remove(java.io.Serializable)
+    */
     public void remove(E entity) {
         entityManager.remove(entity);
     }
+
+    /*
+     * (non-Javadoc)
+     * @see fi.vm.sade.jdbc.dao.JpaDAO#findAll
+     */
+    public List<E> findAll() {
+        Query query = getEntityManager().createQuery("SELECT x FROM " + entityClass.getSimpleName() + " x");
+        return query.getResultList();
+    }
+
 }

@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package fi.vm.sade.generic.service;
 
@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.PersistenceException;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
@@ -19,10 +20,9 @@ import java.util.Set;
 
 /**
  * @author tommiha
- *
  */
 @Transactional
-public abstract class AbstractCRUDServiceImpl<DTOCLASS, JPACLASS, IDCLASS> implements CRUDService<JPACLASS, IDCLASS> {
+public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, IDCLASS> implements CRUDService<JPACLASS, IDCLASS> {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -37,9 +37,9 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, JPACLASS, IDCLASS> imple
      * @see fi.vm.sade.generic.service.CRUDService#read(java.lang.Object)
      */
     @Transactional(readOnly = true)
-    protected DTOCLASS read(IDCLASS key) {
+    protected FATDTOCLASS read(IDCLASS key) {
         log.debug("Reading record by primary key: " + key);
-        return convertToDTO(dao.read(key));
+        return convertToFatDTO(dao.read(key));
     }
 
     /*
@@ -47,7 +47,11 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, JPACLASS, IDCLASS> imple
      * @see fi.vm.sade.generic.service.CRUDService#update(java.lang.Object)
      */
     protected void update(DTOCLASS dto) throws ValidationException {
-        JPACLASS entity = convertToJPA(dto);
+        JPACLASS entity = convertToJPA(dto, true);
+        updateJPA(entity);
+    }
+
+    protected void updateJPA(JPACLASS entity) throws ValidationException {
         if (entity == null) {
             throw new RuntimeException("Entity is null.");
         }
@@ -61,11 +65,28 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, JPACLASS, IDCLASS> imple
      * @see fi.vm.sade.generic.service.CRUDService#insert(java.lang.Object)
      */
     protected DTOCLASS insert(DTOCLASS dto) throws ValidationException {
-        JPACLASS entity = convertToJPA(dto);
-        log.debug("Inserting record: " + entity);
-        validate(entity);
-        entity = dao.insert(entity);
+        JPACLASS entity = convertToJPA(dto, true);
+        entity = insertJPA(entity);
         return convertToDTO(entity);
+    }
+
+    protected JPACLASS insertJPA(JPACLASS entity) throws ValidationException {
+        log.debug("Inserting record: " + entity);
+
+        try {
+
+            validate(entity);
+            entity = dao.insert(entity);
+            return entity;
+
+        } catch (PersistenceException e) {
+            // TODO: unique kenttien validointi etukäteen? myös updateen?
+            if (e.getCause().toString().contains("ConstraintViolationException")) {
+                throw new ValidationException("constraint violation! unique problem, row with same value already exists?");
+            }
+            throw e;
+        }
+
     }
 
     /*
@@ -73,7 +94,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, JPACLASS, IDCLASS> imple
      * @see fi.vm.sade.generic.service.CRUDService#delete(java.lang.Object)
      */
     protected void delete(DTOCLASS dto) {
-        JPACLASS entity = convertToJPA(dto);
+        JPACLASS entity = convertToJPA(dto, true);
         log.debug("Deleting record: " + entity);
         dao.remove(entity);
     }
@@ -88,9 +109,11 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, JPACLASS, IDCLASS> imple
         dao.remove(entity);
     }
 
+    protected abstract FATDTOCLASS convertToFatDTO(JPACLASS entity);
+
     protected abstract DTOCLASS convertToDTO(JPACLASS entity);
 
-    protected abstract JPACLASS convertToJPA(DTOCLASS dto);
+    protected abstract JPACLASS convertToJPA(DTOCLASS dto, boolean merge);
 
     protected Collection<DTOCLASS> convertToDTO(Collection<JPACLASS> entitys) {
         if (entitys == null) {
@@ -103,13 +126,13 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, JPACLASS, IDCLASS> imple
         return result;
     }
 
-    protected Collection<JPACLASS> convertToJPA(Collection<DTOCLASS> dtos) {
+    protected Collection<JPACLASS> convertToJPA(Collection<DTOCLASS> dtos, boolean merge) {
         if (dtos == null) {
             return null;
         }
         List<JPACLASS> result = new ArrayList<JPACLASS>();
         for (DTOCLASS dto : dtos) {
-            result.add(convertToJPA(dto));
+            result.add(convertToJPA(dto, merge));
         }
         return result;
     }
@@ -118,7 +141,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, JPACLASS, IDCLASS> imple
         ValidatorFactory validatorFactory = ValidatorFactoryBean.getInstance();
         Validator validator = validatorFactory.getValidator();
         Set<ConstraintViolation<JPACLASS>> validationResult = validator.validate(entity);
-        log.debug("validate, validator: "+validator+", validationResult: " + validationResult);
+        log.debug("validate, validator: " + validator + ", validationResult: " + validationResult);
         if (validationResult.size() > 0) {
             ValidationException validationException = new ValidationException();
             for (ConstraintViolation<JPACLASS> violation : validationResult) {
