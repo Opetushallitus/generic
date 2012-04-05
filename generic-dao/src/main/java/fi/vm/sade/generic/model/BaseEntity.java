@@ -9,17 +9,12 @@ import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.persistence.Version;
 
 /**
  * @author tommiha
  */
 @MappedSuperclass
-@XmlRootElement(name = "BaseEntity")
-@XmlAccessorType(XmlAccessType.FIELD)
 public class BaseEntity implements Serializable {
 
     /**
@@ -30,8 +25,11 @@ public class BaseEntity implements Serializable {
     @Id
     @Column(name = "ID", unique = true, nullable = false)
     @GeneratedValue
-    @XmlElement
     private Long id;
+
+    @Version
+    @Column(name = "VERSION", nullable = false)
+    private Long version;
 
     public Long getId() {
         return id;
@@ -41,17 +39,24 @@ public class BaseEntity implements Serializable {
         this.id = id;
     }
 
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
 
-  
         }
         // XXX: eblomqvist: removed - direct dependency to Hibernate
-//        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) {
-//            return false;
-//        }
+        // if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) {
+        // return false;
+        // }
 
         return id != null && id.equals(((BaseEntity) o).getId());
     }
