@@ -47,6 +47,7 @@ public abstract class AbstractJpaDAOImpl<E, ID> implements JpaDAO<E, ID> {
      */
     public void update(E entity) {
         entityManager.merge(entity);
+        entityManager.flush();
     }
 
     /*
@@ -55,6 +56,8 @@ public abstract class AbstractJpaDAOImpl<E, ID> implements JpaDAO<E, ID> {
      */
     public E insert(E entity) {
         entityManager.persist(entity);
+        // Database must be synchronized at this point or the insert query does not get executed at all
+        entityManager.flush();
         return entity;
     }
 
