@@ -25,4 +25,12 @@ public class ValidationException extends Exception {
     public String getMessage() {
         return validationMessages.toString();
     }
+
+    public List<String> getValidationMessages() {
+        return validationMessages;
+    }
+
+    public void setValidationMessages(List<String> validationMessages) {
+        this.validationMessages = validationMessages;
+    }
 }
