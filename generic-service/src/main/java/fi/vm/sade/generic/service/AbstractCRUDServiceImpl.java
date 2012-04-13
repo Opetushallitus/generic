@@ -47,6 +47,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
      * @see fi.vm.sade.generic.service.CRUDService#update(java.lang.Object)
      */
     protected void update(DTOCLASS dto) throws ValidationException {
+        validateDTO(dto);
         JPACLASS entity = convertToJPA(dto, true);
         updateJPA(entity);
     }
@@ -56,7 +57,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
             throw new RuntimeException("Entity is null.");
         }
         log.debug("Updating record: " + entity);
-        validate(entity);
+        validateJPA(entity);
         dao.update(entity);
     }
 
@@ -65,6 +66,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
      * @see fi.vm.sade.generic.service.CRUDService#insert(java.lang.Object)
      */
     protected DTOCLASS insert(DTOCLASS dto) throws ValidationException {
+        validateDTO(dto);
         JPACLASS entity = convertToJPA(dto, true);
         entity = insertJPA(entity);
         return convertToDTO(entity);
@@ -75,7 +77,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
 
         try {
 
-            validate(entity);
+            validateJPA(entity);
             entity = dao.insert(entity);
             return entity;
 
@@ -137,19 +139,35 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
         return result;
     }
 
-    protected void validate(JPACLASS entity) throws ValidationException {
+    /**
+     * validate based on JSR-303 annoations
+     */
+    protected void validateDTO(DTOCLASS dto) throws ValidationException {
+        validate(dto);
+    }
+
+    /**
+     * validate based on JSR-303 annoations
+     */
+    protected void validateJPA(JPACLASS entity) throws ValidationException {
+        validate(entity);
+    }
+
+    /**
+     * validate based on JSR-303 annoations
+     */
+    protected void validate(Object dtoOrEntity) throws ValidationException {
         ValidatorFactory validatorFactory = ValidatorFactoryBean.getInstance();
         Validator validator = validatorFactory.getValidator();
-        Set<ConstraintViolation<JPACLASS>> validationResult = validator.validate(entity);
-        log.debug("validate, validator: " + validator + ", validationResult: " + validationResult);
+        Set<ConstraintViolation<Object>> validationResult = validator.validate(dtoOrEntity);
+        log.debug("validate, validator: "+validator + ", validationResult: " + validationResult);
         if (validationResult.size() > 0) {
             ValidationException validationException = new ValidationException();
-            for (ConstraintViolation<JPACLASS> violation : validationResult) {
-                validationException.addValidationMessage(violation.getMessage());
+            for (ConstraintViolation<Object> violation : validationResult) {
+                validationException.addValidationMessage(violation.getPropertyPath() + " - " + violation.getMessage());
             }
             throw validationException;
         }
     }
-
 
 }

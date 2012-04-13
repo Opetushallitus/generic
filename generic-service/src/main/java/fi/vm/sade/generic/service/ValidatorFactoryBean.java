@@ -14,6 +14,8 @@ import java.util.List;
 /**
  * TODO: en saanut ValidatorFactoryä toimimaan osgissa, joten koitetaan tämmöistä
  *
+ * OVT-407
+ *
  * @author Antti
  */
 public final class ValidatorFactoryBean {
