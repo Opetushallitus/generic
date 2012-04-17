@@ -84,7 +84,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
         } catch (PersistenceException e) {
             // TODO: unique kenttien validointi etukäteen? myös updateen?
             if (e.getCause().toString().contains("ConstraintViolationException")) {
-                throw new ValidationException("constraint violation! unique problem, row with same value already exists?");
+                throw new ValidationException("constraint violation! unique problem, row with same value already exists?", e);
             }
             throw e;
         }
@@ -109,6 +109,10 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
         JPACLASS entity = dao.read(id);
         log.debug("Deleting record: " + entity);
         dao.remove(entity);
+    }
+
+    protected Collection<DTOCLASS> findAll() {
+        return convertToDTO(dao.findAll());
     }
 
     protected abstract FATDTOCLASS convertToFatDTO(JPACLASS entity);
@@ -164,7 +168,8 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
         if (validationResult.size() > 0) {
             ValidationException validationException = new ValidationException();
             for (ConstraintViolation<Object> violation : validationResult) {
-                validationException.addValidationMessage(violation.getPropertyPath() + " - " + violation.getMessage());
+                validationException.addValidationMessage(violation.getPropertyPath() + " - " + violation.getMessage()
+                        + " (was: " + violation.getInvalidValue() + ")");
             }
             throw validationException;
         }

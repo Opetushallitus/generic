@@ -17,6 +17,11 @@ public class ValidationException extends Exception {
         addValidationMessage(message);
     }
 
+    public ValidationException(String message, Exception cause) {
+        super(cause);
+        addValidationMessage(message);
+    }
+
     public void addValidationMessage(String msg) {
         validationMessages.add(msg);
     }

@@ -23,6 +23,7 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Description>${project.description}</Bundle-Description>
                         <Import-Package>
+                            org.apache.commons.lang.builder,
                         </Import-Package>
                         <Export-Package>fi.vm.sade.generic.common</Export-Package>
                     </instructions>
@@ -36,6 +37,12 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>${commons-lang.version}</version>
         </dependency>
 
     </dependencies>

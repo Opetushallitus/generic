@@ -14,22 +14,24 @@ public abstract class SeleniumTestCaseSupport extends TestCase {
     protected WebDriver driver;
     protected String ophServerUrl = "http://localhost";
 
-    public SeleniumTestCaseSupport() {
-        try {
-            driver = new FirefoxDriver();
-        } catch (Exception e) {
-            System.out.println("selenium failed to initialize firefox, falling back to htmlunit");
-            driver = new HtmlUnitDriver();
-            ((HtmlUnitDriver) driver).setJavascriptEnabled(true);
+    public SeleniumTestCaseSupport(boolean createDriver) {
+        if (createDriver) {
+            try {
+                driver = new FirefoxDriver();
+            } catch (Exception e) {
+                System.out.println("selenium failed to initialize firefox, falling back to htmlunit");
+                driver = new HtmlUnitDriver();
+                ((HtmlUnitDriver) driver).setJavascriptEnabled(true);
+            }
+
+            if (System.getenv("OPH_SERVER_URL") != null) {
+                ophServerUrl = System.getenv("OPH_SERVER_URL");
+            }
+            if (System.getProperty("ophServerUrl") != null) {
+                ophServerUrl = System.getProperty("ophServerUrl");
+            }
+            System.out.println("selenium using ophServerUrl: " + ophServerUrl);
         }
-        
-        if (System.getenv("OPH_SERVER_URL") != null) {
-            ophServerUrl = System.getenv("OPH_SERVER_URL");
-        }
-        if (System.getProperty("ophServerUrl") != null) {
-            ophServerUrl = System.getProperty("ophServerUrl");
-        }
-        System.out.println("selenium using ophServerUrl: " + ophServerUrl);
     }
 
     public SeleniumTestCaseSupport(WebDriver driver) {
@@ -61,5 +63,6 @@ public abstract class SeleniumTestCaseSupport extends TestCase {
         driver.get(url);
         return url;
     }
+
 
 }

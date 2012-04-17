@@ -43,4 +43,6 @@ public interface JpaDAO<E, ID> {
      * finds all objects of dao's type from db
      */
     List<E> findAll();
+
+    List<E> findBy(String column, Object value);
 }
