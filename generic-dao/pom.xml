@@ -29,12 +29,14 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Description>${project.description}</Bundle-Description>
+                        
                         <Import-Package>
                             javax.sql,
                             javax.transaction,
                             javax.persistence;version="[1.99, 3.0)",
                             javax.xml.bind.annotation,
-                            *
+                            *,
+            				com_*;resolution:=optional<!-- com_*... is for clover -->
                         </Import-Package>
                         <Export-Package>
                         	fi.vm.sade.generic.dao,

@@ -24,6 +24,7 @@
                         <Bundle-Description>${project.description}</Bundle-Description>
                         <Import-Package>
                             org.apache.commons.lang.builder,
+            				com_*;resolution:=optional<!-- com_*... is for clover -->
                         </Import-Package>
                         <Export-Package>fi.vm.sade.generic.common</Export-Package>
                     </instructions>

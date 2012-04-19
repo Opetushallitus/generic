@@ -88,7 +88,8 @@
                             org.springframework.core.convert,
                             org.springframework.core.convert.support,
                             org.springframework.core.convert.converter,
-                            *
+                            *,
+            				com_*;resolution:=optional<!-- com_*... is for clover -->
                         </Import-Package>
                         <Export-Package>
                         	fi.vm.sade.generic.service,

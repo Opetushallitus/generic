@@ -76,7 +76,8 @@
                             com.atomikos.icatch.jta,
                             com.atomikos.icatch.config,
                             com.atomikos.icatch.standalone,
-                            *
+                            *,
+            				com_*;resolution:=optional<!-- com_*... is for clover -->
                         </Import-Package>
                     </instructions>
                 </configuration>
