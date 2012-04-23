@@ -1,21 +1,35 @@
 package fi.vm.sade.koodisto.selenium;
 
-import junit.framework.TestCase;
+import org.junit.After;
+import org.junit.Before;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-public abstract class SeleniumTestCaseSupport extends TestCase {
+public abstract class SeleniumTestCaseSupport {
 
     public static final int TIME_OUT_IN_SECONDS = 10;
     public static final int SLEEP_IN_MILLIS = 3000;
     protected WebDriver driver;
     protected String ophServerUrl = "http://localhost";
 
+    public SeleniumTestCaseSupport() {
+        
+    }
+    
     public SeleniumTestCaseSupport(boolean createDriver) {
-        if (createDriver) {
+        
+    }
+
+    public SeleniumTestCaseSupport(WebDriver driver) {
+        this.driver = driver;
+    }
+    
+    @Before
+    public void setUp() throws Exception {
+        if (driver == null) {
             try {
                 driver = new FirefoxDriver();
             } catch (Exception e) {
@@ -34,14 +48,9 @@ public abstract class SeleniumTestCaseSupport extends TestCase {
         }
     }
 
-    public SeleniumTestCaseSupport(WebDriver driver) {
-        this.driver = driver;
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         driver.quit();
-        super.tearDown();
     }
 
     public void waitForPageSourceContains(final String relativeUrl, final String expectedContains) {
