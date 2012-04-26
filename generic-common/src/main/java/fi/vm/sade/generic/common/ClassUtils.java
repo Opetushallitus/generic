@@ -70,4 +70,21 @@ public final class ClassUtils {
         return field;
     }
 
+    public static void copyFields(Object o1, Object o2) {
+        Class clazz1 = o1.getClass();
+        Class clazz2 = o2.getClass();
+
+        for (Field field1 : ClassUtils.getDeclaredFields(clazz1)) {
+            try {
+                Field field2 = ClassUtils.getDeclaredField(clazz2, field1.getName());
+                field1.setAccessible(true);
+                field2.setAccessible(true);
+                Object value = field1.get(o1);
+                field2.set(o2, value);
+            } catch (Exception e) {
+                System.out.println("failed to copy field '"+field1.getName()+" - "+e);
+            }
+        }
+    }
+
 }
