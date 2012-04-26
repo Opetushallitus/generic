@@ -4,6 +4,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -31,7 +32,9 @@ public abstract class SeleniumTestCaseSupport {
     public void setUp() throws Exception {
         if (driver == null) {
             try {
-                driver = new FirefoxDriver();
+                FirefoxProfile profile = new FirefoxProfile();
+                profile.setEnableNativeEvents(false); // disable update firefox etc dialogs
+                driver = new FirefoxDriver(profile);
             } catch (Exception e) {
                 System.out.println("selenium failed to initialize firefox, falling back to htmlunit");
                 driver = new HtmlUnitDriver();
