@@ -1,15 +1,8 @@
 package fi.vm.sade.generic.service;
 
-import org.hibernate.validator.HibernateValidator;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
-import javax.validation.Configuration;
-import javax.validation.Validation;
-import javax.validation.ValidationProviderResolver;
-import javax.validation.ValidatorFactory;
-import javax.validation.bootstrap.ProviderSpecificBootstrap;
-import javax.validation.spi.ValidationProvider;
-import java.util.ArrayList;
-import java.util.List;
+import javax.validation.Validator;
 
 /**
  * TODO: en saanut ValidatorFactoryä toimimaan osgissa, joten koitetaan tämmöistä
@@ -23,31 +16,11 @@ public final class ValidatorFactoryBean {
     private ValidatorFactoryBean() {
     }
 
-    /**
-     * Custom provider resolver is needed since the default provider resolver
-     * relies on current thread context loader and doesn't find the default
-     * META-INF/services/.... configuration file
-     */
-    private static class HibernateValidationProviderResolver implements ValidationProviderResolver {
-
-        @Override
-        public List getValidationProviders() {
-            List providers = new ArrayList(1);
-            providers.add(new HibernateValidator());
-            return providers;
-        }
+    public static Validator getValidator() {
+        // hibernate validator cannt be used directly because does not support multilingual messages
+        LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
+        validator.afterPropertiesSet();
+        return validator;
     }
 
-    private static final ValidatorFactory INSTANCE;
-
-    static {
-        ProviderSpecificBootstrap validationBootStrap = Validation.byProvider(ValidationProvider.class);
-        validationBootStrap.providerResolver(new HibernateValidationProviderResolver());
-        Configuration configuration = validationBootStrap.configure();
-        INSTANCE = configuration.buildValidatorFactory();
-    }
-
-    public static ValidatorFactory getInstance() {
-        return INSTANCE;
-    }
 }

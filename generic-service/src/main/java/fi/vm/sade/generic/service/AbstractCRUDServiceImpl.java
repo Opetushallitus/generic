@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.PersistenceException;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -161,8 +160,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
      * validate based on JSR-303 annoations
      */
     protected void validate(Object dtoOrEntity) throws ValidationException {
-        ValidatorFactory validatorFactory = ValidatorFactoryBean.getInstance();
-        Validator validator = validatorFactory.getValidator();
+        Validator validator = ValidatorFactoryBean.getValidator();
         Set<ConstraintViolation<Object>> validationResult = validator.validate(dtoOrEntity);
         log.debug("validate, validator: "+validator + ", validationResult: " + validationResult);
         if (validationResult.size() > 0) {
