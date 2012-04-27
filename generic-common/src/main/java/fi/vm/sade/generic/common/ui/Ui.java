@@ -48,7 +48,7 @@ public @interface Ui {
     /**
      * Together with targetClass
      */
-    String targetProperty() default "id";
+    String targetProperty() default "";
     /**
      * Set field caption or no
      */
