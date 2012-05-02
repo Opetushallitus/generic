@@ -13,8 +13,10 @@
         <feature>camel-cxf</feature>
         <feature>servicemix-camel</feature>
         <feature>webconsole</feature>
+        <feature>camel-castor</feature>
     </feature>
-
+    
+   
     <feature name="jpa-hibernate" version="${hibernate.version}">
         <bundle>mvn:javax.persistence/com.springsource.javax.persistence/${jpa-api.version}</bundle>
         <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.commons-dbcp/${commons-dbcp.version}</bundle>
