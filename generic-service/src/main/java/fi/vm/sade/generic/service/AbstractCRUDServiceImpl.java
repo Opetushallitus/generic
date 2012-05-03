@@ -110,7 +110,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
         dao.remove(entity);
     }
 
-    protected Collection<DTOCLASS> findAll() {
+    protected List<DTOCLASS> findAll() {
         return convertToDTO(dao.findAll());
     }
 
@@ -120,7 +120,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
 
     protected abstract JPACLASS convertToJPA(DTOCLASS dto, boolean merge);
 
-    protected Collection<DTOCLASS> convertToDTO(Collection<JPACLASS> entitys) {
+    protected List<DTOCLASS> convertToDTO(Collection<JPACLASS> entitys) {
         if (entitys == null) {
             return null;
         }
@@ -131,7 +131,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
         return result;
     }
 
-    protected Collection<JPACLASS> convertToJPA(Collection<DTOCLASS> dtos, boolean merge) {
+    protected List<JPACLASS> convertToJPA(Collection<DTOCLASS> dtos, boolean merge) {
         if (dtos == null) {
             return null;
         }
