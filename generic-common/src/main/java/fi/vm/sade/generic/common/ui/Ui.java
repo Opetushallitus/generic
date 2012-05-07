@@ -53,4 +53,8 @@ public @interface Ui {
      * Set field caption or no
      */
     boolean caption() default true;
+    /**
+     * Load options once when creating the component (false) or dynamically when onfocus (true)
+     */
+    boolean dynamic() default false;
 }
