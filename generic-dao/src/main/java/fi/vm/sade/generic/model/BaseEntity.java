@@ -22,13 +22,16 @@ public class BaseEntity implements Serializable {
      */
     private static final long serialVersionUID = -1482830143396044915L;
 
+    public static final String ID_COLUMN_NAME = "id";
+    public static final String VERSION_COLUMN_NAME = "version";
+
     @Id
-    @Column(name = "ID", unique = true, nullable = false)
+    @Column(name = ID_COLUMN_NAME, unique = true, nullable = false)
     @GeneratedValue
     private Long id;
 
     @Version
-    @Column(name = "VERSION", nullable = false)
+    @Column(name = VERSION_COLUMN_NAME, nullable = false)
     private Long version;
 
     public Long getId() {
