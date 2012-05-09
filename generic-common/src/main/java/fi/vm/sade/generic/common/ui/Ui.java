@@ -9,6 +9,7 @@ import java.lang.annotation.ElementType;
  * @see fi.vm.sade.organisaatio.ui.sandbox.GuiFactory
  * @author Antti Salonen
  */
+@Deprecated
 @java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
 @java.lang.annotation.Target({ElementType.FIELD, ElementType.TYPE})
 public @interface Ui {
