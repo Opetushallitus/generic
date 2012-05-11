@@ -33,7 +33,7 @@ public abstract class SeleniumTestCaseSupport {
         if (driver == null) {
             try {
                 FirefoxProfile profile = new FirefoxProfile();
-                profile.setEnableNativeEvents(false); // disable update firefox etc dialogs
+                //profile.setEnableNativeEvents(false); // disable update firefox etc dialogs
                 driver = new FirefoxDriver(profile);
             } catch (Exception e) {
                 System.out.println("selenium failed to initialize firefox, falling back to htmlunit");
