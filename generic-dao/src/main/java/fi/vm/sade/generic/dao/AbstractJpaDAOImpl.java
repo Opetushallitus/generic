@@ -85,4 +85,5 @@ public abstract class AbstractJpaDAOImpl<E, ID> implements JpaDAO<E, ID> {
         return query.getResultList();
     }
 
+
 }
