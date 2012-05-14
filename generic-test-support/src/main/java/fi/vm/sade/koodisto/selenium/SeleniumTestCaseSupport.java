@@ -40,15 +40,16 @@ public abstract class SeleniumTestCaseSupport {
                 driver = new HtmlUnitDriver();
                 ((HtmlUnitDriver) driver).setJavascriptEnabled(true);
             }
-
-            if (System.getenv("OPH_SERVER_URL") != null) {
-                ophServerUrl = System.getenv("OPH_SERVER_URL");
-            }
-            if (System.getProperty("ophServerUrl") != null) {
-                ophServerUrl = System.getProperty("ophServerUrl");
-            }
-            System.out.println("selenium using ophServerUrl: " + ophServerUrl);
         }
+
+        if (System.getenv("OPH_SERVER_URL") != null) {
+            ophServerUrl = System.getenv("OPH_SERVER_URL");
+        }
+        if (System.getProperty("ophServerUrl") != null) {
+            ophServerUrl = System.getProperty("ophServerUrl");
+        }
+        System.out.println("selenium using ophServerUrl: " + ophServerUrl);
+
     }
 
     @After
