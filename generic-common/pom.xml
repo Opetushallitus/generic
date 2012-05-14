@@ -24,7 +24,10 @@
                         <Bundle-Description>${project.description}</Bundle-Description>
                         <Import-Package>
                             org.apache.commons.lang.builder,
-            				com_*;resolution:=optional<!-- com_*... is for clover -->
+                            org.springframework.context,
+                            org.springframework.context.support,
+                            com_*;resolution:=optional<!-- com_*... is for 
+                                clover -->
                         </Import-Package>
                         <Export-Package>fi.vm.sade.generic.common</Export-Package>
                     </instructions>
@@ -44,6 +47,10 @@
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>${commons-lang.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
         </dependency>
 
     </dependencies>
