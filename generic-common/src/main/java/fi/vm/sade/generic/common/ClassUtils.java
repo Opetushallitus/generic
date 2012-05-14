@@ -15,28 +15,20 @@ public final class ClassUtils {
     public static String toString(Object o) {
         return ToStringBuilder.reflectionToString(o);
         /*
-        ArrayList list = new ArrayList();
-        ClassUtils.toString(o, o.getClass(), list);
-        return o.getClass().getName().concat(list.toString());
-        */
+         * ArrayList list = new ArrayList(); ClassUtils.toString(o,
+         * o.getClass(), list); return
+         * o.getClass().getName().concat(list.toString());
+         */
     }
 
     /*
-    private static void toString(Object o, Class clazz, List list) {
-        List<Field> fields = getDeclaredFields(clazz);
-        for (Field field : fields) {
-            try {
-                field.setAccessible(true);
-                list.add(field.getName() + "=" + field.get(o));
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-        if (clazz.getSuperclass().getSuperclass() != null) {
-            toString(o, clazz.getSuperclass(), list);
-        }
-    }
-    */
+     * private static void toString(Object o, Class clazz, List list) {
+     * List<Field> fields = getDeclaredFields(clazz); for (Field field : fields)
+     * { try { field.setAccessible(true); list.add(field.getName() + "=" +
+     * field.get(o)); } catch (IllegalAccessException e) { e.printStackTrace();
+     * } } if (clazz.getSuperclass().getSuperclass() != null) { toString(o,
+     * clazz.getSuperclass(), list); } }
+     */
 
     public static List<Field> getDeclaredFields(Class clazz) {
         List<Field> fields = new ArrayList<Field>();
@@ -82,7 +74,7 @@ public final class ClassUtils {
                 Object value = field1.get(o1);
                 field2.set(o2, value);
             } catch (Exception e) {
-                System.out.println("failed to copy field '"+field1.getName()+" - "+e);
+                throw new RuntimeException("failed to copy field '" + field1.getName(), e);
             }
         }
     }
