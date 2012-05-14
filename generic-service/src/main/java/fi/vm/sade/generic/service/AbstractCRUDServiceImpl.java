@@ -173,4 +173,18 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
         }
     }
 
+    protected void validateProperty(Object dtoOrEntity, String propertyName) throws ValidationException {
+        Validator validator = ValidatorFactoryBean.getValidator();
+        Set<ConstraintViolation<Object>> validationResult = validator.validateProperty(dtoOrEntity, propertyName);
+        log.debug("validate, validator: "+validator + ", validationResult: " + validationResult);
+        if (validationResult.size() > 0) {
+            ValidationException validationException = new ValidationException();
+            for (ConstraintViolation<Object> violation : validationResult) {
+                validationException.addValidationMessage(violation.getPropertyPath() + " - " + violation.getMessage()
+                        + " (was: " + violation.getInvalidValue() + ")");
+            }
+            throw validationException;
+        }
+    }
+
 }
