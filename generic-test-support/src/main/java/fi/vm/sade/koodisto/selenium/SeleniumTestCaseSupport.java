@@ -8,9 +8,12 @@ import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class SeleniumTestCaseSupport {
 
+    private final Logger log = LoggerFactory.getLogger(getClass());
     public static final int TIME_OUT_IN_SECONDS = 10;
     public static final int SLEEP_IN_MILLIS = 3000;
     protected WebDriver driver;
@@ -36,7 +39,7 @@ public abstract class SeleniumTestCaseSupport {
                 //profile.setEnableNativeEvents(false); // disable update firefox etc dialogs
                 driver = new FirefoxDriver(profile);
             } catch (Exception e) {
-                System.out.println("selenium failed to initialize firefox, falling back to htmlunit");
+                log.warn("selenium failed to initialize firefox, falling back to htmlunit");
                 driver = new HtmlUnitDriver();
                 ((HtmlUnitDriver) driver).setJavascriptEnabled(true);
             }
@@ -48,7 +51,7 @@ public abstract class SeleniumTestCaseSupport {
         if (System.getProperty("ophServerUrl") != null) {
             ophServerUrl = System.getProperty("ophServerUrl");
         }
-        System.out.println("selenium using ophServerUrl: " + ophServerUrl);
+        log.info("selenium using ophServerUrl: %s", ophServerUrl);
 
     }
 
