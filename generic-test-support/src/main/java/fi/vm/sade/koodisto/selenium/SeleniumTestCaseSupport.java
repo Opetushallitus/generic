@@ -18,16 +18,20 @@ public abstract class SeleniumTestCaseSupport {
     public static final int SLEEP_IN_MILLIS = 3000;
     protected WebDriver driver;
     protected String ophServerUrl = "http://localhost";
+    protected String mode;
+    private static final String MODE_PORTAL = "portal";
 
     public SeleniumTestCaseSupport() {
         
     }
     
     public SeleniumTestCaseSupport(boolean createDriver) {
-        
+        ophServerUrl = getEnvOrSystemProperty(ophServerUrl, "OPH_SERVER_URL", "ophServerUrl");
+        mode = getEnvOrSystemProperty(ophServerUrl, "SELENIUM_MODE", "seleniumMode");
     }
 
     public SeleniumTestCaseSupport(WebDriver driver) {
+        this(false);
         this.driver = driver;
     }
     
@@ -45,14 +49,22 @@ public abstract class SeleniumTestCaseSupport {
             }
         }
 
-        if (System.getenv("OPH_SERVER_URL") != null) {
-            ophServerUrl = System.getenv("OPH_SERVER_URL");
-        }
-        if (System.getProperty("ophServerUrl") != null) {
-            ophServerUrl = System.getProperty("ophServerUrl");
-        }
-        log.info("selenium using ophServerUrl: %s", ophServerUrl);
+        log.info("selenium start, ophServerUrl: {}, mode: {}, portalMode: {}", new Object[]{ophServerUrl, mode, modePortal()});
 
+    }
+
+    public boolean modePortal() {
+        return MODE_PORTAL.equals(mode);
+    }
+
+    protected String getEnvOrSystemProperty(String originalValue, String envVariableName, String systemPropertyName) {
+        if (System.getenv(envVariableName) != null) {
+            originalValue = System.getenv(envVariableName);
+        }
+        if (System.getProperty(systemPropertyName) != null) {
+            originalValue = System.getProperty(systemPropertyName);
+        }
+        return originalValue;
     }
 
     @After
