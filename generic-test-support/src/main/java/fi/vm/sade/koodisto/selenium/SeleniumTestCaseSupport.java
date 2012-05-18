@@ -5,8 +5,6 @@ import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 import org.monte.media.Format;
 import org.monte.media.FormatKeys;
 import org.monte.media.math.Rational;
@@ -69,70 +67,23 @@ public abstract class SeleniumTestCaseSupport {
     protected Throwable failure;
     private StringBuffer testReport = new StringBuffer();
 
-    private String testName;
+    String testName;
 
-    // TODO: move startVideo+stopVideo to some extension?
     protected ScreenRecorder screenRecorder;
 
     @Rule
-    public TestWatcher testWatcher = new TestWatcher() {
-
-        @Override
-        protected void starting(Description description) {
-            testName = this.getClass().getSimpleName() + "." + description.getMethodName();
-        }
-
-        @Override
-        protected void failed(Throwable e, Description description) {
-            log.info("TestWatcher.failed: " + e);
-            failure = e;
-            STEP("test FAILED\nstep: " + previousStep + "\nexception: " + failure);
-            writeReport();
-            driver.quit();
-        }
-
-        @Override
-        protected void succeeded(Description description) {
-            log.info("TestWatcher.succeeded");
-            STEP("test OK");
-            writeReport();
-            driver.quit();
-        }
-
-    };
-
-    @Before
-    public void setUp() throws Exception {
-
-        if (driver == null) {
-            try {
-                FirefoxProfile profile = new FirefoxProfile();
-                //profile.setEnableNativeEvents(false); // disable update firefox etc dialogs
-                driver = new FirefoxDriver(profile);
-            } catch (Exception e) {
-                log.warn("selenium failed to initialize firefox, falling back to htmlunit");
-                driver = new HtmlUnitDriver();
-                ((HtmlUnitDriver) driver).setJavascriptEnabled(true);
-            }
-        }
-
-        log.info("selenium start, ophServerUrl: {}, mode: {}, portalMode: {}", new Object[]{ophServerUrl, mode, modePortal()});
-
-        maybeFixMacFocus();
-
-        // maximize browser window - http://stackoverflow.com/questions/3189430/how-do-i-maximize-the-browser-window-using-webdriver-selenium-2
-        //driver.manage().window().maximize();
-
-        appendTestReport("<html><body><table border='1'>");
-        STEP("TEST: " + testName);
-
-        initPageObjects();
-    }
+    public SeleniumTestWatcher testWatcher = new SeleniumTestWatcher(this);
 
     public SeleniumTestCaseSupport() {
         ophServerUrl = getEnvOrSystemProperty(ophServerUrl, "OPH_SERVER_URL", "ophServerUrl");
         mode = getEnvOrSystemProperty(ophServerUrl, "SELENIUM_MODE", "seleniumMode");
+        String demoModeValue = getEnvOrSystemProperty(null, "DEMO_MODE", "demoMode");
+        demoMode = (demoModeValue != null && !demoModeValue.equals("false"));
+        initI18N();
 
+    }
+
+    protected void initI18N() {
         final ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
         messageSource.setBasename("i18n/messages");
         I18N.setMessageSourceAccessor(new MessageSourceAccessor(new MessageSource() {
@@ -168,7 +119,34 @@ public abstract class SeleniumTestCaseSupport {
          * messages.getProperty(code); log.info("MSG: " + code + " - " + msg); return msg != null ? msg : code; } catch (IOException e) {
          * log.info("OrganisaatioSeleniumTstCaseSupport.I18N.getMessage warn, code: " + code + ", exception: " + e); return code; } } });
          */
+    }
 
+    @Before
+    public void setUp() throws Exception {
+
+        if (driver == null) {
+            try {
+                FirefoxProfile profile = new FirefoxProfile();
+                //profile.setEnableNativeEvents(false); // disable update firefox etc dialogs
+                driver = new FirefoxDriver(profile);
+            } catch (Exception e) {
+                log.warn("selenium failed to initialize firefox, falling back to htmlunit");
+                driver = new HtmlUnitDriver();
+                ((HtmlUnitDriver) driver).setJavascriptEnabled(true);
+            }
+        }
+
+        log.info("selenium start, ophServerUrl: {}, mode: {}, portalMode: {}", new Object[]{ophServerUrl, mode, modePortal()});
+
+        maybeFixMacFocus();
+
+        // maximize browser window - http://stackoverflow.com/questions/3189430/how-do-i-maximize-the-browser-window-using-webdriver-selenium-2
+        //driver.manage().window().maximize();
+
+        appendTestReport("<html><body><table border='1'>");
+        STEP("TEST: " + testName);
+
+        initPageObjects();
     }
     
     public SeleniumTestCaseSupport(WebDriver driver) {
@@ -447,7 +425,7 @@ public abstract class SeleniumTestCaseSupport {
         });
     }
 
-    private void writeReport() {
+    void writeReport() {
         try {
             appendTestReport("</table></body></html>");
             if (failure == null) {
