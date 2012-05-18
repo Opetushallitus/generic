@@ -54,11 +54,11 @@ public abstract class SeleniumTestCaseSupport {
     /**
      * Flag that enables or disables tests still image capturing.
      */
-    protected boolean takeScreenshots = true;
+    protected boolean takeScreenshots = false;
     /**
      * Flag that enables or disables tests video recording.
      */
-    protected boolean takeVideo = true;
+    protected boolean takeVideo = false;
     /**
      * Flag that enables or disables fix for Mac focus problem. This is actually done by disabling screenshot and video capture.
      */
@@ -75,10 +75,22 @@ public abstract class SeleniumTestCaseSupport {
     public SeleniumTestWatcher testWatcher = new SeleniumTestWatcher(this);
 
     public SeleniumTestCaseSupport() {
+        
         ophServerUrl = getEnvOrSystemProperty(ophServerUrl, "OPH_SERVER_URL", "ophServerUrl");
         mode = getEnvOrSystemProperty(ophServerUrl, "SELENIUM_MODE", "seleniumMode");
         String demoModeValue = getEnvOrSystemProperty(null, "DEMO_MODE", "demoMode");
         demoMode = (demoModeValue != null && !demoModeValue.equals("false"));
+        
+        takeScreenshots = getEnvOrSystemPropertyAsBoolean(takeScreenshots, "SCREENSHOT_MODE", "screenshotMode");
+        takeVideo = getEnvOrSystemPropertyAsBoolean(takeVideo, "VIDEO_MODE", "videoMode");
+            
+        log.info("test running with:"
+            + "\n\tophServerUrl: " + ophServerUrl
+            + "\n\tmode: " + mode
+            + "\n\tdemoMode: " + demoMode
+            + "\n\tscreenshot recording: " + takeScreenshots
+            + "\n\tvideo recording: " + takeVideo);
+        
         initI18N();
 
     }
@@ -123,7 +135,7 @@ public abstract class SeleniumTestCaseSupport {
 
     @Before
     public void setUp() throws Exception {
-
+        
         if (driver == null) {
             try {
                 FirefoxProfile profile = new FirefoxProfile();
@@ -158,6 +170,13 @@ public abstract class SeleniumTestCaseSupport {
         return MODE_PORTAL.equals(mode);
     }
 
+    protected boolean getEnvOrSystemPropertyAsBoolean(Boolean originalValue, String envVariableName, String systemPropertyName) {
+        
+        String value = getEnvOrSystemProperty(null, envVariableName, systemPropertyName);
+        return (value == null ? originalValue : Boolean.parseBoolean(value));
+        
+    }
+    
     protected String getEnvOrSystemProperty(String originalValue, String envVariableName, String systemPropertyName) {
         if (System.getenv(envVariableName) != null) {
             originalValue = System.getenv(envVariableName);
@@ -462,11 +481,13 @@ public abstract class SeleniumTestCaseSupport {
                 log.warn("WARN: you are running a Mac OS and macFix is disabled. This may cause some tests to fail. ");
                 return;
             }
-
+        
             takeScreenshots = false;
             takeVideo = false;
 
-        }
+        } 
+        
+        log.debug("********* TAKE VIDEO: " + takeVideo + ", TAKE STILL: " + takeScreenshots);
 
     }
 
@@ -566,6 +587,8 @@ public abstract class SeleniumTestCaseSupport {
 
     @Before
     public void startVideo() throws Exception {
+        
+        maybeFixMacFocus();
 
         if (takeVideo) {
 
