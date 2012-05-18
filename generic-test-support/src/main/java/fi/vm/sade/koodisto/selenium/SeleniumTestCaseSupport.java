@@ -301,7 +301,7 @@ public abstract class SeleniumTestCaseSupport {
     }
 
     public void assertMessageKey(final String key) {
-        assertMessageKey(key, "//div[@id='serverMessage']", null);
+        assertMessageKey(key, "//div[@id[contains(.,'serverMessage')]]", null);//='serverMessage']", null);
     }
 
     public void assertErrorKey(final String key, boolean dismiss) {
