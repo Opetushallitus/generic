@@ -22,7 +22,7 @@ public class SeleniumTestWatcher extends TestWatcher {
 
     @Override
     protected void starting(Description description) {
-        seleniumTestCaseSupport.testName = this.getClass().getSimpleName() + "." + description.getMethodName();
+        seleniumTestCaseSupport.testName = seleniumTestCaseSupport.getClass().getSimpleName() + "." + description.getMethodName();
     }
 
     @Override
