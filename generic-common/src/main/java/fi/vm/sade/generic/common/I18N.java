@@ -15,12 +15,12 @@ public class I18N implements ApplicationContextAware {
     private static MessageSourceAccessor messageSourceAccessor;
     private static final ThreadLocal<Locale> LOCALE_THREAD_LOCAL = new ThreadLocal<Locale>();
 
-    private static void setMessageSourceAccessor(MessageSourceAccessor msa) {
-        I18N.messageSourceAccessor = msa;
+    public static void setMessageSourceAccessor(MessageSourceAccessor msa) {
+        messageSourceAccessor = msa;
     }
 
     public void setApplicationContext(ApplicationContext applicationContext) {
-        I18N.setMessageSourceAccessor(new MessageSourceAccessor(applicationContext));
+        setMessageSourceAccessor(new MessageSourceAccessor(applicationContext));
     }
 
     /**
