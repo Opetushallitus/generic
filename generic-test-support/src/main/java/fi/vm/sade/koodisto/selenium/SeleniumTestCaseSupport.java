@@ -125,6 +125,8 @@ public abstract class SeleniumTestCaseSupport {
 
         appendTestReport("<html><body><table border='1'>");
         STEP("TEST: " + testName);
+
+        initPageObjects();
     }
 
     public SeleniumTestCaseSupport() {
@@ -279,7 +281,6 @@ public abstract class SeleniumTestCaseSupport {
         }
     }
 
-    @Before
     public void initPageObjects() {
         throw new RuntimeException("override this method (some problem with abstract method vs aspectj compiler)");
     }
