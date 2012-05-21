@@ -71,8 +71,8 @@ public abstract class SeleniumTestCaseSupport {
 
     protected ScreenRecorder screenRecorder;
 
-    @Rule
-    public SeleniumTestWatcher testWatcher = new SeleniumTestWatcher(this);
+    //@Rule
+    //public SeleniumTestWatcher testWatcher = new SeleniumTestWatcher(this);
 
     public SeleniumTestCaseSupport() {
         
@@ -210,6 +210,23 @@ public abstract class SeleniumTestCaseSupport {
         String url = ophServerUrl + relativeUrl;
         driver.get(url);
         return url;
+    }
+    
+    public void selectCustom(WebElement element, final String optionText) {
+        final WebElement btn = element.findElement(By.xpath("//div[@class='v-filterselect-button']"));
+        
+//        btn.click();
+//        WebElement option = waitForElement(By.xpath("//td[@class='gwt-MenuItem']/span[contains(.,'" + text + "')]"));
+        WebElement option = wait("KoodistoComponent not found: " + optionText, new ExpectedCondition<WebElement>() {
+
+            @Override
+            public WebElement apply(@Nullable WebDriver webDriver) {
+                btn.click();
+                return driver.findElement(By.xpath("//td[@class='gwt-MenuItem']/span[contains(.,'" + optionText + "')]"));
+            }
+
+        });
+        option.click();
     }
 
     public void select(WebElement element, final String optionText) {
