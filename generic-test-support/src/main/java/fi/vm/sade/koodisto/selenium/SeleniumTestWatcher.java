@@ -7,6 +7,7 @@ import org.junit.runner.Description;
  * Test watcher that will:
  *  - set test name
  *  - initialize and write test report
+ *  - quit firefox after test
  *
  * TODO: videointi myös tänne?
  *

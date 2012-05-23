@@ -24,7 +24,6 @@ import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.context.support.ResourceBundleMessageSource;
 
 import javax.annotation.Nullable;
-
 import java.awt.*;
 import java.io.File;
 import java.io.PrintWriter;
@@ -34,9 +33,13 @@ import java.util.List;
 import java.util.Locale;
 
 import static org.junit.Assert.fail;
-import static org.monte.media.FormatKeys.*;
 import static org.monte.media.FormatKeys.EncodingKey;
 import static org.monte.media.FormatKeys.FrameRateKey;
+import static org.monte.media.FormatKeys.KeyFrameIntervalKey;
+import static org.monte.media.FormatKeys.MIME_AVI;
+import static org.monte.media.FormatKeys.MediaType;
+import static org.monte.media.FormatKeys.MediaTypeKey;
+import static org.monte.media.FormatKeys.MimeTypeKey;
 import static org.monte.media.VideoFormatKeys.*;
 
 public abstract class SeleniumTestCaseSupport {
@@ -71,8 +74,8 @@ public abstract class SeleniumTestCaseSupport {
 
     protected ScreenRecorder screenRecorder;
 
-    //@Rule
-    //public SeleniumTestWatcher testWatcher = new SeleniumTestWatcher(this);
+    @Rule
+    public SeleniumTestWatcher testWatcher = new SeleniumTestWatcher(this);
 
     public SeleniumTestCaseSupport() {
         
