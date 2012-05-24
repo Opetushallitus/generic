@@ -1,15 +1,13 @@
 package fi.vm.sade.koodisto.selenium;
 
 import fi.vm.sade.generic.common.I18N;
-import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.monte.media.Format;
-import org.monte.media.FormatKeys;
-import org.monte.media.math.Rational;
-import org.monte.screenrecorder.ScreenRecorder;
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
@@ -24,23 +22,11 @@ import org.springframework.context.support.MessageSourceAccessor;
 import org.springframework.context.support.ResourceBundleMessageSource;
 
 import javax.annotation.Nullable;
-import java.awt.*;
-import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 import static org.junit.Assert.fail;
-import static org.monte.media.FormatKeys.EncodingKey;
-import static org.monte.media.FormatKeys.FrameRateKey;
-import static org.monte.media.FormatKeys.KeyFrameIntervalKey;
-import static org.monte.media.FormatKeys.MIME_AVI;
-import static org.monte.media.FormatKeys.MediaType;
-import static org.monte.media.FormatKeys.MediaTypeKey;
-import static org.monte.media.FormatKeys.MimeTypeKey;
-import static org.monte.media.VideoFormatKeys.*;
 
 public abstract class SeleniumTestCaseSupport {
 
@@ -53,46 +39,30 @@ public abstract class SeleniumTestCaseSupport {
     private static final String MODE_PORTAL = "portal";
 
     public static final int DEMOSLEEP = 5000;
-    protected boolean demoMode = false;
-    /**
-     * Flag that enables or disables tests still image capturing.
-     */
-    protected boolean takeScreenshots = false;
-    /**
-     * Flag that enables or disables tests video recording.
-     */
-    protected boolean takeVideo = false;
     /**
      * Flag that enables or disables fix for Mac focus problem. This is actually done by disabling screenshot and video capture.
      */
     protected boolean useMacFix = true;
-    protected String previousStep;
     protected Throwable failure;
-    private StringBuffer testReport = new StringBuffer();
 
     String testName;
 
-    protected ScreenRecorder screenRecorder;
-
     @Rule
-    public SeleniumTestWatcher testWatcher = new SeleniumTestWatcher(this);
+    public TestCaseReporter testCaseReporter = new TestCaseReporter(this);
+    @Rule
+    public TestCaseVideoRecorder videoRecorder = new TestCaseVideoRecorder();
 
     public SeleniumTestCaseSupport() {
         
-        ophServerUrl = getEnvOrSystemProperty(ophServerUrl, "OPH_SERVER_URL", "ophServerUrl");
-        mode = getEnvOrSystemProperty(ophServerUrl, "SELENIUM_MODE", "seleniumMode");
-        String demoModeValue = getEnvOrSystemProperty(null, "DEMO_MODE", "demoMode");
-        demoMode = (demoModeValue != null && !demoModeValue.equals("false"));
-        
-        takeScreenshots = getEnvOrSystemPropertyAsBoolean(takeScreenshots, "SCREENSHOT_MODE", "screenshotMode");
-        takeVideo = getEnvOrSystemPropertyAsBoolean(takeVideo, "VIDEO_MODE", "videoMode");
-            
+        ophServerUrl = TestUtils.getEnvOrSystemProperty(ophServerUrl, "OPH_SERVER_URL", "ophServerUrl");
+        mode = TestUtils.getEnvOrSystemProperty(null, "SELENIUM_MODE", "seleniumMode");
+
         log.info("test running with:"
             + "\n\tophServerUrl: " + ophServerUrl
             + "\n\tmode: " + mode
-            + "\n\tdemoMode: " + demoMode
-            + "\n\tscreenshot recording: " + takeScreenshots
-            + "\n\tvideo recording: " + takeVideo);
+            + "\n\tdemoMode: " + TestUtils.isDemoMode()
+            + "\n\tscreenshot recording: " + testCaseReporter.isTakeScreenshots()
+            + "\n\tvideo recording: " + videoRecorder.isTakeVideo());
         
         initI18N();
 
@@ -153,13 +123,8 @@ public abstract class SeleniumTestCaseSupport {
 
         log.info("selenium start, ophServerUrl: {}, mode: {}, portalMode: {}", new Object[]{ophServerUrl, mode, modePortal()});
 
-        maybeFixMacFocus();
-
         // maximize browser window - http://stackoverflow.com/questions/3189430/how-do-i-maximize-the-browser-window-using-webdriver-selenium-2
         //driver.manage().window().maximize();
-
-        appendTestReport("<html><body><table border='1'>");
-        STEP("TEST: " + testName);
 
         initPageObjects();
     }
@@ -173,26 +138,9 @@ public abstract class SeleniumTestCaseSupport {
         return MODE_PORTAL.equals(mode);
     }
 
-    protected boolean getEnvOrSystemPropertyAsBoolean(Boolean originalValue, String envVariableName, String systemPropertyName) {
-        
-        String value = getEnvOrSystemProperty(null, envVariableName, systemPropertyName);
-        return (value == null ? originalValue : Boolean.parseBoolean(value));
-        
-    }
-    
-    protected String getEnvOrSystemProperty(String originalValue, String envVariableName, String systemPropertyName) {
-        if (System.getenv(envVariableName) != null) {
-            originalValue = System.getenv(envVariableName);
-        }
-        if (System.getProperty(systemPropertyName) != null) {
-            originalValue = System.getProperty(systemPropertyName);
-        }
-        return originalValue;
-    }
-
     @After
     public void tearDown() throws Exception {
-//        driver.quit(); tehdäänkin rulella
+        driver.quit();
     }
 
     public void waitForPageSourceContains(final String relativeUrl, final String expectedContains) {
@@ -302,43 +250,6 @@ public abstract class SeleniumTestCaseSupport {
         throw new RuntimeException("override this method (some problem with abstract method vs aspectj compiler)");
     }
 
-    public String getRelativePath() {
-        throw new RuntimeException("override this method (some problem with abstract method vs aspectj compiler)");
-    }
-
-    public String getRelativePathPortal() {
-        throw new RuntimeException("override this method (some problem with abstract method vs aspectj compiler)");
-    }
-
-    public void open(final String lang) {
-        // TODO: portti järkevämmin
-        log.info("open, lang: " + lang + ", portalMode: " + modePortal());
-        if (modePortal()) {
-            loginToPortal();
-            openRelative(":8180" + getRelativePathPortal() + "?restartApplication&lang=" + lang);
-        } else {
-            openRelative(":8080" + getRelativePath() + "?restartApplication&lang=" + lang);
-        }
-//        openRelative(":8080/organisaatio-app?restartApplication");
-//        openRelative(":8080/organisaatio-app?lang="+lang);
-        (new WebDriverWait(driver, TIME_OUT_IN_SECONDS)).until(new ExpectedCondition<Boolean>() {
-
-            public Boolean apply(WebDriver d) {
-                return driver.getPageSource().contains("Organisaatiot");
-            }
-
-        });
-    }
-
-    public void loginToPortal() {
-        log.info("loginToPortal...");
-        openRelative(":8180/c/portal/logout"); // first logout
-        openRelative(":8180/c/portal/login");
-        input("_58_login", "test@liferay.com");
-        input("_58_password", "test");
-        driver.findElement(By.xpath("//input[@type='submit']")).click();
-    }
-
     public void assertMessageKey(final String key) {
         assertMessageKey(key, "//div[@id[contains(.,'serverMessage')]]", null);//='serverMessage']", null);
     }
@@ -377,7 +288,7 @@ public abstract class SeleniumTestCaseSupport {
                 }
 
             });
-            if (demoMode) {
+            if (TestUtils.isDemoMode()) {
                 Thread.sleep(DEMOSLEEP);
             }
         } catch (Exception e) {
@@ -464,209 +375,8 @@ public abstract class SeleniumTestCaseSupport {
         });
     }
 
-    void writeReport() {
-        try {
-            appendTestReport("</table></body></html>");
-            if (failure == null) {
-                appendTestReport("<h3>SUCCESS</h3>");
-            } else {
-                StringWriter sw = new StringWriter();
-                PrintWriter pw = new PrintWriter(sw);
-                failure.printStackTrace(pw);
-                pw.close();
-                appendTestReport("<h3>FAILURE</h3><pre>" + sw + "</pre>");
-            }
-            File reportFile = new File(getReportDir(), testName + "-report.html");
-            FileUtils.writeStringToFile(reportFile, testReport.toString());
-            log.info("WROTE REPORT: " + reportFile.getAbsolutePath());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private File getReportDir() {
-        return new File("target/failsafe-reports/selenium-reports");
-    }
-
-    /**
-     * If running on Mac OS and useMacFix flag is enabled, this will turn off video and still image capturing
-     * as it will interfere window focus.
-     */
-    public void maybeFixMacFocus() {
-
-        final String os = System.getProperty("os.name");
-        if (os.startsWith("Mac")) {
-
-            if (!useMacFix) {
-                log.warn("WARN: you are running a Mac OS and macFix is disabled. This may cause some tests to fail. ");
-                return;
-            }
-        
-            takeScreenshots = false;
-            takeVideo = false;
-
-        } 
-        
-        log.debug("********* TAKE VIDEO: " + takeVideo + ", TAKE STILL: " + takeScreenshots);
-
-    }
-
     public void STEP(String description) {
-        log.info("STEP description: " + description.replaceAll("\n", ""));
-        previousStep = description;
-
-        // screenshot
-        String screehshotPath = null;
-        if (takeScreenshots) {
-            try {
-                File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-                String relativePath = "screenshots/" + screenshot.getName();
-                File destFile = new File(getReportDir(), relativePath);
-                FileUtils.moveFile(screenshot, destFile);
-                log.info("SCREENSHOT: " + destFile.getAbsolutePath());
-                //screehshotPath = "file:///"+destFile.getAbsolutePath().replaceAll("\\\\", "/");
-                screehshotPath = relativePath;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        appendTestReport("<tr><td>" + convert(description) + "</td>");
-        appendTestReport("<td><a href='" + screehshotPath + "'>screenshot</a></td>");
-        appendTestReport("</tr>");
-
-        if (demoMode) {
-
-            try {
-
-                // otetaan alkuperäisen ikkunan handle talteen
-                String originalWindow = driver.getWindowHandle();
-
-                // näytetään infodialogi htmlsivulla (alert)
-                JavascriptExecutor js = (JavascriptExecutor) driver;
-                String secondAlert = "hackDialogToIgnoreSeleniumBug"; // selenium hajoaa jos jotain dialogia ei suljeta seleniumilla, siksi toinen alert perään
-                js.executeScript("alert('" + convert(description) + "');" + "alert('" + secondAlert + "');");
-//                js.executeScript("alert('"+ convert(description)+ "');");
-                /*
-                 * String okbtnonclick = "document.body.removeChild(document.getElementById('stepdlg'));"; //
-                 * js.executeScript("window.onerror=function(msg){document.body.setAttribute('JSError',msg);}"); for (int i=0; i<5; i++) { try {
-                 * js.executeScript("" + "var dlg = document.createElement('div');" + "dlg.setAttribute('id', 'stepdlg');" + "dlg.setAttribute('style',
-                 * 'position:fixed;top:30%;left:30%;width:300px;height:300px;background-color:#eee;border:2px solid black;z-index:99999;');" +
-                 * "dlg.innerHTML='<h3>STEP</h3>" + convert(description) + "<br/>';" + "var okbtn = document.createElement('input');" // +
-                 * "okbtn.setAttribute('style', 'z-index:99999;');" + "okbtn.setAttribute('type', 'button');" + "okbtn.setAttribute('value', 'OK');" +
-                 * "okbtn.setAttribute('onclick', \"" + okbtnonclick + "\");" + "dlg.appendChild(okbtn);" + "document.body.appendChild(dlg);" + "return 0;" +
-                 * ""); break; } catch (WebDriverException e) { // log.info("step inject html error: "+e); throw e; // log.info("failed to
-                 * inject STEP html, trying again..."); // if (i == 5-1) { // throw new RuntimeException("failed to inject STEP html", e); // } //
-                 * Thread.sleep(1000); } } // odotetaan että dialogi ilmestyy By byDlg = By.xpath("//h3[contains(.,'STEP')]"); // waitForElement(byDlg); //
-                 * log.info("step dialog found");
-                 */
-
-                // odotetaan kunnes käyttäjä klikkaa "jatka/ok"
-                Alert alert = null;
-                while (true) {
-                    Thread.sleep(100);
-                    /*
-                     * try { WebElement elem = driver.findElement(byDlg); //log.info("step dialog: "+elem); } catch (Exception e) { break; //
-                     * log.info(e); }
-                     */
-                    try {
-                        alert = driver.switchTo().alert();
-                        if (alert.getText().equals(secondAlert)) {
-                            alert.accept();
-                            driver = driver.switchTo().window(originalWindow);
-                            break;
-                        }
-                    } catch (NoAlertPresentException e) {
-                        // first alert dismissed by user
-//                        try {
-//                            js.executeScript("alert('" + secondAlert + "');");
-//                        } catch (Exception e2) {
-//                            e2.printStackTrace();
-                        break;
-//                        }
-                    }
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-//                log.warn("STEP FAILED! step: "+description.replaceAll("\n","")+", exception: "+e);
-//                STEP(description);
-                throw new RuntimeException(e);
-            }
-
-        }
-    }
-
-    private void appendTestReport(String s) {
-        testReport.append(s);
-    }
-
-    public static String convert(String str) {
-        return str.replaceAll("ä", "\u00e4").replaceAll("ö", "\u00f6").replaceAll("'", "\\\\'").replaceAll("\n", "<br/>");
-    }
-
-    @Before
-    public void startVideo() throws Exception {
-        
-        maybeFixMacFocus();
-
-        if (takeVideo) {
-
-            try {
-
-                GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
-                log.info("GraphicsDevices: " + devices.length);
-                for (GraphicsDevice device : devices) {
-                    log.info("    GraphicsDevice - id: " + device.getIDstring() + ", type: " + device.getType() + ", device: " + device);
-                }
-
-                GraphicsConfiguration gc = GraphicsEnvironment//
-                        .getLocalGraphicsEnvironment()//
-                        .getDefaultScreenDevice()//
-                        .getDefaultConfiguration();
-
-                // Create a instance of ScreenRecorder with the required configurations
-                screenRecorder = new ScreenRecorder(gc,
-                        new Format(MediaTypeKey, FormatKeys.MediaType.FILE, MimeTypeKey, MIME_AVI),
-                        new Format(MediaTypeKey, FormatKeys.MediaType.VIDEO, EncodingKey, ENCODING_AVI_TECHSMITH_SCREEN_CAPTURE,
-                                CompressorNameKey, ENCODING_AVI_TECHSMITH_SCREEN_CAPTURE,
-                                DepthKey, (int) 24, FrameRateKey, Rational.valueOf(15),
-                                QualityKey, 1.0f,
-                                KeyFrameIntervalKey, (int) (15 * 60)),
-                        new Format(MediaTypeKey, MediaType.VIDEO, EncodingKey, "black",
-                                FrameRateKey, Rational.valueOf(30)),
-                        null);
-
-                // Call the start method of ScreenRecorder to begin recording
-                screenRecorder.start();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @After
-    public void stopVideo() throws Exception {
-
-        if (takeVideo) {
-
-            try {
-
-                screenRecorder.stop();
-
-                File video = screenRecorder.getCreatedMovieFiles().get(0);
-                //String relativePath = "videos/" + video.getName();
-                String relativePath = "videos/" + testName + ".avi";
-                File destFile = new File(getReportDir(), relativePath);
-                FileUtils.deleteQuietly(destFile);
-                FileUtils.moveFile(video, destFile);
-                log.info("VIDEO: " + destFile.getAbsolutePath());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
+        testCaseReporter.STEP(description, driver, log);
     }
 
     private String msg(String key, String message) {
