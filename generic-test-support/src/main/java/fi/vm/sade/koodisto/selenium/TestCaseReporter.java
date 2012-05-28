@@ -44,7 +44,7 @@ public class TestCaseReporter extends TestWatcher {
         seleniumTestCaseSupport.testName = TestUtils.getTestName(description);
         testName = TestUtils.getTestName(description);
         appendTestReport("<html><body><table border='1'>");
-        STEP("TEST: " + testName, seleniumTestCaseSupport.driver, seleniumTestCaseSupport.log);
+        STEP("TEST: " + testName, null, seleniumTestCaseSupport.log);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class TestCaseReporter extends TestWatcher {
                 //screehshotPath = "file:///"+destFile.getAbsolutePath().replaceAll("\\\\", "/");
                 screehshotPath = relativePath;
             } catch (Exception e) {
-                e.printStackTrace();
+                log.info("failed to take screenshot for step: "+description+", exception: "+e);
             }
         }
 

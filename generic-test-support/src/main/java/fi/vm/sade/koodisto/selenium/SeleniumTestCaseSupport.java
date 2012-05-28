@@ -4,10 +4,7 @@ import fi.vm.sade.generic.common.I18N;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.openqa.selenium.By;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
@@ -197,15 +194,36 @@ public abstract class SeleniumTestCaseSupport {
     }
 
     public void input(String elementId, String text) {
-        driver.switchTo().window(""); // firefox ei lauo onchange jos ikkuna ei ole aktiivinen - http://code.google.com/p/selenium/issues/detail?id=157
-        WebElement element = getWebElementForDebugId(elementId);
-        element.click();
-        element.clear();
-        element.sendKeys(text);
-        //fireOnChange(element);
-        driver.findElement(By.xpath("//body")).click(); // click outside the element to launch validation etc javascripts
+        input(elementId, text, true, true);
     }
 
+    public void input(WebElement element, String text) {
+        input(element, text, true, true);
+    }
+
+    public void input(String elementId, String text, boolean fastInput, boolean clickOutsideAfter) {
+        WebElement element = getWebElementForDebugId(elementId);
+        input(element, text, fastInput, clickOutsideAfter);
+    }
+
+    public void input(WebElement element, String text, boolean fastInput, boolean clickOutsideAfter) {
+        driver.switchTo().window(""); // firefox ei lauo onchange jos ikkuna ei ole aktiivinen - http://code.google.com/p/selenium/issues/detail?id=157
+        element.click();
+        if (fastInput) {
+            setValue(element, text);
+        } else {
+            element.clear();
+            element.sendKeys(text);
+        }
+        //fireOnChange(element);
+        if (clickOutsideAfter) {
+            driver.findElement(By.xpath("//body")).click(); // click outside the element to launch validation etc javascripts
+        }
+    }
+
+    public void setValue(WebElement element, String value) {
+        ((JavascriptExecutor)driver).executeScript("arguments[0].value = arguments[1]", element, value);
+    }
 
     public WebElement click(final By by) {
         return wait("failed to click element: " + by, new ExpectedCondition<WebElement>() {
