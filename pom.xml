@@ -28,6 +28,7 @@
         <module>generic-test-support</module>
         <module>transaction-osgi</module>
         <module>generic-features</module>
+        <module>generic-test-aspects</module>
     </modules>
 
     <!-- Here comes all the dependencies used in modules. Versions can be managed from properties. -->
