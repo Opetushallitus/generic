@@ -79,11 +79,18 @@ public abstract class AbstractJpaDAOImpl<E, ID> implements JpaDAO<E, ID> {
         return query.getResultList();
     }
 
+    @Override
     public List<E> findBy(String column, Object value) {
-        Query query = getEntityManager().createQuery("SELECT x FROM " + entityClass.getSimpleName() + " x WHERE x."+column+" = :value");
-        query.setParameter("value", value);
-        return query.getResultList();
+        return findBy(column, value, 0, Integer.MAX_VALUE);
     }
 
+    @Override
+    public List<E> findBy(String column, Object value, int startIndex, int maxResults) {
+        Query query = getEntityManager().createQuery("SELECT x FROM " + entityClass.getSimpleName() + " x WHERE x."+column+" = :value");
+        query.setParameter("value", value);
+        query.setFirstResult(startIndex);
+        query.setMaxResults(maxResults);
 
+        return query.getResultList();
+    }
 }

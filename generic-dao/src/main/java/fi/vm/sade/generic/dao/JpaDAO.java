@@ -44,5 +44,24 @@ public interface JpaDAO<E, ID> {
      */
     List<E> findAll();
 
+    /**
+     * Find.
+     *
+     * @param column
+     * @param value
+     * @return
+     */
     List<E> findBy(String column, Object value);
+
+    /**
+     * Paged find.
+     *
+     * @param column
+     * @param value
+     * @param firstResultIndex
+     * @param maxResults
+     * @return
+     */
+    List<E> findBy(String column, Object value, int firstResultIndex, int maxResults);
+
 }
