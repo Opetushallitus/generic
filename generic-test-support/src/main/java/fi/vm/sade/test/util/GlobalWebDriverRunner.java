@@ -1,5 +1,6 @@
 package fi.vm.sade.test.util;
 
+import fi.vm.sade.koodisto.selenium.TestUtils;
 import org.junit.runner.Result;
 import org.junit.runner.notification.RunListener;
 import org.junit.runner.notification.RunNotifier;
@@ -23,6 +24,10 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  * InitDriver -method will return existing GlobalWebDriverRunner.globalDriver (or create new when first called),
  * and GlobalWebDriverRunner will quit the driver when last test is finished.
  *
+ * NOTE:
+ *
+ * - firefox window can bse reused with 'reuseFirefox'-system property or 'REUSE_FIREFOX'-env param
+ *
  * @author Antti Salonen
  */
 public class GlobalWebDriverRunner extends SpringJUnit4ClassRunner {
@@ -45,13 +50,22 @@ public class GlobalWebDriverRunner extends SpringJUnit4ClassRunner {
         try {
             FirefoxProfile profile = new FirefoxProfile();
             //profile.setEnableNativeEvents(false); // disable update firefox etc dialogs
-            globalDriver = new FirefoxDriver(profile);
+            if (reuseFirefox()) {
+                LOG.info("reuseFirefox=true");
+                globalDriver = new ReusableFirefoxDriver(profile);
+            } else {
+                globalDriver = new FirefoxDriver(profile);
+            }
         } catch (Exception e) {
             LOG.warn("selenium failed to initialize firefox, falling back to htmlunit");
             globalDriver = new HtmlUnitDriver();
             ((HtmlUnitDriver) globalDriver).setJavascriptEnabled(true);
         }
         return globalDriver;
+    }
+
+    private static boolean reuseFirefox() {
+        return TestUtils.getEnvOrSystemPropertyAsBoolean(false, "REUSE_FIREFOX", "reuseFirefox");
     }
 
     @Override
@@ -61,7 +75,9 @@ public class GlobalWebDriverRunner extends SpringJUnit4ClassRunner {
             notifier.addListener(new RunListener(){
                 @Override
                 public void testRunFinished(Result result) throws Exception {
-                    globalDriver.quit();
+                    if (!reuseFirefox()) {
+                        globalDriver.quit();
+                    }
                 }
             });
         }
