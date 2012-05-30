@@ -1,7 +1,9 @@
 package fi.vm.sade.generic.common;
 
+import javax.validation.ConstraintViolation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Antti
@@ -10,6 +12,7 @@ public class ValidationException extends LocalizedBusinessException {
 
     public static final String KEY = "validation.exception";
     private List<String> validationMessages = new ArrayList<String>();
+    private Set<ConstraintViolation<Object>> violations;
 
     public ValidationException() {
         super(KEY);
@@ -29,6 +32,11 @@ public class ValidationException extends LocalizedBusinessException {
         super(message, key);
     }
 
+    public ValidationException(Set<javax.validation.ConstraintViolation<Object>> violations) {
+        super(KEY);
+        this.violations = violations;
+    }
+
     public void addValidationMessage(String msg) {
         validationMessages.add(msg);
     }
@@ -44,5 +52,9 @@ public class ValidationException extends LocalizedBusinessException {
 
     public void setValidationMessages(List<String> validationMessages) {
         this.validationMessages = validationMessages;
+    }
+
+    public Set<ConstraintViolation<Object>> getViolations() {
+        return violations;
     }
 }

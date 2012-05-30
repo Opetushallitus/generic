@@ -26,6 +26,8 @@
                             org.apache.commons.lang.builder,
                             org.springframework.context,
                             org.springframework.context.support,
+                            javax.validation,
+                            javax.validation.constraints,
                             com_*;resolution:=optional<!-- com_*... is for
                                 clover -->
                         </Import-Package>
@@ -51,6 +53,11 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>1.0.0.GA</version>
         </dependency>
 
     </dependencies>

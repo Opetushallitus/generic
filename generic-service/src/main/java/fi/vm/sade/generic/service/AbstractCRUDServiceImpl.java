@@ -164,7 +164,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
         Set<ConstraintViolation<Object>> validationResult = validator.validate(dtoOrEntity);
         log.debug("validate, validator: "+validator + ", validationResult: " + validationResult);
         if (validationResult.size() > 0) {
-            ValidationException validationException = new ValidationException();
+            ValidationException validationException = new ValidationException(validationResult);
             for (ConstraintViolation<Object> violation : validationResult) {
                 validationException.addValidationMessage(violation.getPropertyPath() + " - " + violation.getMessage()
                         + " (was: " + violation.getInvalidValue() + ")");
