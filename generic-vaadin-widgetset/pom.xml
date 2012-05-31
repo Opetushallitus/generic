@@ -4,11 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <!--<artifactId>generic-vaadin-app</artifactId>-->
         <artifactId>build-parent</artifactId>
         <groupId>fi.vm.sade.generic</groupId>
         <version>1.0-SNAPSHOT</version>
-        <!--<relativePath>../generic-vaadin-app</relativePath>-->
     </parent>
 
     <artifactId>generic-vaadin-widgetset</artifactId>
