@@ -16,6 +16,35 @@
     <name>${artifactId}</name>
     <description>Common vaadin widgetset for all vaadin applications</description>
 
+    <dependencies>
+
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.vaadin.addons</groupId>
+            <artifactId>googlemapwidget</artifactId>
+            <version>${google.map.widget.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.gwt.google-apis</groupId>
+            <artifactId>gwt-maps</artifactId>
+            <version>1.1.0</version>
+            <classifier>gwt23</classifier>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-user</artifactId>
+            <version>${gwt.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
+
     <profiles>
         <profile>
             <id>compile-widgetset</id>
