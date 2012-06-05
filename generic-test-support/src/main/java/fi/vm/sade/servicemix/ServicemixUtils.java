@@ -150,7 +150,7 @@ public class ServicemixUtils {
                 if (!"true".equals(System.getenv("SMX_WAIT_QUIET"))) {
                     if (i % SMX_WAIT_LOG_INTERVAL == 0) { // logita vain joka
                                                           // kymmenes kierros
-                        System.out.println("[[wait for: " + info + "...]]");
+                        System.out.println("[[waitFor for: " + info + "...]]");
                     }
                 }
                 Thread.sleep(WAIT_MS);
@@ -159,7 +159,7 @@ public class ServicemixUtils {
             }
             i++;
         }
-        System.out.println("[[wait done for: " + info + " (ready: " + ready + ", stopped: " + stopped + ", installed: " + installed + ")]]");
+        System.out.println("[[waitFor done for: " + info + " (ready: " + ready + ", stopped: " + stopped + ", installed: " + installed + ")]]");
     }
 
     private void followstream(InputStream inputStream, final boolean markStoppedAfter, final String prefix) {

@@ -1,4 +1,4 @@
-package fi.vm.sade.koodisto.selenium;
+package fi.vm.sade.support.selenium;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.rules.TestWatcher;

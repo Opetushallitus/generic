@@ -58,5 +58,11 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.bsb.common.vaadin</groupId>
+            <artifactId>com.bsb.common.vaadin.embed</artifactId>
+            <version>0.4</version>
+        </dependency>
+
     </dependencies>
 </project>

@@ -1,6 +1,6 @@
 package fi.vm.sade.test.util;
 
-import fi.vm.sade.koodisto.selenium.TestUtils;
+import fi.vm.sade.support.selenium.TestUtils;
 import org.junit.runner.Result;
 import org.junit.runner.notification.RunListener;
 import org.junit.runner.notification.RunNotifier;
@@ -26,7 +26,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  *
  * NOTE:
  *
- * - firefox window can bse reused with 'reuseFirefox'-system property or 'REUSE_FIREFOX'-env param
+ * - firefox window can be reused event between selenium sessions with 'reuseFirefox'-system property or 'REUSE_FIREFOX'-env param
  *
  * @author Antti Salonen
  */

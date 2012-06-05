@@ -1,4 +1,4 @@
-package fi.vm.sade.koodisto.selenium;
+package fi.vm.sade.support.selenium;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.rules.TestWatcher;
@@ -34,6 +34,7 @@ public class TestCaseReporter extends TestWatcher {
     private String testName;
 
     public TestCaseReporter(SeleniumTestCaseSupport seleniumTestCaseSupport) {
+        SeleniumContext.setTestCaseReporter(this);
         this.seleniumTestCaseSupport = seleniumTestCaseSupport;
         takeScreenshots = TestUtils.getEnvOrSystemPropertyAsBoolean(takeScreenshots, "SCREENSHOT_MODE", "screenshotMode");
     }
@@ -41,7 +42,7 @@ public class TestCaseReporter extends TestWatcher {
     @Override
     protected void starting(Description description) {
         //seleniumTestCaseSupport.testName = seleniumTestCaseSupport.getClass().getSimpleName() + "." + description.getMethodName();
-        seleniumTestCaseSupport.testName = TestUtils.getTestName(description);
+        SeleniumContext.setTestName(TestUtils.getTestName(description));
         testName = TestUtils.getTestName(description);
         appendTestReport("<html><body><table border='1'>");
         STEP("TEST: " + testName, null, seleniumTestCaseSupport.log);
@@ -50,15 +51,14 @@ public class TestCaseReporter extends TestWatcher {
     @Override
     protected void failed(Throwable e, Description description) {
         seleniumTestCaseSupport.log.info("TestWatcher.failed: " + e);
-        seleniumTestCaseSupport.failure = e;
-        seleniumTestCaseSupport.STEP("test FAILED\nstep: " + previousStep + "\nexception: " + seleniumTestCaseSupport.failure);
+        SeleniumUtils.STEP("test FAILED\nstep: " + previousStep + "\nexception: " + e);
         writeReport(e);
     }
 
     @Override
     protected void succeeded(Description description) {
         seleniumTestCaseSupport.log.info("TestWatcher.succeeded");
-        seleniumTestCaseSupport.STEP("test OK");
+        SeleniumUtils.STEP("test OK");
         writeReport(null);
     }
 
@@ -86,7 +86,8 @@ public class TestCaseReporter extends TestWatcher {
         appendTestReport("<td><a href='" + screehshotPath + "'>screenshot</a></td>");
         appendTestReport("</tr>");
 
-        if (TestUtils.isDemoMode()) {
+        if (TestUtils.isDemoMode()
+                && driver != null) { // TODO: aloitus steppi ei toimi koska driver null siinä vaiheessa
 
             try {
 
@@ -128,7 +129,7 @@ public class TestCaseReporter extends TestWatcher {
                 e.printStackTrace();
 //                log.warn("STEP FAILED! step: "+description.replaceAll("\n","")+", exception: "+e);
 //                STEP(description);
-                throw new RuntimeException(e);
+//                throw new RuntimeException(e); // TODO: viimeinenkin step failaa, syy: UnreachableBrowserException
             }
 
         }
