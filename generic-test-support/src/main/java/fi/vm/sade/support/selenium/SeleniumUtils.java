@@ -254,7 +254,7 @@ public class SeleniumUtils {
         });
     }
     
-    public static List<WebElement> getWebElementByContainingId(String debugId) {
+    public static List<WebElement> getWebElementsByContainingId(String debugId) {
         List<WebElement> elements = new ArrayList<WebElement>();
         try {
             
