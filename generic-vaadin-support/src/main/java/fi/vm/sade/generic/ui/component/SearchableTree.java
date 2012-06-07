@@ -59,6 +59,9 @@ public class SearchableTree<T> extends VerticalLayout {
 
     @DebugId(id = "org_tree_search")
     TextField searchBox = new TextField(I18N.getMessage("Hakupuu.lblHaku"));
+    
+    // add tabpanel
+    TabSheet tabSheet = new TabSheet();
 
     @DebugId(id = "org_tree_refresh")
     private Button buttonRefresh = new Button(I18N.getMessage("Hakupuu.lblRefresh"), new Button.ClickListener() { // TODO: parametrisoi, ei tarvita aina
@@ -81,6 +84,11 @@ public class SearchableTree<T> extends VerticalLayout {
         this.treeAdapter = treeAdapter;
         this.setDebugId(debugIdPrefix+"searchableTree");
     }
+    
+    protected void hideTab() {
+        this.removeComponent(tabSheet);
+        this.addComponent(basicSearch);
+    }
 
     public void init() {
         dataSource.addContainerProperty("caption", String.class, "");
@@ -93,8 +101,7 @@ public class SearchableTree<T> extends VerticalLayout {
             }
         });
 
-        // add tabpanel
-        TabSheet tabSheet = new TabSheet();
+        
         this.addComponent(tabSheet);
         basicSearch = new VerticalLayout();
         tabSheet.addTab(basicSearch, "Perushaku");
