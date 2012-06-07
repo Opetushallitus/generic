@@ -1,10 +1,10 @@
 package fi.vm.sade.generic.common;
 
-import java.util.Locale;
-
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.support.MessageSourceAccessor;
+
+import java.util.Locale;
 
 /**
  * @author tommiha
@@ -14,6 +14,7 @@ public class I18N implements ApplicationContextAware {
 
     private static MessageSourceAccessor messageSourceAccessor;
     private static final ThreadLocal<Locale> LOCALE_THREAD_LOCAL = new ThreadLocal<Locale>();
+    private static final Locale DEFAULT_LOCALE = new Locale("fi");
 
     public static void setMessageSourceAccessor(MessageSourceAccessor msa) {
         messageSourceAccessor = msa;
@@ -58,6 +59,10 @@ public class I18N implements ApplicationContextAware {
     }
 
     public static Locale getLocale() {
-        return LOCALE_THREAD_LOCAL.get();
+        Locale locale = LOCALE_THREAD_LOCAL.get();
+        if (locale == null) {
+            return DEFAULT_LOCALE;
+        }
+        return locale;
     }
 }

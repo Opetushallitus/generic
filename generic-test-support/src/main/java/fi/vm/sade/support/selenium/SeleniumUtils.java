@@ -1,5 +1,6 @@
 package fi.vm.sade.support.selenium;
 
+import com.vaadin.ui.Component;
 import fi.vm.sade.generic.common.I18N;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedCondition;
@@ -94,6 +95,17 @@ public class SeleniumUtils {
             @Override
             public WebElement apply(@Nullable WebDriver webDriver) {
                 return getDriver().findElement(By.xpath("//*[contains(.,'" + text + "')]"));
+            }
+
+        });
+    }
+
+    public static WebElement waitForElement(final Component component) {
+        return waitFor("element not found in time: " + component.getDebugId(), new ExpectedCondition<WebElement>() {
+
+            @Override
+            public WebElement apply(@Nullable WebDriver webDriver) {
+                return getDriver().findElement(By.id(component.getDebugId()));
             }
 
         });

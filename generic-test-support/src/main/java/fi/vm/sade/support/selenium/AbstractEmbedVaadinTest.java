@@ -5,13 +5,12 @@ import com.bsb.common.vaadin.embed.EmbedVaadinServerBuilder;
 import com.bsb.common.vaadin.embed.support.EmbedVaadin;
 import com.vaadin.Application;
 import com.vaadin.ui.Component;
-import com.vaadin.ui.ComponentContainer;
-import com.vaadin.ui.Form;
-import com.vaadin.ui.Window;
+import org.junit.Before;
 import org.openqa.selenium.WebDriver;
 
 import java.io.File;
-import java.util.Iterator;
+import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
 
 /**
  * Super class for running embed vaadin selenium tests against some vaadin component.
@@ -31,7 +30,6 @@ import java.util.Iterator;
  * - uses random port, unless "EMBED_VAADIN_PORT"-envvar or "embedVaadinPort"-systemproperty is given
  * - access vaadin component/application object via 'component' and 'application' -fields
  *
- * TODO: genericsit kehiin ja automaattinen ylikirjoitettava komponentin luominen setupissa
  * TODO: koodiston puolelta aspect-pohjainen component-pageobject-systeemi tänne
  * TODO: selkeämpi support applicationille ja componentille (nyt ruma ja esim. component/application-fieldit jää nulliksi nyt)
  * TODO: yksinkertaista organisaatio selenium perintärakennetta
@@ -39,11 +37,12 @@ import java.util.Iterator;
  *
  * @author Antti Salonen
  */
-public abstract class AbstractEmbedVaadinTest extends SeleniumTestCaseSupport {
+public abstract class AbstractEmbedVaadinTest<COMPONENT extends Component> extends SeleniumTestCaseSupport {
 
     protected EmbedVaadinServer server;
-    protected Component component;
+    protected COMPONENT component;
     protected Application application;
+    private boolean createComponentAndStartVaadinOnSetup;
 
     public AbstractEmbedVaadinTest() {
     }
@@ -52,7 +51,45 @@ public abstract class AbstractEmbedVaadinTest extends SeleniumTestCaseSupport {
         super(driver);
     }
 
-    @Override
+    public AbstractEmbedVaadinTest(boolean createComponentAndStartVaadinOnSetup) {
+        this();
+        this.createComponentAndStartVaadinOnSetup = createComponentAndStartVaadinOnSetup;
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        startSelenium();
+
+        if (createComponentAndStartVaadinOnSetup) {
+            component = createComponent();
+            initComponent(component);
+            startEmbedVaadin(component);
+        }
+
+        initPageObjects();
+    }
+
+    protected COMPONENT createComponent() throws Exception {
+        return findGenericType().newInstance();
+    }
+
+    /**
+     * Meant for overriding if component initializing needs to be customized
+     */
+    protected void initComponent(Component component) {
+    }
+
+    @SuppressWarnings("unchecked")
+    private Class<COMPONENT> findGenericType() {
+        try {
+            Class<COMPONENT> clazz = (Class<COMPONENT>) ((ParameterizedType) (getClass().getGenericSuperclass())).getActualTypeArguments()[0];
+            return clazz;
+        } catch (ClassCastException e) {
+            throw new RuntimeException("Application class is null. Please define valid class on overridden generic class.", e);
+        }
+    }
+
+     @Override
     public void tearDown() throws Exception {
         stopEmbedVaadin();
     }
@@ -64,14 +101,22 @@ public abstract class AbstractEmbedVaadinTest extends SeleniumTestCaseSupport {
         stopEmbedVaadin();
 
         // generate id's for vaadin components that don't have it already
-        generateIds(component);
+        TestUtils.generateIds(component);
 
         // create embed vaadin builder for component
         EmbedVaadinServerBuilder builder = createEmbedVaadin(component);
 
         // configure embed vaadin builder
+        File moduleBaseDir = getModuleBaseDir();
+        File rootDir = null;
+        try {
+            rootDir = new File(moduleBaseDir, "target/" + moduleBaseDir.getCanonicalFile().getName());
+            log.info("vaadin root dir: "+rootDir.getCanonicalPath());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         builder
-                .withContextRootDirectory(new File(getModuleBaseDir(), "target/organisaatio-app"))
+                .withContextRootDirectory(rootDir)
                 .withWidgetSet("fi.vm.sade.widgetset.GoogleMapComponent")
                 .wait(false);
 
@@ -88,7 +133,8 @@ public abstract class AbstractEmbedVaadinTest extends SeleniumTestCaseSupport {
             driver.get(SeleniumContext.getBaseUrl());
         }
         log.info("started EmbedVaadin, baseUrl: "+SeleniumContext.getBaseUrl()+", took: "+(System.currentTimeMillis()-t0)+"ms");
-        this.component = component;
+
+        this.component = (COMPONENT) component;
         if (component != null) {
             this.application = component.getApplication();
         }
@@ -106,40 +152,12 @@ public abstract class AbstractEmbedVaadinTest extends SeleniumTestCaseSupport {
         }
     }
 
-    private static long nextDebugId = 0;
-    public void generateIds(Component component) {
-        if (component == null) {
-            return;
-        }
-
-        // generate debugid if not present
-        if (component.getDebugId() == null) {
-            String id = "generatedId_" + (++nextDebugId);
-            component.setDebugId(id);
-        }
-
-        // recursion
-        if (component instanceof ComponentContainer) {
-            ComponentContainer container = (ComponentContainer) component;
-            Iterator<Component> iterator = container.getComponentIterator();
-            while (iterator.hasNext()) {
-                generateIds(iterator.next());
-            }
-        }
-        if (component instanceof Window) {
-            Window window = (Window) component;
-            for (Window child : window.getChildWindows()) {
-                generateIds(child);
-            }
-        }
-        if (component instanceof Form) {
-            Form form = (Form) component;
-            generateIds(form.getLayout());
-        }
-    }
-
     protected File getModuleBaseDir() {
         return new File(".");
+    }
+
+    protected  <T extends Component> T getComponentByType(Class<T> clazz) {
+        return TestUtils.getComponentsByType(component, clazz).get(0);
     }
 
 }
