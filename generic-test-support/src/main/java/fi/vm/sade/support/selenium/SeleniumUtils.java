@@ -253,6 +253,25 @@ public class SeleniumUtils {
             }
         });
     }
+    
+    public static List<WebElement> getWebElementByContainingId(String debugId) {
+        List<WebElement> elements = new ArrayList<WebElement>();
+        try {
+            
+            WebElement element  = getDriver().findElement(By.id(debugId));
+            elements.add(element);
+            return elements;
+        } catch (NoSuchElementException e) {
+            try {
+                log.info("getWebElementFor didn't find element by id, trying with partial id: " + debugId);
+                
+                return getDriver().findElements(By.xpath("//*[contains(@id,'" + debugId + "')]"));
+            } catch (NoSuchElementException e2) {
+               
+                throw new NoSuchElementException("no element for id: " + debugId);
+            }
+        }
+    }
 
     public static WebElement getWebElementForDebugId(String debugId) {
         return getDriver().findElement(By.id(debugId));
