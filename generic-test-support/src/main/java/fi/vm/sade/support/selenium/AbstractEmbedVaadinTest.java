@@ -29,11 +29,7 @@ import java.lang.reflect.ParameterizedType;
  * NOTE:
  * - uses random port, unless "EMBED_VAADIN_PORT"-envvar or "embedVaadinPort"-systemproperty is given
  * - access vaadin component/application object via 'component' and 'application' -fields
- *
- * TODO: koodiston puolelta aspect-pohjainen component-pageobject-systeemi tänne
- * TODO: selkeämpi support applicationille ja componentille (nyt ruma ja esim. component/application-fieldit jää nulliksi nyt)
- * TODO: yksinkertaista organisaatio selenium perintärakennetta
- * TODO: testcasereporterin todo-kohta
+ * - remember @ContextConfiguration and to override initPageObjects -method
  *
  * @author Antti Salonen
  */
@@ -42,7 +38,8 @@ public abstract class AbstractEmbedVaadinTest<COMPONENT extends Component> exten
     protected EmbedVaadinServer server;
     protected COMPONENT component;
     protected Application application;
-    private boolean createComponentAndStartVaadinOnSetup;
+    private boolean createComponent;
+    private boolean startVaadinOnSetup;
 
     public AbstractEmbedVaadinTest() {
     }
@@ -51,26 +48,30 @@ public abstract class AbstractEmbedVaadinTest<COMPONENT extends Component> exten
         super(driver);
     }
 
-    public AbstractEmbedVaadinTest(boolean createComponentAndStartVaadinOnSetup) {
+    public AbstractEmbedVaadinTest(boolean createComponent, boolean startVaadinOnSetup) {
         this();
-        this.createComponentAndStartVaadinOnSetup = createComponentAndStartVaadinOnSetup;
+        this.createComponent = createComponent;
+        this.startVaadinOnSetup = startVaadinOnSetup;
     }
 
     @Before
     public void setUp() throws Exception {
         startSelenium();
 
-        if (createComponentAndStartVaadinOnSetup) {
+        if (createComponent) {
             component = createComponent();
             initComponent(component);
-            startEmbedVaadin(component);
+        }
+        if (startVaadinOnSetup) {
+            EmbedVaadinServerBuilder builder = createEmbedVaadinBuilder();
+            startEmbedVaadin(builder);
         }
 
         initPageObjects();
     }
 
     protected COMPONENT createComponent() throws Exception {
-        return findGenericType().newInstance();
+        return (COMPONENT) findGenericType().newInstance();
     }
 
     /**
@@ -80,9 +81,9 @@ public abstract class AbstractEmbedVaadinTest<COMPONENT extends Component> exten
     }
 
     @SuppressWarnings("unchecked")
-    private Class<COMPONENT> findGenericType() {
+    protected Class findGenericType() {
         try {
-            Class<COMPONENT> clazz = (Class<COMPONENT>) ((ParameterizedType) (getClass().getGenericSuperclass())).getActualTypeArguments()[0];
+            Class clazz = (Class) ((ParameterizedType) (getClass().getGenericSuperclass())).getActualTypeArguments()[0];
             return clazz;
         } catch (ClassCastException e) {
             throw new RuntimeException("Application class is null. Please define valid class on overridden generic class.", e);
@@ -94,17 +95,21 @@ public abstract class AbstractEmbedVaadinTest<COMPONENT extends Component> exten
         stopEmbedVaadin();
     }
 
-    public <T extends Component> T startEmbedVaadin(T component) {
+    public COMPONENT startEmbedVaadin(COMPONENT component) {
+        this.component = component;
+        EmbedVaadinServerBuilder builder = createEmbedVaadinBuilder();
+        startEmbedVaadin(builder);
+        return component;
+    }
+
+    public void startEmbedVaadin(EmbedVaadinServerBuilder builder) {
         long t0 = System.currentTimeMillis();
 
         // first stop vaadin if it's running
         stopEmbedVaadin();
 
-        // generate id's for vaadin components that don't have it already
+        // generate debugId's for vaadin components that don't have it already
         TestUtils.generateIds(component);
-
-        // create embed vaadin builder for component
-        EmbedVaadinServerBuilder builder = createEmbedVaadin(component);
 
         // configure embed vaadin builder
         File moduleBaseDir = getModuleBaseDir();
@@ -133,15 +138,9 @@ public abstract class AbstractEmbedVaadinTest<COMPONENT extends Component> exten
             driver.get(SeleniumContext.getBaseUrl());
         }
         log.info("started EmbedVaadin, baseUrl: "+SeleniumContext.getBaseUrl()+", took: "+(System.currentTimeMillis()-t0)+"ms");
-
-        this.component = (COMPONENT) component;
-        if (component != null) {
-            this.application = component.getApplication();
-        }
-        return component;
     }
 
-    protected <T extends Component> EmbedVaadinServerBuilder createEmbedVaadin(T component) {
+    protected EmbedVaadinServerBuilder createEmbedVaadinBuilder() {
         return EmbedVaadin.forComponent(component);
     }
 
