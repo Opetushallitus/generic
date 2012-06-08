@@ -22,8 +22,11 @@ import static org.junit.Assert.fail;
 public class SeleniumUtils {
 
     public static final int TIME_OUT_IN_SECONDS = 10;
+
     public static final int SLEEP_IN_MILLIS = 3000;
+
     public static final int DEMOSLEEP = 5000;
+
     private static Logger log = LoggerFactory.getLogger(SeleniumUtils.class);
 
     public static WebDriver getDriver() {
@@ -238,12 +241,80 @@ public class SeleniumUtils {
         ((JavascriptExecutor) getDriver()).executeScript("arguments[0].value = arguments[1]", element, value);
     }
 
+    /**
+     * <p>Tries to find and click element of element name <code>matchElementName</code> 
+     * from <code>parent</code>. If parent's element name matches <code>matchElementName</code> 
+     * parent is returned, else first matching child is returned - if any.</p> 
+     * 
+     * <p>This method was added since Vaadin components often match into a surrounding div that
+     * is not really the actual target of the click but some child element underneath</p>
+     * 
+     * <p>E.g. to click a Vaadin CheckBox element:
+     * <pre>
+     * click(By.id(theCheckBox.getDebugId()), "input");
+     * </pre>
+     * </p>
+     * @param parent
+     * @param matchElementName
+     * @return
+     */
+    public static WebElement click(final By parent, final String matchElementName) {
+        
+        log.debug("trying click element of type: " + matchElementName + " from parent by: " + parent);
+
+        return waitFor("failed to find element: " + parent, new ExpectedCondition<WebElement>() {
+
+            @Override
+            public WebElement apply(@Nullable WebDriver webDriver) {
+                try {
+
+                    WebElement element = getDriver().findElement(parent);
+                    final String parentType = element.getTagName();
+                    if (parentType.equals(matchElementName)) {
+                        log.debug("element type matches parent directly: " + matchElementName + ", parent: " + parent);
+                        return element;
+                    } else {
+                        List<WebElement> children = element.findElements(By.tagName(matchElementName));                        
+                        for (WebElement child : children) {
+                            if (child.getTagName().equals(matchElementName)) {
+                                log.debug("clicking first child of type: " + matchElementName + " of parent: " + parent);
+                                child.click();
+                                return child;
+                            }
+                        }
+                        log.warn("no such child element type: " + matchElementName + " for parent " + parent);
+                        return null;
+                    }
+
+                } catch (Exception e) {
+                    log.warn("unexpected error while trying to find child element to click of type: " + matchElementName, e);
+                    return null;
+                }
+            }
+
+        });
+
+    }
+
     public static WebElement click(final By by) {
         return waitFor("failed to click element: " + by, new ExpectedCondition<WebElement>() {
+
             @Override
             public WebElement apply(@Nullable WebDriver webDriver) {
                 try {
                     WebElement element = getDriver().findElement(by);
+                    log.info("clicking element: " + element
+                        + "\n\ttagName: " + element.getTagName()
+                        + "\n\tclass: " + element.getClass().getName()
+                        + "\n\tcssClass: " + element.getCssValue("class"));
+
+                    List<WebElement> inputs = element.findElements(By.tagName("input"));
+                    log.info("number of inputs under this element: " + inputs.size());
+                    for (WebElement i : inputs) {
+                        log.info("input: " + i);
+                    }
+
+
                     element.click();
                     return element;
                 } catch (Exception e) {
@@ -251,6 +322,7 @@ public class SeleniumUtils {
                     return null;
                 }
             }
+
         });
     }
     
@@ -297,3 +369,4 @@ public class SeleniumUtils {
     }
 
 }
+
