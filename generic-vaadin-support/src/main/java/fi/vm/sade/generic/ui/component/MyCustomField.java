@@ -35,6 +35,9 @@ import java.util.Map;
  * @author Antti
  */
 public class MyCustomField extends CustomField {
+
+    private static final long serialVersionUID = 2734827492749294L;
+
     protected final Logger log = LoggerFactory.getLogger(getClass());
     protected Map<String, Field> fields = new HashMap<String, Field>();
     protected CustomLayout layout;

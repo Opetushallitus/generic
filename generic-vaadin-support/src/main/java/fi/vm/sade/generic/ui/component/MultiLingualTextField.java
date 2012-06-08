@@ -36,8 +36,10 @@ import org.slf4j.LoggerFactory;
  */
 public class MultiLingualTextField extends MyCustomField {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MultiLingualTextField.class);
+    private static final long serialVersionUID = 7875812764891764L;
     
+    private static final Logger LOG = LoggerFactory.getLogger(MultiLingualTextField.class);
+
     public static String LAYOUTS_MULTILINGUALTEXTFIELD = "layouts/MultiLingualTextField.html";
 
     private TextField textFi = addChildField(MultiLingualText.PROPERTY_TEXT_FI, new TextField());

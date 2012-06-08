@@ -51,6 +51,8 @@ import java.util.Map;
 @Configurable(preConstruction = false)
 public class SearchableTree<T> extends VerticalLayout {
 
+    private static final long serialVersionUID = 937592759375875L;
+
     private static final Logger LOG = LoggerFactory.getLogger(SearchableTree.class);
     protected HierarchicalContainer dataSource = new HierarchicalContainer();
 
@@ -59,7 +61,7 @@ public class SearchableTree<T> extends VerticalLayout {
 
     @DebugId(id = "org_tree_search")
     TextField searchBox = new TextField(I18N.getMessage("Hakupuu.lblHaku"));
-    
+
     // add tabpanel
     TabSheet tabSheet = new TabSheet();
 
@@ -76,7 +78,7 @@ public class SearchableTree<T> extends VerticalLayout {
 
     private String debugIdPrefix;
     protected TreeAdapter<T> treeAdapter;
-    
+
     protected VerticalLayout basicSearch;
 
     public SearchableTree(String debugIdPrefix, TreeAdapter<T> treeAdapter) {
@@ -84,7 +86,7 @@ public class SearchableTree<T> extends VerticalLayout {
         this.treeAdapter = treeAdapter;
         this.setDebugId(debugIdPrefix+"searchableTree");
     }
-    
+
     protected void hideTab() {
         this.removeComponent(tabSheet);
         this.addComponent(basicSearch);
@@ -101,7 +103,7 @@ public class SearchableTree<T> extends VerticalLayout {
             }
         });
 
-        
+
         this.addComponent(tabSheet);
         basicSearch = new VerticalLayout();
         tabSheet.addTab(basicSearch, "Perushaku");
@@ -222,7 +224,7 @@ public class SearchableTree<T> extends VerticalLayout {
     public Button getButtonRefresh() {
         return buttonRefresh;
     }
-    
+
     private void processDebugIds(String debugIdPrefix) {
         if (debugIdPrefix == null) {
             debugIdPrefix = "";

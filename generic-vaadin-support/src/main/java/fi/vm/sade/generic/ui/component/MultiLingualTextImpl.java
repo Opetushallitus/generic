@@ -17,15 +17,16 @@
 
 package fi.vm.sade.generic.ui.component;
 
-import org.apache.commons.beanutils.BeanUtils;
-
-
+import java.io.Serializable;
 import java.util.Locale;
+import org.apache.commons.beanutils.BeanUtils;
 
 /**
  * @author Antti Salonen
  */
-public class MultiLingualTextImpl implements MultiLingualText {
+public class MultiLingualTextImpl implements MultiLingualText, Serializable {
+
+    private static final long serialVersionUID = 4674782658365L;
 
     private Object bean;
     private String textFiProperty;
