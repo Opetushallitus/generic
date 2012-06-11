@@ -5,6 +5,8 @@ import com.bsb.common.vaadin.embed.EmbedVaadinServerBuilder;
 import com.bsb.common.vaadin.embed.support.EmbedVaadin;
 import com.vaadin.Application;
 import com.vaadin.ui.Component;
+import fi.vm.sade.generic.ui.blackboard.BlackboardContext;
+import fi.vm.sade.generic.ui.blackboard.SimpleBlackboardProvider;
 import org.junit.Before;
 import org.openqa.selenium.WebDriver;
 
@@ -40,16 +42,22 @@ public abstract class AbstractEmbedVaadinTest<COMPONENT extends Component> exten
     private boolean startVaadinOnSetup;
 
     public AbstractEmbedVaadinTest() {
+        initBlackboardContext();
     }
 
     public AbstractEmbedVaadinTest(WebDriver driver) {
         super(driver);
+        initBlackboardContext();
     }
 
     public AbstractEmbedVaadinTest(boolean createComponent, boolean startVaadinOnSetup) {
         this();
         this.createComponent = createComponent;
         this.startVaadinOnSetup = startVaadinOnSetup;
+    }
+
+    private void initBlackboardContext() {
+        BlackboardContext.setBlackboardProvider(new SimpleBlackboardProvider());
     }
 
     @Before
