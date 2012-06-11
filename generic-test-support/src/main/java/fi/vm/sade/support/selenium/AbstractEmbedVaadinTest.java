@@ -8,8 +8,6 @@ import com.vaadin.ui.Component;
 import org.junit.Before;
 import org.openqa.selenium.WebDriver;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 
 /**
@@ -118,7 +116,7 @@ public abstract class AbstractEmbedVaadinTest<COMPONENT extends Component> exten
         }
 
         // start embed vaadin, set port+baseurl, navigate to first page with browser
-        server = builder.start();
+        server = builder.wait(false).start();
         SeleniumContext.setHttpPort(server.getConfig().getPort());
         if (driver != null) {
             driver.get(SeleniumContext.getBaseUrl());
