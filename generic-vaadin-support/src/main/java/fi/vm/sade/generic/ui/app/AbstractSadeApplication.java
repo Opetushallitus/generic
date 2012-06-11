@@ -15,12 +15,9 @@
  */
 package fi.vm.sade.generic.ui.app;
 
-import com.github.wolfie.blackboard.Blackboard;
 import com.vaadin.Application;
-import com.vaadin.service.ApplicationContext.TransactionListener;
 import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
 import fi.vm.sade.generic.common.I18N;
-import fi.vm.sade.generic.ui.blackboard.BlackboardContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -35,7 +32,7 @@ import java.util.Locale;
  * @author Jukka Raanamo
  * @author Marko Lyly
  */
-public abstract class AbstractSadeApplication extends Application implements TransactionListener, HttpServletRequestListener {
+public abstract class AbstractSadeApplication extends Application implements HttpServletRequestListener {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -49,8 +46,6 @@ public abstract class AbstractSadeApplication extends Application implements Tra
      */
     public static final String THEME_NAME = "sade";
 
-    private Blackboard blackboardInstance = new Blackboard();
-
     protected Locale sessionLocale = new Locale(DEFAULT_LOCALE);
 
     /**
@@ -58,25 +53,9 @@ public abstract class AbstractSadeApplication extends Application implements Tra
      */
     @Override
     public synchronized void init() {
-        //Init blackboard event bus
-        registerListeners(blackboardInstance);
-
-        // set blackboard to threadlocal - NOTE! tehdään transactionStartissa joten tästä pois
-        //setBlackboard(blackboardInstance);
-
         log.info("init(), current locale: {}, reset to session locale: {}" , I18N.getLocale(), sessionLocale);
         setLocale(sessionLocale);
-
-        // At every "transaction" start set the threadlocal blackboard instance
-        getContext().addTransactionListener(this);
     }
-
-    /**
-     * Invoked at init to register event listeners and events with given event bus.
-     *
-     * @param blackboard
-     */
-    protected abstract void registerListeners(Blackboard blackboard);
 
     /*
      * override Application.setLocale to set locale also to I18N and to the Spring framework locale context holder.
@@ -87,23 +66,6 @@ public abstract class AbstractSadeApplication extends Application implements Tra
         I18N.setLocale(locale);
         LocaleContextHolder.setLocale(locale);
         super.setLocale(locale);
-    }
-
-    /*
-     * Implement TransactionListener interface
-     */
-    @Override
-    public void transactionStart(Application application, Object transactionData) {
-        if (application == this) {
-            BlackboardContext.setBlackboard(blackboardInstance);
-        }
-    }
-
-    @Override
-    public void transactionEnd(Application application, Object transactionData) {
-        if (application == this) {
-            BlackboardContext.setBlackboard(null);
-        }
     }
 
     /*
@@ -134,14 +96,6 @@ public abstract class AbstractSadeApplication extends Application implements Tra
 
         setLocale(sessionLocale);
         log.debug("onRequestStart(): ", requestInfo(request));
-    }
-
-    /**
-     * Get ThreadLocal Blackboard instance
-     * @return
-     */
-    public static Blackboard getBlackboard() {
-        return BlackboardContext.getBlackboard();
     }
 
     /**

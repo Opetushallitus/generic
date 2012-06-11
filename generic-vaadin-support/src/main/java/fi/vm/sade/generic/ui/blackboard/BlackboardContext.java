@@ -16,10 +16,6 @@ public class BlackboardContext {
 
     private static BlackboardProvider blackboardProvider = new ThreadLocalBlackboardProvider();
 
-    public static BlackboardProvider getBlackboardProvider() {
-        return blackboardProvider;
-    }
-
     public static void setBlackboardProvider(BlackboardProvider blackboardProvider) {
         BlackboardContext.blackboardProvider = blackboardProvider;
     }
