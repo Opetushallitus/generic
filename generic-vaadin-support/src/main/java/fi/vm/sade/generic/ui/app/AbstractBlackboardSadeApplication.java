@@ -34,14 +34,6 @@ public abstract class AbstractBlackboardSadeApplication extends AbstractSadeAppl
      */
     protected abstract void registerListeners(Blackboard blackboard);
 
-    /**
-     * Get ThreadLocal Blackboard instance
-     * @return
-     */
-    public static Blackboard getBlackboard() { // TODO: pois?
-        return BlackboardContext.getBlackboard();
-    }
-
     /*
     * Implement TransactionListener interface
     */
