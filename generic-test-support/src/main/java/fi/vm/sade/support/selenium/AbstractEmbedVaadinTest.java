@@ -111,20 +111,6 @@ public abstract class AbstractEmbedVaadinTest<COMPONENT extends Component> exten
         // generate debugId's for vaadin components that don't have it already
         TestUtils.generateIds(component);
 
-        // configure embed vaadin builder
-        File moduleBaseDir = getModuleBaseDir();
-        File rootDir = null;
-        try {
-            rootDir = new File(moduleBaseDir, "target/" + moduleBaseDir.getCanonicalFile().getName());
-            log.info("vaadin root dir: "+rootDir.getCanonicalPath());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        builder
-                .withContextRootDirectory(rootDir)
-                .withWidgetSet("fi.vm.sade.widgetset.GoogleMapComponent")
-                .wait(false);
-
         // use specific port?
         String overridePort = TestUtils.getEnvOrSystemProperty(null, "EMBED_VAADIN_PORT", "embedVaadinPort");
         if (overridePort != null) {
@@ -140,6 +126,7 @@ public abstract class AbstractEmbedVaadinTest<COMPONENT extends Component> exten
         log.info("started EmbedVaadin, baseUrl: "+SeleniumContext.getBaseUrl()+", took: "+(System.currentTimeMillis()-t0)+"ms");
     }
 
+
     protected EmbedVaadinServerBuilder createEmbedVaadinBuilder() {
         return EmbedVaadin.forComponent(component);
     }
@@ -149,10 +136,6 @@ public abstract class AbstractEmbedVaadinTest<COMPONENT extends Component> exten
             server.stop();
             server = null;
         }
-    }
-
-    protected File getModuleBaseDir() {
-        return new File(".");
     }
 
     protected  <T extends Component> T getComponentByType(Class<T> clazz) {
