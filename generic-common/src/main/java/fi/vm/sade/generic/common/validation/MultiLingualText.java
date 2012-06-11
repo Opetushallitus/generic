@@ -15,7 +15,7 @@
  * European Union Public Licence for more details.
  */
 
-package fi.vm.sade.generic.ui.component;
+package fi.vm.sade.generic.common.validation;
 
 import java.util.Locale;
 

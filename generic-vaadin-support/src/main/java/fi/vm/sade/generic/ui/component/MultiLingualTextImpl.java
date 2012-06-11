@@ -17,9 +17,11 @@
 
 package fi.vm.sade.generic.ui.component;
 
+import fi.vm.sade.generic.common.validation.MultiLingualText;
+import org.apache.commons.beanutils.BeanUtils;
+
 import java.io.Serializable;
 import java.util.Locale;
-import org.apache.commons.beanutils.BeanUtils;
 
 /**
  * @author Antti Salonen

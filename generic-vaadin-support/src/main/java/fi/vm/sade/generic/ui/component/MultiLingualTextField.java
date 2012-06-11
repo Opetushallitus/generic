@@ -21,7 +21,7 @@ import com.vaadin.data.Property;
 import com.vaadin.data.Validator;
 import com.vaadin.data.util.NestedMethodProperty;
 import com.vaadin.ui.TextField;
-
+import fi.vm.sade.generic.common.validation.MultiLingualText;
 import fi.vm.sade.generic.ui.CustomVaadinUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
