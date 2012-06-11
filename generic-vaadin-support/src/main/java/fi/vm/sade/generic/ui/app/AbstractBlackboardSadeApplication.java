@@ -24,13 +24,13 @@ public abstract class AbstractBlackboardSadeApplication extends AbstractSadeAppl
         //Init blackboard event bus
         registerListeners(blackboardInstance);
 
-        // set blackboard to threadlocal - NOTE! tehdään transactionStartissa joten tästä pois
-        //setBlackboard(blackboardInstance);
-
-        super.init();
-
         // At every "transaction" start set the threadlocal blackboard instance
         getContext().addTransactionListener(this);
+
+        // set blackboard to threadlocal also for first request
+        BlackboardContext.setBlackboard(blackboardInstance);
+
+        super.init();
     }
 
     /**
