@@ -26,6 +26,7 @@
                             org.apache.commons.lang.builder,
                             org.springframework.context,
                             org.springframework.context.support,
+                            javax.xml.datatype,
                             javax.validation,
                             javax.validation.constraints,
                             com_*;resolution:=optional<!-- com_*... is for
