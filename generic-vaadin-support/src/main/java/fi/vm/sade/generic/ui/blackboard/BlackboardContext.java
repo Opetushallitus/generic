@@ -5,7 +5,7 @@ import com.github.wolfie.blackboard.Blackboard;
 /**
  * Context for getting blackboard, Uses BlackboardProvider inside.
  * In Application we should use ThreadLocalBlackboardProvider (default).
- * When used together with AbstractSadeApplication,
+ * When used together with AbstractBlackboardSadeApplication,
  * this combination will init blackboard when application starts, and set/unset blackboard to threadlocal when request starts/ends.
  *
  * In component based selenium tests we should use SimpleBlackboardProvider, which gives same blackboard instance in every situation.
