@@ -31,7 +31,7 @@ import java.util.Locale;
  * @author Marko Lyly
  */
 @Configurable(preConstruction = false)
-public abstract class AbstractSadePortletApplication extends AbstractSadeApplication implements PortletRequestListener {
+public abstract class AbstractSadePortletApplication extends AbstractBlackboardSadeApplication implements PortletRequestListener {
 
     /*
      * Override to get params from portlet request
