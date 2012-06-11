@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Locale;
 
 /**
- * TODO This could be moved as common base class.
+ * Super class for sade vaadin based vaadin applications, handles locale.
  *
  * @author Jukka Raanamo
  * @author Marko Lyly
@@ -40,11 +40,6 @@ public abstract class AbstractSadeApplication extends Application implements Htt
      * System default locale - defined to be "fi".
      */
     public static final String DEFAULT_LOCALE = "fi";
-
-    /**
-     * Default theme is "sade"
-     */
-    public static final String THEME_NAME = "sade";
 
     protected Locale sessionLocale = new Locale(DEFAULT_LOCALE);
 

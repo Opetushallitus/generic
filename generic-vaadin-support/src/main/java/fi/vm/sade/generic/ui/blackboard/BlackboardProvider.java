@@ -5,8 +5,10 @@ import com.github.wolfie.blackboard.Blackboard;
 /**
  * Provides blackboard instance to user
  *
-* @author Antti Salonen
-*/
+ * @see ThreadLocalBlackboardProvider for applications
+ * @see SimpleBlackboardProvider for component based embed vaadin tests
+ * @author Antti Salonen
+ */
 public interface BlackboardProvider {
 
     /**

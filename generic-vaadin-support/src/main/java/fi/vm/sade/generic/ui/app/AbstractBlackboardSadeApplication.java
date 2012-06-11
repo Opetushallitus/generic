@@ -6,6 +6,12 @@ import com.vaadin.service.ApplicationContext;
 import fi.vm.sade.generic.ui.blackboard.BlackboardContext;
 
 /**
+ * Super class for sade vaadin based applications which use Blackboard.
+ * With this superclass Blackboard can be accessed always via BlackboardContext.getBlackboard().
+ * This class handles blackboard binding and releasing.
+ *
+ * @see BlackboardContext
+ * @see fi.vm.sade.generic.ui.blackboard.BlackboardProvider
  * @author Antti Salonen
  */
 public abstract class AbstractBlackboardSadeApplication extends AbstractSadeApplication implements ApplicationContext.TransactionListener {
