@@ -83,7 +83,7 @@ public abstract class AbstractEmbedVaadinTest<COMPONENT extends Component> exten
     /**
      * Meant for overriding if component initializing needs to be customized
      */
-    protected void initComponent(Component component) {
+    protected void initComponent(COMPONENT component) {
     }
 
     @SuppressWarnings("unchecked")

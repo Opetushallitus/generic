@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
@@ -366,6 +367,54 @@ public class SeleniumUtils {
                 throw new RuntimeException("should have failed already");
             }
         }
+    }
+
+    /**
+     * Assert if webelement contains validation errors (css class "v-errorindicator")
+     *
+     * @param expectedErrorCount
+     * @param elem
+     */
+    public static void assertValidationErrors(final int expectedErrorCount, WebElement elem) throws Throwable {
+        final List<WebElement> errorElems = elem.findElements(By.xpath("//*[contains(@class,'v-errorindicator')]"));
+        waitAssert(new AssertionCallback() {
+            @Override
+            public void doAssertion() {
+                assertEquals("assertValidationErrors failed", expectedErrorCount, errorElems.size());
+            }
+        });
+    }
+
+    /**
+     * Wait until callback does _not_ throw exception (or timeout), useful for making waited assertions.
+     */
+    public static void waitAssert(final AssertionCallback assertionCallback) throws Throwable {
+        final Throwable[] exception = new Throwable[1];
+        try {
+            Object result = new WebDriverWait(SeleniumContext.getDriver(), SeleniumUtils.TIME_OUT_IN_SECONDS).until(new ExpectedCondition<Object>() {
+                @Override
+                public Object apply(@Nullable WebDriver webDriver) {
+                    try {
+                        assertionCallback.doAssertion();
+                        return "OK";
+                    } catch (Throwable e) {
+                        exception[0] = e;
+                        log.warn("waitAssert not yet succeeded: " + e);
+                        return null;
+                    }
+                }
+            });
+        } catch (org.openqa.selenium.TimeoutException te) {
+            if (exception[0] != null) {
+                throw exception[0];
+            } else {
+                fail("waitAssert failed but exception is null?!");
+            }
+        }
+    }
+
+    public static abstract class AssertionCallback {
+        public abstract void doAssertion() throws Throwable;
     }
 
 }
