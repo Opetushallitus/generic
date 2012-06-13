@@ -210,6 +210,23 @@ public class SeleniumUtils {
         option.click();
     }
 
+    public static void select(Component selectboxComponent, final int optionIndex) {
+        select(selectboxComponent.getDebugId(), optionIndex);
+    }
+
+    public static void select(String selectboxId, final int optionIndex) {
+        final WebElement btn = waitForElement(By.xpath("//*[@id='"+selectboxId+"']//*[@class='v-filterselect-button']"));
+        btn.click();
+        WebElement option = waitFor("option not found with index: " + optionIndex, new ExpectedCondition<WebElement>() {
+            @Override
+            public WebElement apply(@Nullable WebDriver webDriver) {
+                return getDriver().findElements(By.xpath("//td[@class='gwt-MenuItem']")).get(optionIndex);
+            }
+
+        });
+        option.click();
+    }
+
     public static void input(String elementId, String text) {
         input(elementId, text, true, true);
     }

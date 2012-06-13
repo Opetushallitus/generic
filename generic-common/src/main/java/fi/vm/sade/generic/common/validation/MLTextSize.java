@@ -15,7 +15,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 public @interface MLTextSize {
 
+    /** if at least one is required to be valid, defaults to true */
     boolean oneRequired() default true;
+
+    /** if all are required to be valid, defaults to false */
+    boolean allRequired() default false;
 
     // copypasted from @javax.validation.constraints.Size
 

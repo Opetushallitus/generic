@@ -29,17 +29,16 @@ public class MLTextSizeValidator implements ConstraintValidator<MLTextSize, Mult
             return !size.oneRequired();
         }
 
-        // proceed with actual validation, validate each field, all must be valid (null counts as valid)
+        // proceed with actual validation, validate each field, all must be valid (null counts as valid ONLY if allRequired is false)
         boolean fi = isValid(mltext.getTextFi(), constraintValidatorContext);
         boolean sv = isValid(mltext.getTextSv(), constraintValidatorContext);
         boolean en = isValid(mltext.getTextEn(), constraintValidatorContext);
-        System.out.println("MLTextSizeValidator, fi: "+fi+", sv: "+sv+", en: "+en+", mltext: "+mltext);
         return fi & sv && en;
     }
 
     public boolean isValid(String s, ConstraintValidatorContext constraintValidatorContext) {
         if (s == null) {
-            return true;
+            return !size.allRequired();
         } else {
             int length = s.length();
             return length >= min && length <= max;

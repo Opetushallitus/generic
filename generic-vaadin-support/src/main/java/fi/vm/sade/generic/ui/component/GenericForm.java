@@ -30,14 +30,20 @@ import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 
 /**
- * Custom form superclass that uses beanitem form inside.
+ * Custom form superclass that uses ViewBoundForm and BeanItem form (Vaadin addon) inside.
+ *
  * Provides:
  *  - save button
  *  - save logic with exception handling
  *  - form <-> model binding
- *  - bind -method for setting the model/datasource
+ *  - bind -method for setting/changing the model/datasource
  *
- *  NOTE: override save and initFields -methods
+ *  NOTE:
+ *   - override save -method
+ *   - override initFields -method
+ *   - if using no-args-constructor, call initForm manually
+ *   - set @PropertyId -annotations to fields (or call form.addField for more custom cases)
+ *   - fields not annotated with @PropertyId must be added manually to form so they will be validated on commit
  *
  * @author Antti Salonen
  */
@@ -49,18 +55,34 @@ public abstract class GenericForm<MODELCLASS> extends CustomComponent {
     protected Label serverMessage = new Label("");
     protected Button buttonSave;
     protected BeanItem<MODELCLASS> beanItem;
+    protected MODELCLASS model;
+
+    protected GenericForm() {
+    }
 
     public GenericForm(MODELCLASS model) {
-        beanItem = new BeanItem<MODELCLASS>(model);
+        initForm(model, null);
+    }
 
-        // luodaan fieldit
-        initFields();
+    protected void initForm(MODELCLASS model, Layout formLayout) {
+        this.model = model;
+        beanItem = new BeanItem<MODELCLASS>(model); // note that this will be re-created when re-binding with bind-method
 
         // luodaan form
         form = new ViewBoundForm(this);
+        // setataan formin layout
+        // NOTE! ViewBoundFormin layout pitää asettaa heti formin luonnin jälkeen, ja ennenkuin siihen laitetaan mitään komponentteja
+        // NOTE! layout pitää setata ennen setFormFieldFactory, muuten fieldit ei bindaudu oikein
+        if (formLayout != null) {
+            form.setLayout(formLayout);
+        }
+        // asetetaan formille overridattu PreCreatedFieldsHelper, koska alkuperäinen ei tue perintähierarkiaa
         form.setFormFieldFactory(new PreCreatedFieldsHelper((new Object[]{
                 this, form, ((ViewBoundForm) form).getCustomFieldSouces()
         })));
+
+        // luodaan fieldit
+        initFields();
 
         // bindataan model <-> form
         form.setItemDataSource(beanItem);
@@ -97,8 +119,8 @@ public abstract class GenericForm<MODELCLASS> extends CustomComponent {
             form.getWindow().showNotification(I18N.getMessage("c_save_successful"));
             serverMessage.setValue(SAVE_SUCCESSFUL);
         } catch (Validator.EmptyValueException e) {
-            LOG.warn("empty value, debugId: "+e.getDebugId()+", exception: "+e+", causes: "+ Arrays.asList(e.getCauses()), e);
-            form.getWindow().showNotification("empty value: " + e.getDebugId(), Window.Notification.TYPE_ERROR_MESSAGE);
+            LOG.warn("empty value, debugId: " + e.getDebugId() + ", exception: " + e + ", causes: " + Arrays.asList(e.getCauses()), e);
+            form.getWindow().showNotification(I18N.getMessage("required.field.empty"), Window.Notification.TYPE_ERROR_MESSAGE);
         } catch (LocalizedBusinessException e) {
             LOG.warn("encountered business exception when saving form: "+e, e);
             form.getWindow().showNotification(I18N.getMessage(e.getKey()), Window.Notification.TYPE_ERROR_MESSAGE);
@@ -123,8 +145,12 @@ public abstract class GenericForm<MODELCLASS> extends CustomComponent {
     }
 
     public void bind(MODELCLASS model) {
+        this.model = model;
         beanItem = new BeanItem<MODELCLASS>(model);
         form.setItemDataSource(beanItem);
     }
 
+    public Form getForm() {
+        return form;
+    }
 }

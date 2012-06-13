@@ -146,6 +146,7 @@ public final class TestUtils {
         if (component instanceof Form) {
             Form form = (Form) component;
             generateIds(form.getLayout());
+            generateIds(form.getFooter());
         }
     }
 }
