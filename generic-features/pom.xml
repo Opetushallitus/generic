@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>generic-features</artifactId>
-    <name>${project.artifactId}</name>
+    <name>Generic :: Features</name>
     <packaging>pom</packaging>
 
     <build>

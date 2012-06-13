@@ -8,6 +8,7 @@
 		<relativePath>..</relativePath>
 	</parent>
 	<artifactId>generic-test-aspects</artifactId>
+        <name>Generic :: Test Aspects</name>
 
 	<dependencies>
 		<dependency>
