@@ -62,7 +62,7 @@ import java.util.Set;
  *
  * @author Antti Salonen
  */
-class JSR303FieldValidator implements Validator {
+public class JSR303FieldValidator implements Validator {
 
     private static final Logger log = LoggerFactory.getLogger(JSR303FieldValidator.class);
     private static ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
