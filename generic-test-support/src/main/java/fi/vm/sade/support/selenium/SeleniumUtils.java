@@ -194,6 +194,23 @@ public class SeleniumUtils {
         option.click();
     }
 
+    public static void select(Component comp, final String optionText) {
+        select(comp.getDebugId(), optionText);
+    }
+
+    public static void select(String selectboxId, final String optionText) {
+        final WebElement btn = waitForElement(By.xpath("//*[@id='"+selectboxId+"']//*[@class='v-filterselect-button']"));
+        WebElement option = waitFor("option not found with option: " + optionText, new ExpectedCondition<WebElement>() {
+            @Override
+            public WebElement apply(@Nullable WebDriver webDriver) {
+                btn.click();
+                return getDriver().findElement(By.xpath("//td[@class='gwt-MenuItem']/span[contains(.,'" + optionText + "')]"));
+            }
+
+        });
+        option.click();
+    }
+
     public static void select(WebElement element, final String optionText) {
         final WebElement btn = element.findElement(By.xpath("div[@class='v-filterselect-button']"));
 //        btn.click();
