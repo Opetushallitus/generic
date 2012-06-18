@@ -7,6 +7,8 @@ import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.terminal.PaintException;
 import com.vaadin.terminal.PaintTarget;
 import com.vaadin.ui.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
@@ -16,6 +18,7 @@ import java.util.List;
  */
 public abstract class WrapperComponent<DTOCLASS> extends CustomComponent implements Field {
 
+    protected Logger log = LoggerFactory.getLogger(getClass());
     protected AbstractSelect field;
     protected Layout root;
     protected CaptionFormatter captionFormatter;
@@ -43,8 +46,15 @@ public abstract class WrapperComponent<DTOCLASS> extends CustomComponent impleme
         for (DTOCLASS dto : dtos) {
             Object value = this.fieldValueFormatter.formatFieldValue(dto);
             Item item = container.addItem(value);
-            String formattedCaption = formatCaption(dto);
-            item.getItemProperty("fieldCaption").setValue(formattedCaption);
+            if (item == null) {
+                // this should happen only when closing view etc, but shouldn't matter anyway?
+                //throw new NullPointerException("WrapperComponent.setFieldValues failed, null item for value: "+value+", dto: "+dto);
+                log.warn("setFieldValues failed, null item for value: " + value + ", dto: " + dto);
+            } else {
+                String formattedCaption = formatCaption(dto);
+                Property fieldCaption = item.getItemProperty("fieldCaption");
+                fieldCaption.setValue(formattedCaption);
+            }
         }
         container.sort(new Object[] {"fieldCaption"}, new boolean[] {true});
     }

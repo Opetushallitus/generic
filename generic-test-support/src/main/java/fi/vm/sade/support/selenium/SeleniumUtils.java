@@ -139,6 +139,8 @@ public class SeleniumUtils {
 
     public static List<String> getOptions(WebElement element) {
         List<String> result = new ArrayList<String>();
+        // first click outside (if option is selected+highlighted, this breaks up)
+        getDriver().findElement(By.tagName("body")).click();
         // click to open options
         WebElement btn = element.findElement(By.xpath("div[@class='v-filterselect-button']"));
         btn.click();
