@@ -449,6 +449,37 @@ public class SeleniumUtils {
         }
     }
 
+    public static List<String> getCheckboxOptions(String parentId) {
+        List<WebElement> elems = getDriver().findElements(By.xpath("//*[@id='" + parentId + "']//*[contains(@class,'v-checkbox')]"));
+        List<String> result = new ArrayList<String>();
+        for (WebElement elem : elems) {
+            WebElement cb = elem.findElement(By.tagName("input"));
+            if ("checked".equals(cb.getAttribute("checked")) || "true".equals(cb.getAttribute("checked"))) {
+                result.add(elem.getText());
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Click checkbox option and return the checkbox
+     *
+     * @param parentId
+     * @param optionText
+     * @return
+     */
+    public static WebElement clickCheckbox(String parentId, String optionText) {
+        List<WebElement> elems = getDriver().findElements(By.xpath("//*[@id='" + parentId + "']//*[contains(@class,'v-checkbox')]"));
+        for (WebElement elem : elems) {
+            if (optionText.equals(elem.getText())) {
+                WebElement cb = elem.findElement(By.tagName("input"));
+                cb.click();
+                return cb;
+            }
+        }
+        return null;
+    }
+
     public static abstract class AssertionCallback {
         public abstract void doAssertion() throws Throwable;
     }
