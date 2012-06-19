@@ -145,8 +145,8 @@ public class SeleniumUtils {
         WebElement btn = element.findElement(By.xpath("div[@class='v-filterselect-button']"));
         btn.click();
         // get options elems
-        By byOptions = By.xpath("//td[@class='gwt-MenuItem']/span");
-        waitForElement(byOptions);
+        By byOptions = By.xpath("//td[@class='gwt-MenuItem']");
+        waitForElement(byOptions); // NOTE: tämä ei toimi joissain tapauksissa bamboolla? jos xpath: //td[@class='gwt-MenuItem']/span ?
         List<WebElement> optionElems = getDriver().findElements(byOptions);
         // get options strings
         for (WebElement optionElem : optionElems) {
