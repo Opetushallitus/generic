@@ -142,12 +142,21 @@ public class SeleniumUtils {
         // first click outside (if option is selected+highlighted, this breaks up)
         getDriver().findElement(By.tagName("body")).click();
         // click to open options
-        WebElement btn = element.findElement(By.xpath("div[@class='v-filterselect-button']"));
-        btn.click();
+        final WebElement btn = element.findElement(By.xpath("div[@class='v-filterselect-button']"));
+        final By byOptions = By.xpath("//td[@class='gwt-MenuItem']");
+
         // get options elems
-        By byOptions = By.xpath("//td[@class='gwt-MenuItem']");
-        waitForElement(byOptions); // NOTE: tämä ei toimi joissain tapauksissa bamboolla? jos xpath: //td[@class='gwt-MenuItem']/span ?
+        //waitForElement(byOptions); // NOTE: tämä ei toimi joissain tapauksissa bamboolla? jos xpath: //td[@class='gwt-MenuItem']/span ? trying sthing else..
+        waitFor("options not found in time: " + byOptions, new ExpectedCondition<WebElement>() {
+            @Override
+            public WebElement apply(@Nullable WebDriver webDriver) {
+                btn.click();
+                return getDriver().findElement(byOptions);
+            }
+        });
+
         List<WebElement> optionElems = getDriver().findElements(byOptions);
+
         // get options strings
         for (WebElement optionElem : optionElems) {
             result.add(optionElem.getText());
