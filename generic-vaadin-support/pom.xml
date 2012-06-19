@@ -4,9 +4,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>parent-vaadin-app</artifactId>
+		<artifactId>parent-vaadin-app</artifactId>
         <groupId>fi.vm.sade.generic</groupId>
         <version>1.0-SNAPSHOT</version>
+		<relativePath>../../build-parent/trunk/parent-vaadin-app/pom.xml</relativePath>
     </parent>
 
     <artifactId>generic-vaadin-support</artifactId>
