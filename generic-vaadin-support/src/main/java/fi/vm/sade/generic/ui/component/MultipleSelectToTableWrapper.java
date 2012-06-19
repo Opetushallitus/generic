@@ -10,7 +10,6 @@ import org.vaadin.addon.customfield.CustomField;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Multiple select that contains a field (usually combobox), add button, and table containing the values.
@@ -36,15 +35,16 @@ public class MultipleSelectToTableWrapper<FIELDCLASS extends Field> extends Cust
         @Override
         public void buttonClick(Button.ClickEvent clickEvent) {
             Object value = field.getValue();
-            //getDataSource().addItem(value);
-            table.addItem(value);
-            log.info("added value: " + value + " ("+value.getClass().getSimpleName()+"), values now: " + getValueList());
-            table.requestRepaint();
-            field.setValue(null);
+            if (value != null) {            
+                table.addItem(value);
+                log.info("added value: " + value + " ("+value.getClass().getSimpleName()+"), values now: " + getValueList());
+                table.requestRepaint();
+                field.setValue(null);
+            }
         }
     });
     protected Table table;
-    protected List targetList;
+    protected Collection targetCollection;
     /** used when committing values */
     protected FieldValueFormatter fieldValueFormatter = new FieldValueFormatter() {
         @Override
@@ -103,13 +103,13 @@ public class MultipleSelectToTableWrapper<FIELDCLASS extends Field> extends Cust
 
     @Override
     public Class<?> getType() {
-        return List.class;
+        return Collection.class;
     }
 
     @Override
     public Object getValue() {
         Collection valueList = getValueList();
-        List result = new ArrayList();
+        Collection result = new ArrayList();
         for (Object o : valueList) {
             result.add(fieldValueFormatter.formatFieldValue(o));
         }
@@ -123,27 +123,27 @@ public class MultipleSelectToTableWrapper<FIELDCLASS extends Field> extends Cust
     @Override
     public void setPropertyDataSource(Property newDataSource) {
         super.setPropertyDataSource(newDataSource);
-        setDataSource((List) newDataSource.getValue());
+        setDataSource((Collection) newDataSource.getValue());
     }
 
-    public void setDataSource(List value) {
-        getDataSource().addAll(value);
+    public void setDataSource(Collection values) {
+        getDataSource().addAll(values);
         table.refreshRowCache();
         //table.requestRepaint();
-        for (Object o : value) {
+        for (Object o : values) {
             Object item = fieldValueFormatterReverse.formatFieldValue(o);
             table.addItem(item);
         }
         table.requestRepaint();
-        this.targetList = value;
+        this.targetCollection = values;
     }
 
     @Override
     public void commit() throws SourceException, Validator.InvalidValueException {
         //validate();
-        targetList.clear();
-        targetList.addAll((Collection) getValue());
-        log.debug("commit MultipleSelect, targetList: " + targetList);
+        targetCollection.clear();
+        targetCollection.addAll((Collection) getValue());
+        log.debug("commit MultipleSelect, targetList: " + targetCollection);
     }
 
     private BeanItemContainer getDataSource() {
