@@ -8,17 +8,19 @@ import org.openqa.selenium.WebDriver;
  *
  * @author Antti Salonen
  */
-public class VaadinPageObjectSupport<COMPONENT extends Component> extends SeleniumTestCaseSupport {
+public class VaadinPageObjectSupport<COMPONENT extends Component> {
 
     protected COMPONENT component;
+    protected WebDriver driver;
 
-    public VaadinPageObjectSupport(WebDriver driver, COMPONENT component) {
-        super(driver);
-        this.component = component;
+    public VaadinPageObjectSupport(WebDriver driver) {
+        this.driver = SeleniumContext.getDriver();
     }
 
-    @Override
-    public void initPageObjects() {
+    public VaadinPageObjectSupport(WebDriver driver, COMPONENT component) {
+//        super(driver);
+        this.driver = SeleniumContext.getDriver();
+        this.component = component;
     }
 
     public COMPONENT getComponent() {

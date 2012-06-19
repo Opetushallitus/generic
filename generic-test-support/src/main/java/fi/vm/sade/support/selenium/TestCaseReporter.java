@@ -45,7 +45,7 @@ public class TestCaseReporter extends TestWatcher {
         SeleniumContext.setTestName(TestUtils.getTestName(description));
         testName = TestUtils.getTestName(description);
         appendTestReport("<html><body><table border='1'>");
-        STEP("TEST: " + testName, null, seleniumTestCaseSupport.log);
+        STEP("TEST: " + testName, null, seleniumTestCaseSupport.log, false);
     }
 
     @Override
@@ -62,12 +62,12 @@ public class TestCaseReporter extends TestWatcher {
         writeReport(null);
     }
 
-    public void STEP(String description, WebDriver driver, Logger log) {
+    public void STEP(String description, WebDriver driver, Logger log, boolean takeScreenshots) {
         log.info("STEP description: " + description.replaceAll("\n", ""));
         previousStep = description;
 
         // screenshot
-        String screehshotPath = null;
+        String screenshotHtml = "";
         if (takeScreenshots) {
             try {
                 File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
@@ -76,14 +76,15 @@ public class TestCaseReporter extends TestWatcher {
                 FileUtils.moveFile(screenshot, destFile);
                 log.info("SCREENSHOT: " + destFile.getAbsolutePath());
                 //screehshotPath = "file:///"+destFile.getAbsolutePath().replaceAll("\\\\", "/");
-                screehshotPath = relativePath;
+                screenshotHtml = "<a href='" + relativePath + "'>screenshot</a>";
             } catch (Exception e) {
                 log.info("failed to take screenshot for step: "+description+", exception: "+e);
+                e.printStackTrace();
             }
         }
 
         appendTestReport("<tr><td>" + convert(description) + "</td>");
-        appendTestReport("<td><a href='" + screehshotPath + "'>screenshot</a></td>");
+        appendTestReport("<td>" + screenshotHtml + "</td>");
         appendTestReport("</tr>");
 
         if (TestUtils.isDemoMode()

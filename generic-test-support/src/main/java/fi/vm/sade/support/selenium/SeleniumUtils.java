@@ -176,7 +176,8 @@ public class SeleniumUtils {
     }
 
     public static void STEP(String description) {
-        SeleniumContext.getTestCaseReporter().STEP(description, getDriver(), log);
+        TestCaseReporter testCaseReporter = SeleniumContext.getTestCaseReporter();
+        testCaseReporter.STEP(description, getDriver(), log, testCaseReporter.isTakeScreenshots());
     }
 
     public static void selectCustom(WebElement element, final String optionText) {
@@ -479,6 +480,8 @@ public class SeleniumUtils {
         }
         return null;
     }
+
+
 
     public static abstract class AssertionCallback {
         public abstract void doAssertion() throws Throwable;
