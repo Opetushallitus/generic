@@ -28,7 +28,16 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 /**
+ * Util-class to add validators to vaadin fields based on JSR-303 annotations in the model classes.
  *
+ * Usage:
+ * - Annotate model's java fields with JSR-303 annotations
+ * - Create form with vaadin fields with @PropertyId annotations
+ * - Call ValidationUtils.addValidatorsAndSetRequired(form, modelClass)
+ *
+ * NOTE!!!
+ *
+ * - If you want to annotate vaadin form fields instead of model, use fi.vm.sade.generic.ui.validation.JSR303FieldValidator
  *
  * @author Antti Salonen
  */
