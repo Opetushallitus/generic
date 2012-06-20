@@ -50,7 +50,7 @@ public class TestCaseReporter extends TestWatcher {
 
     @Override
     protected void failed(Throwable e, Description description) {
-        seleniumTestCaseSupport.log.info("TestWatcher.failed: " + e);
+        seleniumTestCaseSupport.log.info("TestWatcher.failed: " + e, e);
         SeleniumUtils.STEP("test FAILED\nstep: " + previousStep + "\nexception: " + e);
         writeReport(e);
     }
