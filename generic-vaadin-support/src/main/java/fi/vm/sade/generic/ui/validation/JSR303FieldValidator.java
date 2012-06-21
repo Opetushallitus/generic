@@ -3,6 +3,7 @@ package fi.vm.sade.generic.ui.validation;
 import com.vaadin.data.Validator;
 import com.vaadin.ui.Field;
 import fi.vm.sade.generic.common.ClassUtils;
+import fi.vm.sade.generic.common.I18N;
 import fi.vm.sade.generic.common.validation.MLTextSize;
 import fi.vm.sade.generic.common.validation.MLTextSizeValidator;
 import org.hibernate.validator.constraints.impl.NotNullValidator;
@@ -120,7 +121,7 @@ public class JSR303FieldValidator implements Validator {
         try {
             String messageTemplate = (String) annotation.annotationType().getMethod("message").invoke(annotation);
             MessageInterpolatorContext context = new MessageInterpolatorContext(constraintDescriptor, value);
-            return messageInterpolator.interpolate(messageTemplate, context);
+            return messageInterpolator.interpolate(messageTemplate, context, I18N.getLocale());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
