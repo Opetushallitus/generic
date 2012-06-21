@@ -10,7 +10,8 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 public final class DateHelper {
 
-    private static SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yy HH:mm");
+    private static String DEFAULT_DATE_FORMAT_STRING = "dd-MM-yy HH:mm";
+    private static SimpleDateFormat formatter = new SimpleDateFormat(DEFAULT_DATE_FORMAT_STRING);
 
     public static String xmlCalToTypicalString(XMLGregorianCalendar cal) {
         if (cal != null) {
@@ -18,6 +19,10 @@ public final class DateHelper {
             return dateToTypicalString(date);
         }
         return "";
+    }
+
+    public static String getDefaultDateFormatString() {
+        return DEFAULT_DATE_FORMAT_STRING;
     }
 
     public static String dateToTypicalString(Date date) {
@@ -44,4 +49,5 @@ public final class DateHelper {
             throw new RuntimeException("Operation with XMLGregorianCalendar failed", e);
         }
     }
+
 }
