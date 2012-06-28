@@ -117,15 +117,35 @@ public final class TestUtils {
         getComponentsByTypeRecursive(comp, components, clazz);
         return components;
     }
-
+    
+    /**
+     * Generates an id for a component using class name and component hash code.
+     * 
+     * @param component
+     * @return
+     */
+    public static String resolveComponentIdFromHashCode(Component component) {
+        return component.getClass().getName() + "@" + Integer.toHexString(component.hashCode());
+    }
+    
     public static void generateIds(Component component) {
+        generateIds(component, false);
+    }
+
+    public static void generateIds(Component component, boolean useHashCode) {
         if (component == null) {
             return;
         }
 
         // generate debugid if not present
         if (component.getDebugId() == null) {
-            String id = "generatedId_" + (++nextDebugId);
+            String id = null;
+            if (useHashCode) {
+                id = resolveComponentIdFromHashCode(component);
+            }
+            else {
+                id = "generatedId_" + (++nextDebugId);
+            }
             component.setDebugId(id);
         }
 
