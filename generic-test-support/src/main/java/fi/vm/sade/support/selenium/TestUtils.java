@@ -154,19 +154,19 @@ public final class TestUtils {
             ComponentContainer container = (ComponentContainer) component;
             Iterator<Component> iterator = container.getComponentIterator();
             while (iterator.hasNext()) {
-                generateIds(iterator.next());
+                generateIds(iterator.next(), useHashCode);
             }
         }
         if (component instanceof Window) {
             Window window = (Window) component;
             for (Window child : window.getChildWindows()) {
-                generateIds(child);
+                generateIds(child, useHashCode);
             }
         }
         if (component instanceof Form) {
             Form form = (Form) component;
-            generateIds(form.getLayout());
-            generateIds(form.getFooter());
+            generateIds(form.getLayout(), useHashCode);
+            generateIds(form.getFooter(), useHashCode);
         }
     }
 }
