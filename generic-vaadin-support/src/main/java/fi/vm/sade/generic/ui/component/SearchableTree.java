@@ -26,6 +26,7 @@ import com.vaadin.ui.*;
 
 import fi.vm.sade.generic.common.ClassUtils;
 import fi.vm.sade.generic.common.I18N;
+import fi.vm.sade.generic.ui.StyleNames;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +73,7 @@ public class SearchableTree<T> extends VerticalLayout {
             reload();
         }
     });
+    
 
     @DebugId(id = "org_resultcount")
     private Label labelResultCount = new Label();
@@ -93,6 +95,9 @@ public class SearchableTree<T> extends VerticalLayout {
     }
 
     public void init() {
+        
+        buttonRefresh.addStyleName(StyleNames.B_YELLOW_SMALL);
+        
         dataSource.addContainerProperty("caption", String.class, "");
         tree.setItemCaptionPropertyId("caption");
         searchBox.setInputPrompt("Kirjoita osa organisaation nimestä tai y-tunnuksesta");
@@ -106,6 +111,7 @@ public class SearchableTree<T> extends VerticalLayout {
 
         this.addComponent(tabSheet);
         basicSearch = new VerticalLayout();
+        basicSearch.addStyleName(StyleNames.GRID_16);
         tabSheet.addTab(basicSearch, "Perushaku");
 
         // add search box
