@@ -1,7 +1,5 @@
 package fi.vm.sade.generic.common;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,24 +9,6 @@ public final class ClassUtils {
 
     private ClassUtils() {
     }
-
-    public static String toString(Object o) {
-        return ToStringBuilder.reflectionToString(o);
-        /*
-         * ArrayList list = new ArrayList(); ClassUtils.toString(o,
-         * o.getClass(), list); return
-         * o.getClass().getName().concat(list.toString());
-         */
-    }
-
-    /*
-     * private static void toString(Object o, Class clazz, List list) {
-     * List<Field> fields = getDeclaredFields(clazz); for (Field field : fields)
-     * { try { field.setAccessible(true); list.add(field.getName() + "=" +
-     * field.get(o)); } catch (IllegalAccessException e) { e.printStackTrace();
-     * } } if (clazz.getSuperclass().getSuperclass() != null) { toString(o,
-     * clazz.getSuperclass(), list); } }
-     */
 
     public static List<Field> getDeclaredFields(Class clazz) {
         List<Field> fields = new ArrayList<Field>();
