@@ -17,21 +17,24 @@
 
 package fi.vm.sade.generic.ui.app;
 
-
-import com.vaadin.terminal.gwt.server.PortletRequestListener;
-import fi.vm.sade.generic.common.I18N;
-import org.springframework.beans.factory.annotation.Configurable;
+import java.util.Locale;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
-import java.util.Locale;
+
+import org.springframework.beans.factory.annotation.Configurable;
+
+import com.vaadin.terminal.gwt.server.PortletRequestListener;
 
 /**
  * @author Antti
  * @author Marko Lyly
  */
 @Configurable(preConstruction = false)
-public abstract class AbstractSadePortletApplication extends AbstractBlackboardSadeApplication implements PortletRequestListener {
+public abstract class AbstractSadePortletApplication extends AbstractBlackboardSadeApplication implements
+        PortletRequestListener {
+
+    private static ThreadLocal<PortletRequest> threadLocalPortletRequest = new ThreadLocal<PortletRequest>();
 
     /*
      * Override to get params from portlet request
@@ -62,9 +65,42 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
         return sb.toString();
     }
 
+    /**
+     * Pulls Liferay dependencies, enable if needed
+     * 
+     * @return
+     */
+    // @SuppressWarnings("unchecked")
+    // protected List<AccessRight> getRawAccessRights() {
+    // HttpServletRequest httpServletRequest =
+    // PortalUtil.getHttpServletRequest(threadLocalPortletRequest.get());
+    // Object o =
+    // httpServletRequest.getSession().getAttribute(SecuritySessionAttributes.AUTHENTICATION_DATA);
+    //
+    // List<AccessRight> list = new ArrayList<AccessRight>();
+    // if (o != null && o instanceof List) {
+    // try {
+    // list = (List<AccessRight>) o;
+    // return list;
+    // } catch (ClassCastException e) {
+    // log.warn("Failed to get "
+    // + SecuritySessionAttributes.AUTHENTICATION_DATA
+    // +
+    // " Attribute from session. Session contained something else than expected. Expected List<AccessRight> got: ["
+    // + o + "]");
+    // }
+    // }
+    // return list;
+    // }
+
+    protected boolean isUserInRole(String role) {
+        return threadLocalPortletRequest.get().isUserInRole(role);
+    }
+
     @Override
     public void onRequestStart(PortletRequest portletRequest, PortletResponse portletResponse) {
         log.info("onRequestStart() - portlet");
+        threadLocalPortletRequest.set(portletRequest);
         onRequestStart(portletRequest);
     }
 
