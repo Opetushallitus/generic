@@ -59,11 +59,11 @@ public final class StyleNames {
     
     //Styles for buttons
     
-    public static final String B_YELLOW_LARGE = "btn-yellow-large";
-    public static final String B_YELLOW_LARGE_PLUS = "btn-yellow-large-plus";
-    public static final String B_YELLOW_SMALL = "btn-yellow-small";
+    public static final String B_PRIMARY_LARGE = "btn-primary-large";
+    public static final String B_PRIMARY_LARGE_PLUS = "btn-primary-large-plus";
+    public static final String B_PRIMARY_SMALL = "btn-primary-small";
     
-    public static final String B_GREY_LARGE = "btn-grey-large";
-    public static final String B_GREY_SMALL = "btn-grey-small";
+    public static final String B_SECONDARY_LARGE = "btn-secondary-large";
+    public static final String B_SECONDARY_SMALL = "btn-secondary-small";
 
 }
