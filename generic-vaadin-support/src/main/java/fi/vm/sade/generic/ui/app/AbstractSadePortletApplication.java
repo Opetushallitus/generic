@@ -26,6 +26,8 @@ import org.springframework.beans.factory.annotation.Configurable;
 
 import com.vaadin.terminal.gwt.server.PortletRequestListener;
 
+import fi.vm.sade.generic.common.I18N;
+
 /**
  * @author Antti
  * @author Marko Lyly
