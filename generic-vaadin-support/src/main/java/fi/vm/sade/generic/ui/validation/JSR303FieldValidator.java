@@ -4,19 +4,12 @@ import com.vaadin.data.Validator;
 import com.vaadin.ui.Field;
 import fi.vm.sade.generic.common.ClassUtils;
 import fi.vm.sade.generic.common.I18N;
-import fi.vm.sade.generic.common.validation.MLTextSize;
-import fi.vm.sade.generic.common.validation.MLTextSizeValidator;
-import org.hibernate.validator.constraints.impl.NotNullValidator;
-import org.hibernate.validator.constraints.impl.PatternValidator;
-import org.hibernate.validator.constraints.impl.SizeValidatorForString;
 import org.hibernate.validator.engine.MessageInterpolatorContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.validation.*;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 import javax.validation.metadata.BeanDescriptor;
 import javax.validation.metadata.ConstraintDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
@@ -28,40 +21,40 @@ import java.util.Set;
  * Vaadin validator that validates based on JSR-303 annotations given to form's Vaadin fields.
  * Traditionally JSR-303 annotations are given to domain class properties, but with this validator
  * it is able to annotate the form fields.
- *
+ * <p/>
  * Usage:
  * - Annotate form's vaadin fields with JSR-303 annotations
  * - Call JSR303FieldValidator.addValidatorsBasedOnAnnotations(form)
- *
+ * <p/>
  * HINT:
  * - You can use same annotations in corresponding JPA model class for service side validation
- *
+ * <p/>
  * Supports following JSR-303 annotations:
- *  - NotNull, Size, Pattern, MLTextSize
- *
+ * - NotNull, Size, Pattern, MLTextSize
+ * <p/>
  * TODO: support for more annotations
- *
+ * <p/>
  * Example:
- *
+ * <p/>
  * class SampleForm {
- *     @NotNull
- *     @Size(min = 3, max = 100)
- *     private TextField nameField = ...;
- *
- *     SampleForm() {
- *          ...
- *          JSR303FieldValidator.addValidatorsBasedOnAnnotations(this);
- *          ...
- *     }
- * }
- *
- * class SampleJPA {
- *     @NotNull
- *     @Size(min = 3, max = 100)
- *     private String name;
- * }
  *
  * @author Antti Salonen
+ * @NotNull
+ * @Size(min = 3, max = 100)
+ * private TextField nameField = ...;
+ * <p/>
+ * SampleForm() {
+ * ...
+ * JSR303FieldValidator.addValidatorsBasedOnAnnotations(this);
+ * ...
+ * }
+ * }
+ * <p/>
+ * class SampleJPA {
+ * @NotNull
+ * @Size(min = 3, max = 100)
+ * private String name;
+ * }
  */
 public class JSR303FieldValidator implements Validator {
 
@@ -93,28 +86,60 @@ public class JSR303FieldValidator implements Validator {
     @Override
     public void validate(Object o) throws InvalidValueException {
         Object value = getValue();
-        //log.info("validation start, field: "+ property +", value: "+value);
+        log.info("validation start, field: "+ property +", value: "+value);
         boolean result = true;
         String message = null;
         InvalidValueException invalidValueException = null;
 
-
         for (ConstraintDescriptor constraintDescriptor : constraintDescriptors) {
+
+            ConstraintValidator<Annotation, Object> constraintValidatator = getValidatorByTrialAndError(constraintDescriptor);
+
             Annotation annotation = constraintDescriptor.getAnnotation();
-            ConstraintValidator constraintValidatator = getValidator(annotation);
             boolean b = constraintValidatator.isValid(value, ctx);
-            //log.info("validation... constraintValidatator: "+ constraintValidatator +" - "+b);
-            if (!b) {
-                message = getValidationMessage(annotation, value, constraintDescriptor);
-                invalidValueException = new InvalidValueException(message);
-                result = false;
-                break;
-            }
+                //log.info("validation... constraintValidatator: "+ constraintValidatator +" - "+b);
+                if (!b) {
+                    message = getValidationMessage(annotation, value, constraintDescriptor);
+                    invalidValueException = new InvalidValueException(message);
+                    result = false;
+                    break;
+                }
+
         }
-        log.info("validation done, field: "+property+", value: "+value+", result: "+result+", message: "+message+", invalidValueException: "+invalidValueException);
+        log.info("validation done, field: " + property + ", value: " + value + ", result: " + result + ", message: " + message + ", invalidValueException: " + invalidValueException);
         if (invalidValueException != null) {
             throw invalidValueException;
         }
+    }
+
+    /**
+     * This method tries to found correct validator by trial and error. At current implementation of hibernate validator
+     * there is only two possible validators in that list, so if the first fails, second attempt should pass. But if
+     * anyone knows easy way to resolve correct validator based on type this should be replaced.
+     *
+     * @param constraintDescriptor describing constraint
+     * @return initialized constraint validator for constraintDescriptor's annotation
+     */
+    private ConstraintValidator<Annotation, Object> getValidatorByTrialAndError(ConstraintDescriptor constraintDescriptor) {
+
+        final List<Class<? extends ConstraintValidator<Annotation, Object>>> constraintValidatorClasses = getValidatorClasses(constraintDescriptor);
+        ConstraintValidator<Annotation, Object> constraintValidatator = null;
+        for (Class<? extends ConstraintValidator<Annotation, Object>> constraintValidatorClass : constraintValidatorClasses) {
+
+            constraintValidatator = factory.getConstraintValidatorFactory().getInstance(constraintValidatorClass);
+            try {
+                constraintValidatator.initialize(constraintDescriptor.getAnnotation());
+            } catch (ClassCastException ignored) {
+                //we just pick next one,
+            }
+        }
+    //    if (constraintValidatator == null) throw new RuntimeException("no validator found for "+constraintDescriptor.toString());
+        return constraintValidatator;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Class<? extends ConstraintValidator<Annotation, Object>>> getValidatorClasses(ConstraintDescriptor constraintDescriptor) {
+        return constraintDescriptor.getConstraintValidatorClasses();
     }
 
     private String getValidationMessage(Annotation annotation, Object value, ConstraintDescriptor<?> constraintDescriptor) {
@@ -149,26 +174,7 @@ public class JSR303FieldValidator implements Validator {
         }
     }
 
-    private ConstraintValidator getValidator(Annotation annotation) {
 
-        // NOTE: tässäkin voisi käyttää hibernatevalidatoria jos osaisi kaivaa oikean paikan mutta ei noista tarvita kuin muutamaa
-
-        ConstraintValidator validator = null;
-        if (annotation instanceof NotNull) {
-            validator = new NotNullValidator();
-        } else if (annotation instanceof MLTextSize) {
-            validator = new MLTextSizeValidator();
-        } else if (annotation instanceof Size) {
-            validator = new SizeValidatorForString();
-        } else if (annotation instanceof Pattern) {
-            validator = new PatternValidator();
-        }
-
-        if (validator != null) {
-            validator.initialize(annotation);
-        }
-        return validator;
-    }
 
     public static void addValidatorsBasedOnAnnotations(Object form) {
         List<java.lang.reflect.Field> javaFields = ClassUtils.getDeclaredFields(form.getClass());
@@ -180,16 +186,16 @@ public class JSR303FieldValidator implements Validator {
                     BeanDescriptor beanDescriptor = javaxValidator.getConstraintsForClass(form.getClass());
                     PropertyDescriptor propertyDescriptor = beanDescriptor.getConstraintsForProperty(javaField.getName());
                     if (propertyDescriptor != null) {
-                        ((Field)javaValue).addValidator(new JSR303FieldValidator(form, javaField.getName(), propertyDescriptor));
+                        ((Field) javaValue).addValidator(new JSR303FieldValidator(form, javaField.getName(), propertyDescriptor));
 
                         // set field required
                         if (javaField.isAnnotationPresent(NotNull.class)) {
-                            ((Field)javaValue).setRequired(true);
+                            ((Field) javaValue).setRequired(true);
                         }
                     }
                 }
             } catch (Exception e) {
-                throw new RuntimeException("addValidatorsBasedOnAnnotations failed, field: "+ javaField.getName()+", cause: " + e, e);
+                throw new RuntimeException("addValidatorsBasedOnAnnotations failed, field: " + javaField.getName() + ", cause: " + e, e);
             }
         }
     }
