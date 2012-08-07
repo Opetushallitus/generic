@@ -96,7 +96,7 @@ public class SearchableTree<T> extends VerticalLayout {
 
     public void init() {
         
-        buttonRefresh.addStyleName(StyleNames.B_YELLOW_SMALL);
+        buttonRefresh.addStyleName(StyleNames.B_PRIMARY_SMALL);
         
         dataSource.addContainerProperty("caption", String.class, "");
         tree.setItemCaptionPropertyId("caption");
