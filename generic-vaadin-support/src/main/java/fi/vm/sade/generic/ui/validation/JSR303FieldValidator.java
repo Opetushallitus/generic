@@ -38,7 +38,6 @@ import java.util.Set;
  * <p/>
  * class SampleForm {
  *
- * @author Antti Salonen
  * @NotNull
  * @Size(min = 3, max = 100)
  * private TextField nameField = ...;
@@ -55,6 +54,12 @@ import java.util.Set;
  * @Size(min = 3, max = 100)
  * private String name;
  * }
+ *
+ * NOTE!
+ *
+ * - If you can/want to annotate model instead of vaadin fields, use fi.vm.sade.generic.ui.ValidationUtils
+ *
+ * @author Antti Salonen
  */
 public class JSR303FieldValidator implements Validator {
 
