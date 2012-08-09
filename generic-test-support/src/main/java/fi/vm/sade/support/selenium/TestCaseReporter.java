@@ -24,7 +24,8 @@ import java.io.StringWriter;
 public class TestCaseReporter extends TestWatcher {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
-    protected SeleniumTestCaseSupport seleniumTestCaseSupport;
+    private Logger anotherLog;
+    //protected SeleniumTestCaseSupport seleniumTestCaseSupport;
     protected String previousStep;
     private StringBuffer testReport = new StringBuffer();
     /**
@@ -35,8 +36,13 @@ public class TestCaseReporter extends TestWatcher {
 
     public TestCaseReporter(SeleniumTestCaseSupport seleniumTestCaseSupport) {
         SeleniumContext.setTestCaseReporter(this);
-        this.seleniumTestCaseSupport = seleniumTestCaseSupport;
+        //this.seleniumTestCaseSupport = seleniumTestCaseSupport;
+        this.anotherLog = seleniumTestCaseSupport != null ? seleniumTestCaseSupport.log : this.log;
         takeScreenshots = TestUtils.getEnvOrSystemPropertyAsBoolean(takeScreenshots, "SCREENSHOT_MODE", "screenshotMode");
+    }
+
+    public TestCaseReporter() {
+        this(null);
     }
 
     @Override
@@ -45,19 +51,19 @@ public class TestCaseReporter extends TestWatcher {
         SeleniumContext.setTestName(TestUtils.getTestName(description));
         testName = TestUtils.getTestName(description);
         appendTestReport("<html><body><table border='1'>");
-        STEP("TEST: " + testName, null, seleniumTestCaseSupport.log, false);
+        STEP("TEST: " + testName, null, anotherLog, false);
     }
 
     @Override
     protected void failed(Throwable e, Description description) {
-        seleniumTestCaseSupport.log.info("TestWatcher.failed: " + e, e);
+        anotherLog.info("TestWatcher.failed: " + e, e);
         SeleniumUtils.STEP("test FAILED\nstep: " + previousStep + "\nexception: " + e);
         writeReport(e);
     }
 
     @Override
     protected void succeeded(Description description) {
-        seleniumTestCaseSupport.log.info("TestWatcher.succeeded");
+        anotherLog.info("TestWatcher.succeeded");
         SeleniumUtils.STEP("test OK");
         writeReport(null);
     }
