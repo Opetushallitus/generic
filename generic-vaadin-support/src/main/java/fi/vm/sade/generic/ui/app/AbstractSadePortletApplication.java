@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Configurable;
 
 import com.vaadin.terminal.gwt.server.PortletRequestListener;
 
+import fi.vm.sade.generic.auth.RoleEnum;
 import fi.vm.sade.generic.common.I18N;
 
 /**
@@ -94,6 +95,10 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
     // }
     // return list;
     // }
+    
+    protected boolean isUserInRole(RoleEnum role) {
+    	return isUserInRole(role.getValue());
+    }
 
     protected boolean isUserInRole(String role) {
         return threadLocalPortletRequest.get().isUserInRole(role);
