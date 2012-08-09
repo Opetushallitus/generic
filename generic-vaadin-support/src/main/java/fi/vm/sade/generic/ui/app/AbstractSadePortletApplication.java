@@ -95,12 +95,8 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
     // }
     // return list;
     // }
-    
-    protected boolean isUserInRole(RoleEnum role) {
-    	return isUserInRole(role.getValue());
-    }
 
-    protected boolean isUserInRole(String role) {
+    protected static boolean isUserInRole(String role) {
         return threadLocalPortletRequest.get().isUserInRole(role);
     }
 
