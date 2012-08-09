@@ -32,6 +32,7 @@ import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.internal.SocketLock;
+import org.openqa.selenium.logging.LocalLogs;
 import org.openqa.selenium.net.NetworkUtils;
 import org.openqa.selenium.remote.Command;
 import org.openqa.selenium.remote.HttpCommandExecutor;
@@ -89,6 +90,11 @@ public class ReusableFirefoxDriver extends FirefoxDriver {
                                                 return false;
                                         }
                                 }
+
+                            @Override
+                            public void setLocalLogs(LocalLogs localLogs) {
+                                //noop
+                            }
                         };
                 }
                 return super.connectTo(binary, profile, host);
