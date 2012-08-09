@@ -25,12 +25,6 @@ THE SOFTWARE.
 
  */
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.Socket;
-import java.net.URL;
-
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.firefox.ExtensionConnection;
@@ -38,10 +32,17 @@ import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.internal.SocketLock;
+import org.openqa.selenium.logging.LocalLogs;
 import org.openqa.selenium.net.NetworkUtils;
 import org.openqa.selenium.remote.Command;
 import org.openqa.selenium.remote.HttpCommandExecutor;
 import org.openqa.selenium.remote.Response;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.Socket;
+import java.net.URL;
 
 public class ReusableFirefoxDriver extends FirefoxDriver {
         
@@ -90,6 +91,10 @@ public class ReusableFirefoxDriver extends FirefoxDriver {
                                         }
                                 }
 
+                            @Override
+                            public void setLocalLogs(LocalLogs localLogs) {
+                                //noop
+                            }
                         };
                 }
                 return super.connectTo(binary, profile, host);
