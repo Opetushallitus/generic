@@ -47,4 +47,12 @@ public interface GenericDAO {
      * @return
      */
     <E extends BaseEntity> List<E> findBy(Class<E> entity, String column, Object value);
+    
+    /**
+     * Perform entity level validation when needed.
+     * For example two date fields which are dependant. 
+     * 
+     * @param entity 
+     */
+    <E extends BaseEntity> void validate(E entity);
 }

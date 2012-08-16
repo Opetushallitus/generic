@@ -63,5 +63,11 @@ public interface JpaDAO<E, ID> {
      * @return
      */
     List<E> findBy(String column, Object value, int firstResultIndex, int maxResults);
-
+    
+    /**
+     * Implement custom validation logic when needed.
+     * 
+     * @param entity 
+     */
+    void validate(E entity);
 }

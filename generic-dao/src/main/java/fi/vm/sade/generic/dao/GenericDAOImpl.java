@@ -22,11 +22,13 @@ public class GenericDAOImpl implements GenericDAO {
     }
 
     public <E extends BaseEntity> void update(E entity) {
+        validate(entity);
         entityManager.merge(entity);
         entityManager.flush();
     }
 
     public <E extends BaseEntity> E insert(E entity) {
+        validate(entity);
         entityManager.persist(entity);
         entityManager.flush();
         return entity;
@@ -57,4 +59,8 @@ public class GenericDAOImpl implements GenericDAO {
         this.entityManager = entityManager;
     }
 
+    @Override
+    public <E extends BaseEntity> void validate(E entity) {
+        // empty, implemenet custom validation logic where needed
+    }
 }

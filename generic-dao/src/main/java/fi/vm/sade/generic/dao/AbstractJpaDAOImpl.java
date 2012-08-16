@@ -47,6 +47,7 @@ public abstract class AbstractJpaDAOImpl<E, ID> implements JpaDAO<E, ID> {
      * @see fi.vm.sade.jdbc.dao.JpaDAO#update(java.io.Serializable)
      */
     public void update(E entity) {
+        validate(entity);
         entityManager.merge(entity);
         entityManager.flush();
     }
@@ -56,6 +57,7 @@ public abstract class AbstractJpaDAOImpl<E, ID> implements JpaDAO<E, ID> {
      * @see fi.vm.sade.jdbc.dao.JpaDAO#insert(java.io.Serializable)
      */
     public E insert(E entity) {
+        validate(entity);
         entityManager.persist(entity);
         // Database must be synchronized at this point or the insert query does not get executed at all
         entityManager.flush();
@@ -93,4 +95,10 @@ public abstract class AbstractJpaDAOImpl<E, ID> implements JpaDAO<E, ID> {
 
         return query.getResultList();
     }
+
+    @Override
+    public void validate(E entity) {
+        // empty, override to implement custom validation logic
+    }
+    
 }
