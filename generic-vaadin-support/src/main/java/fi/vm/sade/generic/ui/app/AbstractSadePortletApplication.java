@@ -36,6 +36,8 @@ import fi.vm.sade.generic.common.I18N;
 public abstract class AbstractSadePortletApplication extends AbstractBlackboardSadeApplication implements
         PortletRequestListener {
 
+    private static ThreadLocal<PortletRequest> threadLocalPortletRequest = new ThreadLocal<PortletRequest>();
+
     /*
      * Override to get params from portlet request
      */
@@ -65,10 +67,46 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
         return sb.toString();
     }
 
+    protected static boolean isUserInRole(String role) {
+        boolean value = false;
+        if (threadLocalPortletRequest.get() != null) {
+            value = threadLocalPortletRequest.get().isUserInRole(role);
+        }
+        return value;
+    }
+
+    /**
+     * Pulls Liferay dependencies, enable if needed
+     * 
+     * @return
+     */
+    // @SuppressWarnings("unchecked")
+    // protected List<AccessRight> getRawAccessRights() {
+    // HttpServletRequest httpServletRequest =
+    // PortalUtil.getHttpServletRequest(threadLocalPortletRequest.get());
+    // Object o =
+    // httpServletRequest.getSession().getAttribute(SecuritySessionAttributes.AUTHENTICATION_DATA);
+    //
+    // List<AccessRight> list = new ArrayList<AccessRight>();
+    // if (o != null && o instanceof List) {
+    // try {
+    // list = (List<AccessRight>) o;
+    // return list;
+    // } catch (ClassCastException e) {
+    // log.warn("Failed to get "
+    // + SecuritySessionAttributes.AUTHENTICATION_DATA
+    // +
+    // " Attribute from session. Session contained something else than expected. Expected List<AccessRight> got: ["
+    // + o + "]");
+    // }
+    // }
+    // return list;
+    // }
+
     @Override
     public void onRequestStart(PortletRequest portletRequest, PortletResponse portletResponse) {
         log.info("onRequestStart() - portlet");
-        ThreadLocalPortletRequestSupport.setPortletRequest(portletRequest);
+        threadLocalPortletRequest.set(portletRequest);
         onRequestStart(portletRequest);
     }
 
