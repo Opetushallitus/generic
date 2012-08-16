@@ -124,9 +124,10 @@ public abstract class GenericForm<MODELCLASS> extends CustomComponent {
         } catch (LocalizedBusinessException e) {
             LOG.warn("encountered business exception when saving form: "+e, e);
             form.getWindow().showNotification(I18N.getMessage(e.getKey()), Window.Notification.TYPE_ERROR_MESSAGE);
-        } catch (Throwable e) {
+        } 
+        catch (Throwable e) {
             LOG.error("encountered an exception when saving form: "+e, e);
-            form.getWindow().showNotification(e.getLocalizedMessage(), Window.Notification.TYPE_ERROR_MESSAGE);
+            form.getWindow().showNotification(I18N.getMessage(e.getLocalizedMessage()), Window.Notification.TYPE_ERROR_MESSAGE);
         }
     }
 
