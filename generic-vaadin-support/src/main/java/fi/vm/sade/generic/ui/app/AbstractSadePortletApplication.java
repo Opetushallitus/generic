@@ -24,6 +24,7 @@ import javax.portlet.PortletResponse;
 
 import org.springframework.beans.factory.annotation.Configurable;
 
+import com.github.wolfie.blackboard.Blackboard;
 import com.vaadin.terminal.gwt.server.PortletRequestListener;
 
 import fi.vm.sade.generic.common.I18N;
@@ -36,7 +37,6 @@ import fi.vm.sade.generic.common.I18N;
 public abstract class AbstractSadePortletApplication extends AbstractBlackboardSadeApplication implements
         PortletRequestListener {
 
-    private static ThreadLocal<PortletRequest> threadLocalPortletRequest = new ThreadLocal<PortletRequest>();
 
     /*
      * Override to get params from portlet request
@@ -45,6 +45,12 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
     protected String getParameter(Object req, String name) {
         PortletRequest request = (PortletRequest) req;
         return request.getParameter(name);
+    }
+
+    @Override
+    protected void registerListeners(Blackboard blackboard) {
+        // TODO Auto-generated method stub
+
     }
 
     /*
@@ -67,13 +73,7 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
         return sb.toString();
     }
 
-    protected static boolean isUserInRole(String role) {
-        boolean value = false;
-        if (threadLocalPortletRequest.get() != null) {
-            value = threadLocalPortletRequest.get().isUserInRole(role);
-        }
-        return value;
-    }
+
 
     /**
      * Pulls Liferay dependencies, enable if needed
@@ -106,7 +106,7 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
     @Override
     public void onRequestStart(PortletRequest portletRequest, PortletResponse portletResponse) {
         log.info("onRequestStart() - portlet");
-        threadLocalPortletRequest.set(portletRequest);
+        setUser(new UserImpl(portletRequest));
         onRequestStart(portletRequest);
     }
 

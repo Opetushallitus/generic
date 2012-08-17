@@ -47,15 +47,20 @@
 			<artifactId>generic-portlet-support</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+	  <dependency>
+            <groupId>javax.portlet</groupId>
+            <artifactId>portlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
 		
-		<!--  uncomment if you choose to use getRawAccessRights 
+		<!--  uncomment if you choose to use getRawAccessRights 	
 	   <dependency>
 	       <groupId>com.liferay.portal</groupId>
 	       <artifactId>util-taglib</artifactId>
 	       <version>${liferay.version}</version>
-	       <scope>provided</scope>
+	       <scope>provided</scope> 
 	   </dependency>
-	-->
+-->
     </dependencies>
 
 </project>
