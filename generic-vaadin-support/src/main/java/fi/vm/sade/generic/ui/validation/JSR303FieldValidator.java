@@ -101,13 +101,12 @@ public class JSR303FieldValidator implements Validator {
 
         for (ConstraintDescriptor constraintDescriptor : constraintDescriptors) {
 
-            ConstraintValidator<Annotation, Object> constraintValidatator = getValidatorByTrialAndError(constraintDescriptor);
+            boolean b = validateByTrialAndError(constraintDescriptor, value);
 
-            Annotation annotation = constraintDescriptor.getAnnotation();
-            boolean b = constraintValidatator.isValid(value, ctx);
             // log.info("validation... constraintValidatator: "+
             // constraintValidatator +" - "+b);
             if (!b) {
+                Annotation annotation = constraintDescriptor.getAnnotation();
                 message = getValidationMessage(annotation, value, constraintDescriptor);
                 invalidValueException = new InvalidValueException(message);
                 result = false;
@@ -134,8 +133,7 @@ public class JSR303FieldValidator implements Validator {
      * @return initialized constraint validator for constraintDescriptor's
      *         annotation
      */
-    private ConstraintValidator<Annotation, Object> getValidatorByTrialAndError(
-            ConstraintDescriptor constraintDescriptor) {
+    private boolean validateByTrialAndError(ConstraintDescriptor constraintDescriptor, Object value) {
 
         final List<Class<? extends ConstraintValidator<Annotation, Object>>> constraintValidatorClasses = getValidatorClasses(constraintDescriptor);
         ConstraintValidator<Annotation, Object> constraintValidatator = null;
@@ -144,15 +142,14 @@ public class JSR303FieldValidator implements Validator {
             constraintValidatator = factory.getConstraintValidatorFactory().getInstance(constraintValidatorClass);
             try {
                 constraintValidatator.initialize(constraintDescriptor.getAnnotation());
-                // This presumes, that first found validator is the right one..
-                break;
+                boolean b = constraintValidatator.isValid(value, ctx);
+                return b;
             } catch (ClassCastException ignored) {
                 // we just pick next one,
             }
         }
-        // if (constraintValidatator == null) throw new
-        // RuntimeException("no validator found for "+constraintDescriptor.toString());
-        return constraintValidatator;
+        throw new RuntimeException("no validator found for " + constraintDescriptor.toString());
+
     }
 
     @SuppressWarnings("unchecked")
