@@ -61,6 +61,12 @@
 	       <scope>provided</scope> 
 	   </dependency>
 -->
+		<dependency>
+			<groupId>com.liferay.portal</groupId>
+			<artifactId>portal-service</artifactId>
+			<scope>provided</scope>
+			<version>${liferay.version}</version>
+		</dependency>
     </dependencies>
 
 </project>
