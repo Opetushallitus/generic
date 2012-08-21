@@ -25,6 +25,8 @@ import javax.portlet.PortletResponse;
 import org.springframework.beans.factory.annotation.Configurable;
 
 import com.github.wolfie.blackboard.Blackboard;
+import com.vaadin.Application;
+import com.vaadin.service.ApplicationContext;
 import com.vaadin.terminal.gwt.server.PortletRequestListener;
 
 import fi.vm.sade.generic.common.I18N;
@@ -35,8 +37,33 @@ import fi.vm.sade.generic.common.I18N;
  */
 @Configurable(preConstruction = false)
 public abstract class AbstractSadePortletApplication extends AbstractBlackboardSadeApplication implements
-        PortletRequestListener {
+        PortletRequestListener,  ApplicationContext.TransactionListener {
 
+
+    @Override
+    public synchronized void init() {
+        super.init();
+    }
+
+    @Override
+    public void transactionStart(Application application, Object transactionData) {
+        super.transactionStart(application, transactionData);
+    }
+
+    @Override
+    public void transactionEnd(Application application, Object transactionData) {
+        super.transactionEnd(application, transactionData);
+    }
+    
+    @Override
+    public void onRequestStart(PortletRequest portletRequest, PortletResponse portletResponse) {
+        setUser(new UserImpl(portletRequest));
+        onRequestStart(portletRequest);
+    }
+
+    @Override
+    public void onRequestEnd(PortletRequest portletRequest, PortletResponse portletResponse) {
+    }
 
     /*
      * Override to get params from portlet request
@@ -103,16 +130,5 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
     // return list;
     // }
 
-    @Override
-    public void onRequestStart(PortletRequest portletRequest, PortletResponse portletResponse) {
-        log.info("onRequestStart() - portlet");
-        setUser(new UserImpl(portletRequest));
-        onRequestStart(portletRequest);
-    }
-
-    @Override
-    public void onRequestEnd(PortletRequest portletRequest, PortletResponse portletResponse) {
-        log.info("onRequestEnd() - portlet");
-        // empty
-    }
+ 
 }
