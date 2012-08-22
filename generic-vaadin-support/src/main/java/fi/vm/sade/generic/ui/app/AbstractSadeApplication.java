@@ -46,8 +46,6 @@ public abstract class AbstractSadeApplication extends Application implements Htt
 
     protected Locale sessionLocale = new Locale(DEFAULT_LOCALE);
 
-    private static ThreadLocal<HttpServletRequest> threadLocalHttpServletRequest = new ThreadLocal<HttpServletRequest>();
-
     /**
      * When overriding this method, remember to call super as the first thing.
      */
@@ -75,31 +73,17 @@ public abstract class AbstractSadeApplication extends Application implements Htt
      */
     @Override
     public void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
-        threadLocalHttpServletRequest.set(request);
-        onRequestStart(request);
-    }
-
-    @Override
-    public void onRequestEnd(HttpServletRequest request, HttpServletResponse response) {
-        // empty
-    }
-
-    /**
-     * Get "lang" request parameter (if present) and set current locale for the
-     * application and I18N service.
-     * 
-     * @param request
-     */
-    protected void onRequestStart(Object request) {
-        // TODO: testejä varten - HUOM! lang-parametrin ohessa pitää antaa myös
-        // 'restartApplication', muuten locale ei vaihdu oikein
+        setUser(new UserImpl(request));
         String langParam = getParameter(request, "lang");
         if (langParam != null) {
             sessionLocale = new Locale(langParam);
         }
         setLocale(sessionLocale);
+    }
 
-        // log.debug("onRequestStart(): ", requestInfo(request));
+    @Override
+    public void onRequestEnd(HttpServletRequest request, HttpServletResponse response) {
+        // empty
     }
 
     /**
@@ -109,7 +93,7 @@ public abstract class AbstractSadeApplication extends Application implements Htt
      * @param name
      * @return
      */
-    protected String getParameter(Object req, String name) {
+    private String getParameter(Object req, String name) {
         HttpServletRequest request = (HttpServletRequest) req;
         return request.getParameter(name);
     }
@@ -125,29 +109,4 @@ public abstract class AbstractSadeApplication extends Application implements Htt
         HttpServletRequest request = (HttpServletRequest) req;
         return request.getSession().getAttribute(name);
     }
-
-    // /**
-    // * Create string information from the given (http) request (for debugging
-    // * purposes).
-    // *
-    // * @param req
-    // * @return
-    // */
-    // protected String requestInfo(Object req) {
-    // HttpServletRequest request = (HttpServletRequest) req;
-    //
-    // StringBuilder sb = new StringBuilder();
-    // sb.append(", sessionLocale: ");
-    // sb.append(sessionLocale.toString());
-    // sb.append(", langParam: ");
-    // sb.append(request.getParameter("lang"));
-    // sb.append(", url: ");
-    // sb.append(request.getRequestURL());
-    // sb.append(", i18n.locale: ");
-    // sb.append(I18N.getLocale());
-    // sb.append(", default locale: ");
-    // sb.append(Locale.getDefault());
-    //
-    // return sb.toString();
-    // }
 }

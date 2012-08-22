@@ -55,7 +55,6 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
     @Override
     public void onRequestStart(PortletRequest portletRequest, PortletResponse portletResponse) {
         setUser(new UserImpl(portletRequest));
-        onRequestStart(portletRequest);
     }
 
     @Override
@@ -64,7 +63,6 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
 
     @Override
     public void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
-        setUser(new UserImpl(request));
         super.onRequestStart(request, response);
     }
 
@@ -73,73 +71,10 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
         super.onRequestEnd(request, response);
     }
 
-    /*
-     * Override to get params from portlet request
-     */
-    @Override
-    protected String getParameter(Object req, String name) {
-        if (req instanceof PortletRequest) {
-            PortletRequest request = (PortletRequest) req;
-            return request.getParameter(name);
-        } else if (req instanceof HttpServletRequest) {
-            HttpServletRequest request = (HttpServletRequest) req;
-            return request.getParameter(name);
-        }
-        return null;
-    }
-
     @Override
     protected void registerListeners(Blackboard blackboard) {
         // TODO Auto-generated method stub
 
     }
-
-    // /*
-    // * Override from the base class (has to use portlet request)
-    // */
-    // @Override
-    // protected String requestInfo(Object req) {
-    // PortletRequest request = (PortletRequest) req;
-    //
-    // StringBuilder sb = new StringBuilder();
-    // sb.append(", sessionLocale: ");
-    // sb.append(sessionLocale.toString());
-    // sb.append(", langParam: ");
-    // sb.append(request.getPublicParameterMap().get("lang"));
-    // sb.append(", i18n.locale: ");
-    // sb.append(I18N.getLocale());
-    // sb.append(", default locale: ");
-    // sb.append(Locale.getDefault());
-    //
-    // return sb.toString();
-    // }
-
-    /**
-     * Pulls Liferay dependencies, enable if needed
-     * 
-     * @return
-     */
-    // @SuppressWarnings("unchecked")
-    // protected List<AccessRight> getRawAccessRights() {
-    // HttpServletRequest httpServletRequest =
-    // PortalUtil.getHttpServletRequest(threadLocalPortletRequest.get());
-    // Object o =
-    // httpServletRequest.getSession().getAttribute(SecuritySessionAttributes.AUTHENTICATION_DATA);
-    //
-    // List<AccessRight> list = new ArrayList<AccessRight>();
-    // if (o != null && o instanceof List) {
-    // try {
-    // list = (List<AccessRight>) o;
-    // return list;
-    // } catch (ClassCastException e) {
-    // log.warn("Failed to get "
-    // + SecuritySessionAttributes.AUTHENTICATION_DATA
-    // +
-    // " Attribute from session. Session contained something else than expected. Expected List<AccessRight> got: ["
-    // + o + "]");
-    // }
-    // }
-    // return list;
-    // }
 
 }
