@@ -29,6 +29,8 @@ import com.vaadin.Application;
 import com.vaadin.service.ApplicationContext;
 import com.vaadin.terminal.gwt.server.PortletRequestListener;
 
+import fi.vm.sade.generic.ui.portlet.security.User;
+
 /**
  * @author Antti
  * @author Marko Lyly
@@ -54,7 +56,9 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
 
     @Override
     public void onRequestStart(PortletRequest portletRequest, PortletResponse portletResponse) {
-        setUser(new UserImpl(portletRequest));
+        User user = new UserLiferayImpl(portletRequest);
+        setUser(user);
+        setLocale(user.getLang());
     }
 
     @Override

@@ -20,6 +20,7 @@ import java.util.Locale;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -68,17 +69,20 @@ public abstract class AbstractSadeApplication extends Application implements Htt
         super.setLocale(locale);
     }
 
+    private void setLang(String lang) {
+        if (StringUtils.isNotBlank(lang)) {
+            sessionLocale = new Locale(lang);
+            setLocale(sessionLocale);
+        }
+    }
+
     /*
      * Implement HttpServletRequestListener interface
      */
     @Override
     public void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
-        setUser(new UserImpl(request));
-        String langParam = getParameter(request, "lang");
-        if (langParam != null) {
-            sessionLocale = new Locale(langParam);
-        }
-        setLocale(sessionLocale);
+        setUser(new UserLiferayImpl(request));
+        setLang(getParameter(request, "lang"));
     }
 
     @Override
