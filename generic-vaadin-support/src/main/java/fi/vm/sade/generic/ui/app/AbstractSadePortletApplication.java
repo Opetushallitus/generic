@@ -17,10 +17,10 @@
 
 package fi.vm.sade.generic.ui.app;
 
-import java.util.Locale;
-
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Configurable;
 
@@ -29,16 +29,13 @@ import com.vaadin.Application;
 import com.vaadin.service.ApplicationContext;
 import com.vaadin.terminal.gwt.server.PortletRequestListener;
 
-import fi.vm.sade.generic.common.I18N;
-
 /**
  * @author Antti
  * @author Marko Lyly
  */
 @Configurable(preConstruction = false)
 public abstract class AbstractSadePortletApplication extends AbstractBlackboardSadeApplication implements
-        PortletRequestListener,  ApplicationContext.TransactionListener {
-
+        PortletRequestListener, ApplicationContext.TransactionListener {
 
     @Override
     public synchronized void init() {
@@ -54,7 +51,7 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
     public void transactionEnd(Application application, Object transactionData) {
         super.transactionEnd(application, transactionData);
     }
-    
+
     @Override
     public void onRequestStart(PortletRequest portletRequest, PortletResponse portletResponse) {
         setUser(new UserImpl(portletRequest));
@@ -65,13 +62,30 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
     public void onRequestEnd(PortletRequest portletRequest, PortletResponse portletResponse) {
     }
 
+    @Override
+    public void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
+        setUser(new UserImpl(request));
+        super.onRequestStart(request, response);
+    }
+
+    @Override
+    public void onRequestEnd(HttpServletRequest request, HttpServletResponse response) {
+        super.onRequestEnd(request, response);
+    }
+
     /*
      * Override to get params from portlet request
      */
     @Override
     protected String getParameter(Object req, String name) {
-        PortletRequest request = (PortletRequest) req;
-        return request.getParameter(name);
+        if (req instanceof PortletRequest) {
+            PortletRequest request = (PortletRequest) req;
+            return request.getParameter(name);
+        } else if (req instanceof HttpServletRequest) {
+            HttpServletRequest request = (HttpServletRequest) req;
+            return request.getParameter(name);
+        }
+        return null;
     }
 
     @Override
@@ -80,27 +94,25 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
 
     }
 
-    /*
-     * Override from the base class (has to use portlet request)
-     */
-    @Override
-    protected String requestInfo(Object req) {
-        PortletRequest request = (PortletRequest) req;
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(", sessionLocale: ");
-        sb.append(sessionLocale.toString());
-        sb.append(", langParam: ");
-        sb.append(request.getPublicParameterMap().get("lang"));
-        sb.append(", i18n.locale: ");
-        sb.append(I18N.getLocale());
-        sb.append(", default locale: ");
-        sb.append(Locale.getDefault());
-
-        return sb.toString();
-    }
-
-
+    // /*
+    // * Override from the base class (has to use portlet request)
+    // */
+    // @Override
+    // protected String requestInfo(Object req) {
+    // PortletRequest request = (PortletRequest) req;
+    //
+    // StringBuilder sb = new StringBuilder();
+    // sb.append(", sessionLocale: ");
+    // sb.append(sessionLocale.toString());
+    // sb.append(", langParam: ");
+    // sb.append(request.getPublicParameterMap().get("lang"));
+    // sb.append(", i18n.locale: ");
+    // sb.append(I18N.getLocale());
+    // sb.append(", default locale: ");
+    // sb.append(Locale.getDefault());
+    //
+    // return sb.toString();
+    // }
 
     /**
      * Pulls Liferay dependencies, enable if needed
@@ -130,5 +142,4 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
     // return list;
     // }
 
- 
 }

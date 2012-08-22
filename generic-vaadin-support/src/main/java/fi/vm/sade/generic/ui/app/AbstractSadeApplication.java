@@ -99,7 +99,7 @@ public abstract class AbstractSadeApplication extends Application implements Htt
         }
         setLocale(sessionLocale);
 
-        log.debug("onRequestStart(): ", requestInfo(request));
+        // log.debug("onRequestStart(): ", requestInfo(request));
     }
 
     /**
@@ -126,28 +126,28 @@ public abstract class AbstractSadeApplication extends Application implements Htt
         return request.getSession().getAttribute(name);
     }
 
-    /**
-     * Create string information from the given (http) request (for debugging
-     * purposes).
-     * 
-     * @param req
-     * @return
-     */
-    protected String requestInfo(Object req) {
-        HttpServletRequest request = (HttpServletRequest) req;
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(", sessionLocale: ");
-        sb.append(sessionLocale.toString());
-        sb.append(", langParam: ");
-        sb.append(request.getParameter("lang"));
-        sb.append(", url: ");
-        sb.append(request.getRequestURL());
-        sb.append(", i18n.locale: ");
-        sb.append(I18N.getLocale());
-        sb.append(", default locale: ");
-        sb.append(Locale.getDefault());
-
-        return sb.toString();
-    }
+    // /**
+    // * Create string information from the given (http) request (for debugging
+    // * purposes).
+    // *
+    // * @param req
+    // * @return
+    // */
+    // protected String requestInfo(Object req) {
+    // HttpServletRequest request = (HttpServletRequest) req;
+    //
+    // StringBuilder sb = new StringBuilder();
+    // sb.append(", sessionLocale: ");
+    // sb.append(sessionLocale.toString());
+    // sb.append(", langParam: ");
+    // sb.append(request.getParameter("lang"));
+    // sb.append(", url: ");
+    // sb.append(request.getRequestURL());
+    // sb.append(", i18n.locale: ");
+    // sb.append(I18N.getLocale());
+    // sb.append(", default locale: ");
+    // sb.append(Locale.getDefault());
+    //
+    // return sb.toString();
+    // }
 }
