@@ -43,18 +43,18 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     /**
      * System default locale - defined to be "fi".
      */
-    public static final String DEFAULT_LOCALE = "fi";
+    public static final String DEFAULT_LOCALE = "fi_FI";
 
-    protected Locale sessionLocale = new Locale(DEFAULT_LOCALE);
+    // protected Locale sessionLocale = new Locale(DEFAULT_LOCALE);
 
     /**
      * When overriding this method, remember to call super as the first thing.
      */
     @Override
     public synchronized void init() {
-        log.info("init(), current locale: {}, reset to session locale: {}", I18N.getLocale(), sessionLocale);
-        setLocale(sessionLocale);
-
+        // log.info("init(), current locale: {}, reset to session locale: {}",
+        // I18N.getLocale(), sessionLocale);
+        // setLocale(sessionLocale);
     }
 
     /*
@@ -64,6 +64,10 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     @Override
     public void setLocale(Locale locale) {
         log.debug("setLocale({})", locale);
+        if (locale == null) {
+            locale = new Locale(DEFAULT_LOCALE);
+            log.debug("locale was null, defaulting({})", locale);
+        }
         I18N.setLocale(locale);
         LocaleContextHolder.setLocale(locale);
         super.setLocale(locale);
@@ -71,8 +75,8 @@ public abstract class AbstractSadeApplication extends Application implements Htt
 
     private void setLang(String lang) {
         if (StringUtils.isNotBlank(lang)) {
-            sessionLocale = new Locale(lang);
-            setLocale(sessionLocale);
+            Locale locale = new Locale(lang);
+            setLocale(locale);
         }
     }
 
