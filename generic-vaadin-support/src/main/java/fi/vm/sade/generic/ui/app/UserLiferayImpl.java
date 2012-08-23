@@ -56,7 +56,7 @@ public class UserLiferayImpl implements User {
         if (portletRequest != null) {
             ThemeDisplay themeDisplay = (ThemeDisplay) portletRequest.getAttribute(WebKeys.THEME_DISPLAY);
             com.liferay.portal.model.User liferayUser = themeDisplay.getUser();
-            String attribute = (String) liferayUser.getExpandoBridge().getAttribute("oid_henkilo");
+            String attribute = (String) liferayUser.getExpandoBridge().getAttribute("oid_henkilo", false);
             return attribute;
         } else if (servletRequest != null) {
             return "oidhenkilo8";
