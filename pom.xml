@@ -135,6 +135,11 @@
 				<artifactId>querydsl-jpa</artifactId>
 				<version>${querydsl.version}</version>
 			</dependency>
+            <dependency>
+                <groupId>org.apache.cxf</groupId>
+                <artifactId>cxf-bundle</artifactId>
+                <version>${cxf.version}</version>
+            </dependency>
 		</dependencies>
 	</dependencyManagement>
 
