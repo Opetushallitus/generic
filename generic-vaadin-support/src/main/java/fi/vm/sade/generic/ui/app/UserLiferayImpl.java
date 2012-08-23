@@ -59,7 +59,7 @@ public class UserLiferayImpl implements User {
             String attribute = (String) liferayUser.getExpandoBridge().getAttribute("oid_henkilo");
             return attribute;
         } else if (servletRequest != null) {
-            return "implement me";
+            return "oidhenkilo8";
         }
         return null;
     }
