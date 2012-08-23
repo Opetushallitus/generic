@@ -40,21 +40,6 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
         PortletRequestListener, ApplicationContext.TransactionListener {
 
     @Override
-    public synchronized void init() {
-        super.init();
-    }
-
-    @Override
-    public void transactionStart(Application application, Object transactionData) {
-        super.transactionStart(application, transactionData);
-    }
-
-    @Override
-    public void transactionEnd(Application application, Object transactionData) {
-        super.transactionEnd(application, transactionData);
-    }
-
-    @Override
     public void onRequestStart(PortletRequest portletRequest, PortletResponse portletResponse) {
         User user = new UserLiferayImpl(portletRequest);
         setUser(user);
@@ -63,16 +48,6 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
 
     @Override
     public void onRequestEnd(PortletRequest portletRequest, PortletResponse portletResponse) {
-    }
-
-    @Override
-    public void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
-        super.onRequestStart(request, response);
-    }
-
-    @Override
-    public void onRequestEnd(HttpServletRequest request, HttpServletResponse response) {
-        super.onRequestEnd(request, response);
     }
 
     @Override
