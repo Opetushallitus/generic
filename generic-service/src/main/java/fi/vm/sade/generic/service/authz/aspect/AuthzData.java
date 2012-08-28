@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Holder class for authorization data.
+ *
  * @author Eetu Blomqvist
  */
 public class AuthzData {

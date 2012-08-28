@@ -5,21 +5,22 @@ import fi.vm.sade.generic.service.authz.aspect.AuthzDataThreadLocal;
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
 import org.apache.cxf.binding.soap.interceptor.SoapActionInInterceptor;
+import org.apache.cxf.headers.Header;
+import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.Phase;
 import org.apache.ws.security.WSConstants;
+import org.apache.ws.security.WSSecurityEngineResult;
+import org.apache.ws.security.handler.WSHandlerConstants;
+import org.apache.ws.security.handler.WSHandlerResult;
+import org.apache.ws.security.message.token.UsernameToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.CollectionUtils;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.Element;
 
+import javax.xml.bind.*;
 import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPException;
-import javax.xml.soap.SOAPHeader;
-import javax.xml.soap.SOAPMessage;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eetu Blomqvist
@@ -50,23 +51,80 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
         return HEADERS;
     }
 
-    public void handleMessage(SoapMessage soapMessage) {
+    public void handleMessage(SoapMessage soapMessage) throws Fault {
 
         LOGGER.info("Security Audit handler called - not yet implemented.");
 
-        SOAPMessage message = soapMessage.getContent(SOAPMessage.class);
-        try {
-            SOAPHeader header = message.getSOAPPart().getEnvelope().getHeader();
-            NodeList authzData = header.getElementsByTagName("AuthzData");
-            if (authzData.getLength() > 0) {
-                Node item = authzData.item(0);
-                AuthzDataThreadLocal.set(new AuthzData(AuthzDataUtil.convertToMap(item)));
+        // first, look for authorization data from SOAP header and set it in thread local variable.
+        List<Header> headers = soapMessage.getHeaders();
+
+        Header header = null;
+        for (Header h : headers) {
+            if (h.getName().getLocalPart().equals("AuthzData")) {
+                header = h;
+                break;
             }
+        }
 
-            // TODO audit logging!
+        if (header == null) {
+            throw new Fault(new org.apache.cxf.common.i18n.Message("SOAP header is null", (ResourceBundle) null, null));
+        }
 
-        } catch (SOAPException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        Element elem = (Element) header.getObject();
+        AuthzDataHolder holder = null;
+
+        try {
+            JAXBContext jc = JAXBContext.newInstance(AuthzDataHolder.class);
+            Unmarshaller unmarshaller = jc.createUnmarshaller();
+            JAXBElement<AuthzDataHolder> jaxbElement = unmarshaller.unmarshal(elem, AuthzDataHolder.class);
+            holder = jaxbElement.getValue();
+        } catch (JAXBException e) {
+            throw new Fault(new org.apache.cxf.common.i18n.Message("Can't read authz data.",
+                    (ResourceBundle) null, null));
+        }
+
+        if (holder != null) {
+
+            LOGGER.info("Got authz data: " + holder.organisations.toString());
+
+            AuthzData ad = new AuthzData(holder.organisations);
+            AuthzDataThreadLocal.set(ad);
+        } else {
+            // if this interceptor is configured, it assumes the data will be found.
+            org.apache.cxf.common.i18n.Message msg =
+                    new org.apache.cxf.common.i18n.Message("Authorization data missing",
+                            (ResourceBundle) null, null);
+            throw new Fault(msg);
+        }
+
+
+        // do audit logging by mining some data out of the request
+        List<Object> results = (List<Object>) soapMessage.get(WSHandlerConstants.RECV_RESULTS);
+
+        if (results != null) {
+
+            String operation = (String) soapMessage.get(Message.WSDL_OPERATION);
+            String iface = (String) soapMessage.get(Message.WSDL_INTERFACE);
+            String user = "";
+
+            for (Object result : results) {
+                WSHandlerResult hr = (WSHandlerResult) result;
+                if (hr == null || hr.getResults() == null) {
+                    break;
+                }
+                for (WSSecurityEngineResult engineResult : hr.getResults()) {
+                    if (engineResult != null && engineResult.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN) instanceof UsernameToken) {
+                        UsernameToken usernameToken = (UsernameToken) engineResult.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN);
+                        user = usernameToken.getName();
+                        break;
+                    }
+                }
+                if (user != null) {
+                    break;
+                }
+            }
+            LOGGER.info("User '" + user + "' called operation " + operation + " in " + iface);
+            // TODO audit logging to sade log.
         }
     }
 }
