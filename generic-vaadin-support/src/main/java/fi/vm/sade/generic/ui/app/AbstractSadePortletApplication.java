@@ -22,6 +22,11 @@ import javax.portlet.PortletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import fi.vm.sade.generic.ui.component.ClearValidationErrorsListener;
+import fi.vm.sade.generic.ui.component.ValidationErrorListener;
+import fi.vm.sade.generic.ui.component.ValidationErrorViewer;
+import fi.vm.sade.generic.ui.validation.ClearValidationErrorsEvent;
+import fi.vm.sade.generic.ui.validation.ValidationErrorEvent;
 import org.springframework.beans.factory.annotation.Configurable;
 
 import com.github.wolfie.blackboard.Blackboard;
@@ -52,8 +57,8 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
 
     @Override
     protected void registerListeners(Blackboard blackboard) {
-        // TODO Auto-generated method stub
-
+        blackboard.register(ValidationErrorListener.class, ValidationErrorEvent.class);
+        blackboard.register(ClearValidationErrorsListener.class, ClearValidationErrorsEvent.class);
     }
 
 }

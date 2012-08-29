@@ -3,6 +3,8 @@ package fi.vm.sade.generic.ui.validation;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import com.vaadin.data.Buffered;
+import fi.vm.sade.generic.ui.blackboard.BlackboardContext;
 import org.vaadin.addon.formbinder.ViewBoundForm;
 
 import com.vaadin.data.Validator;
@@ -27,8 +29,15 @@ public class ValidatingViewBoundForm extends ViewBoundForm {
     }
 
     @Override
+    public void commit() throws SourceException, Validator.InvalidValueException {
+        BlackboardContext.getBlackboard().fire(new ClearValidationErrorsEvent());
+        super.commit();
+    }
+
+    @Override
     public void validate() throws Validator.InvalidValueException {
         super.validate();
+
         for (ValidatingComponent validator : validatorList) {
             validator.validate();
         }
