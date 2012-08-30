@@ -74,18 +74,18 @@ public class JSR303FieldValidator implements Validator {
                                                    // oikeastaan näytä
                                                    // tarvitsevan
 
-    private ValidatingBlackboardComponent component;
+    private Object form;
     private String property;
 
-    public JSR303FieldValidator(ValidatingBlackboardComponent component, String property) {
-        this(component, property, null);
+    public JSR303FieldValidator(Object form, String property) {
+        this(form, property, null);
     }
 
-    protected JSR303FieldValidator(ValidatingBlackboardComponent component, String property, PropertyDescriptor propertyDescriptor) {
-        this.component = component;
+    protected JSR303FieldValidator(Object form, String property, PropertyDescriptor propertyDescriptor) {
+        this.form = form;
         this.property = property;
         if (propertyDescriptor == null) {
-            BeanDescriptor beanDescriptor = javaxValidator.getConstraintsForClass(component.getClass());
+            BeanDescriptor beanDescriptor = javaxValidator.getConstraintsForClass(form.getClass());
             propertyDescriptor = beanDescriptor.getConstraintsForProperty(property);
         }
         constraintDescriptors = propertyDescriptor.getConstraintDescriptors();
@@ -110,7 +110,7 @@ public class JSR303FieldValidator implements Validator {
                 message = getValidationMessage(annotation, value, constraintDescriptor);
                 invalidValueException = new InvalidValueException(message);
                 result = false;
-                this.component.getBlackboard().fire(new ValidationErrorEvent(component, property, message));
+                break;
             }
 
         }
@@ -170,11 +170,11 @@ public class JSR303FieldValidator implements Validator {
     }
 
     private Object getValue() {
-        java.lang.reflect.Field javaField = ClassUtils.getDeclaredField(component.getClass(), property);
+        java.lang.reflect.Field javaField = ClassUtils.getDeclaredField(form.getClass(), property);
         javaField.setAccessible(true);
         Field vaadinField = null;
         try {
-            vaadinField = (Field) javaField.get(component);
+            vaadinField = (Field) javaField.get(form);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -191,23 +191,24 @@ public class JSR303FieldValidator implements Validator {
         }
     }
 
-    public static void addValidatorsBasedOnAnnotations(ValidatingBlackboardComponent component) {
-        List<java.lang.reflect.Field> javaFields = ClassUtils.getDeclaredFields(component.getClass());
+    public static void addValidatorsBasedOnAnnotations(Object form) {
+        List<java.lang.reflect.Field> javaFields = ClassUtils.getDeclaredFields(form.getClass());
         for (java.lang.reflect.Field javaField : javaFields) {
             javaField.setAccessible(true);
             try {
-                Object javaValue = javaField.get(component);
+                Object javaValue = javaField.get(form);
                 if (Field.class.isAssignableFrom(javaField.getType()) && javaValue != null) {
-                    BeanDescriptor beanDescriptor = javaxValidator.getConstraintsForClass(component.getClass());
+                    BeanDescriptor beanDescriptor = javaxValidator.getConstraintsForClass(form.getClass());
                     PropertyDescriptor propertyDescriptor = beanDescriptor.getConstraintsForProperty(javaField
                             .getName());
                     if (propertyDescriptor != null) {
-                        ((Field) javaValue).addValidator(new JSR303FieldValidator(component, javaField.getName(),
+                        ((Field) javaValue).addValidator(new JSR303FieldValidator(form, javaField.getName(),
                                 propertyDescriptor));
 
                         // set field required
                         if (javaField.isAnnotationPresent(NotNull.class)) {
                             ((Field) javaValue).setRequired(true);
+                            ((Field) javaValue).setRequiredError(javaField.getAnnotation(NotNull.class).message());
                         }
                     }
                 }

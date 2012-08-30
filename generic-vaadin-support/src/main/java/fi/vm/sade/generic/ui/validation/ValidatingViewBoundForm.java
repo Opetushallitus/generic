@@ -30,7 +30,6 @@ public class ValidatingViewBoundForm extends ViewBoundForm {
 
     @Override
     public void commit() throws SourceException, Validator.InvalidValueException {
-        BlackboardContext.getBlackboard().fire(new ClearValidationErrorsEvent());
         super.commit();
     }
 
