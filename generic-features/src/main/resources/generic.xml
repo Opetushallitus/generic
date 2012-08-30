@@ -1,65 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <features>
 
-    <!-- -->
-
-    <feature name="generic-features" version="${project.version}">
-        <!--<feature version="${sade-generic.version}">sade-generic</feature>-->
-        <feature version="${spring.version}">spring-orm</feature>
-        <feature version="${postgresql.version}">postgresql</feature>
-        <feature version="${hsqldb.version}">hsqldb</feature>
-        <feature version="${hibernate.version}">jpa-hibernate</feature>
-        <feature version="${atomikos.version}">atomikos</feature>
+    <feature name="generic" version="${project.version}">
         <feature>camel-cxf</feature>
         <feature>servicemix-camel</feature>
-        <feature>webconsole</feature>
+        <feature>camel-csv</feature>
         <feature>camel-castor</feature>
+        <feature>camel-velocity</feature>
+        <feature>camel-mail</feature>
+        <feature>activemq</feature>
+        <feature>camel-jms</feature>
+        <feature>camel-activemq</feature>
+
+        <bundle>mvn:javax.validation/com.springsource.javax.validation/1.0.0.GA</bundle>
+        <bundle>mvn:org.hibernate/com.springsource.org.hibernate.validator/4.2.0.Final</bundle>
+        <bundle>mvn:org.jsoup/com.springsource.org.jsoup/1.5.2</bundle> <!-- hibernate validator tarttee jsoupin -->
+        <bundle>mvn:org.jvnet.jaxb2_commons/jaxb2-basics-runtime/0.6.3</bundle>
+        <bundle>mvn:org.mongodb/mongo-java-driver/${mongo.version}</bundle>
+
+        <bundle>mvn:fi.vm.sade.generic/generic-common/${sade-generic.version}</bundle>
+
     </feature>
     
-   
-    <feature name="jpa-hibernate" version="${hibernate.version}">
-        <bundle>mvn:javax.persistence/com.springsource.javax.persistence/${jpa-api.version}</bundle>
-        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.commons-dbcp/${commons-dbcp.version}</bundle>
-        <bundle>mvn:org.dom4j/com.springsource.org.dom4j/1.6.1</bundle>
-        <bundle>mvn:org.antlr/com.springsource.antlr/2.7.7</bundle>
-        <bundle>mvn:org.objectweb.asm/com.springsource.org.objectweb.asm/1.5.3</bundle>
-        <bundle>mvn:net.sourceforge.cglib/com.springsource.net.sf.cglib/2.2.0</bundle>
-        <bundle>mvn:org.jboss.javassist/com.springsource.javassist/3.15.0.GA</bundle>
-        <bundle>mvn:org.hibernate/com.springsource.org.hibernate.annotations.common/${hibernate.annotations.common.version}</bundle>
-        <bundle>mvn:org.hibernate/com.springsource.org.hibernate.annotations/${hibernate.ejb.version}</bundle>
-        <bundle>mvn:org.hibernate/com.springsource.org.hibernate.ejb/${hibernate.ejb.version}</bundle>
-        <bundle>mvn:org.hibernate/com.springsource.org.hibernate/${hibernate.version}</bundle>
-    </feature>
-
-    <!--<feature name="sade-generic" version="${sade-generic.version}">-->
-        <!--<bundle>mvn:fi.vm.sade.generic/generic-dao/${sade-generic.version}</bundle>-->
-        <!--<bundle>mvn:fi.vm.sade.generic/generic-service/${sade-generic.version}</bundle>-->
-        <!--<bundle>mvn:fi.vm.sade.generic/transaction-osgi/${sade-generic.version}</bundle>-->
-    <!--</feature>-->
-
-    <feature name="spring-orm" version="${spring.version}">
-        <bundle>mvn:org.springframework/spring-orm/${spring.version}</bundle>
-        <bundle>mvn:org.springframework/spring-jdbc/${spring.version}</bundle>
-        <feature>spring-aspects</feature>
-        <bundle>mvn:org.aspectj/com.springsource.org.aspectj.runtime/1.6.12.RELEASE</bundle>
-        <bundle>mvn:org.aspectj/com.springsource.org.aspectj.weaver/1.6.12.RELEASE</bundle>
-    </feature>
-
-    <feature name="postgresql" version="${postgresql.version}">
-        <bundle>mvn:org.postgresql/com.springsource.org.postgresql.jdbc4/${postgresql.version}</bundle>
-    </feature>
-
-    <feature name="hsqldb" version="${hsqldb.version}">
-        <bundle>mvn:org.hsqldb/com.springsource.org.hsqldb/${hsqldb.version}</bundle>
-    </feature>
-
-    <feature name="atomikos" version="${atomikos.version}">
-        <bundle>mvn:com.atomikos/transactions-hibernate3/${atomikos.version}</bundle>
-        <bundle>mvn:com.atomikos/transactions-jdbc/${atomikos.version}</bundle>
-        <bundle>mvn:com.atomikos/atomikos-util/${atomikos.version}</bundle>
-        <bundle>mvn:com.atomikos/transactions/${atomikos.version}</bundle>
-        <bundle>mvn:com.atomikos/transactions-api/${atomikos.version}</bundle>
-        <bundle>mvn:com.atomikos/transactions-jta/${atomikos.version}</bundle>
-    </feature>
-
 </features>
