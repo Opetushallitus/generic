@@ -19,12 +19,20 @@ public abstract class AbstractPortalSmokeTst extends SeleniumTestCaseSupport {
     }
 
     public void loginToPortal() {
-        log.info("loginToPortal...");
-        openRelative(":8180/c/portal/logout"); // first logout
-        openRelative(":8180/c/portal/login");
-        SeleniumUtils.input("_58_login", "joebloggs");
-        SeleniumUtils.input("_58_password", "oph");
-        driver.findElement(By.xpath("//input[@type='submit']")).click();
+        int attempts = 5;
+        for (int i = 1; i <= attempts; i++) {
+            try {
+                log.info("loginToPortal...");
+                openRelative(":8180/c/portal/logout"); // first logout
+                openRelative(":8180/c/portal/login");
+                SeleniumUtils.input("_58_login", "joebloggs");
+                SeleniumUtils.input("_58_password", "oph");
+                driver.findElement(By.xpath("//input[@type='submit']")).click();
+                break;
+            } catch (NullPointerException e) {
+                System.err.println("WARNING! failed to login to portal because of random(?) htmlunit NullPointerException, attempt "+i+"/"+attempts);
+            }
+        }
     }
 
     public String openRelative(String relativeUrl) {
