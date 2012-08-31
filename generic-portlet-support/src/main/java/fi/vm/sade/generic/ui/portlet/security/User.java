@@ -2,6 +2,7 @@ package fi.vm.sade.generic.ui.portlet.security;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public interface User {
 
@@ -13,4 +14,17 @@ public interface User {
 
     public Locale getLang();
 
+    /**
+     * Returns OIDs for organisations the user is member of
+     * 
+     * @return organisation oids
+     */
+    public Set<String> getOrganisations();
+
+    /**
+     * Returns OIDs for organisations and suborganisations the user is member of
+     * 
+     * @return
+     */
+    public Set<String> getOrganisationsHierarchy();
 }

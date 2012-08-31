@@ -1,8 +1,10 @@
 package fi.vm.sade.generic.ui.portlet.security;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * 
@@ -29,6 +31,25 @@ public class UserMock implements User {
     @Override
     public Locale getLang() {
         return new Locale("fi");
+    }
+
+    @Override
+    public Set<String> getOrganisations() {
+        Set<String> oids = new HashSet<String>();
+        oids.add("1.2.2004.3");
+        oids.add("1.2.2004.4");
+        oids.add("1.2.2004.9");
+
+        return oids;
+    }
+
+    @Override
+    public Set<String> getOrganisationsHierarchy() {
+        Set<String> oids = getOrganisations();
+        oids.add("1.2.2004.6");
+        oids.add("1.2.2004.7");
+        oids.add("1.2.2004.8");
+        return oids;
     }
 
 }
