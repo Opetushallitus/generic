@@ -34,6 +34,11 @@ public class UserMock implements User {
     }
 
     @Override
+    public String getTicket() {
+        return "ticket";
+    }
+
+    @Override
     public Set<String> getOrganisations() {
         Set<String> oids = new HashSet<String>();
         oids.add("1.2.2004.3");

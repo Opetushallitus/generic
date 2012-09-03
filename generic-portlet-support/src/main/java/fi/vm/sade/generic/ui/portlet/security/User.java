@@ -14,6 +14,8 @@ public interface User {
 
     public Locale getLang();
 
+    public String getTicket();
+
     /**
      * Returns OIDs for organisations the user is member of
      * 
@@ -27,4 +29,5 @@ public interface User {
      * @return
      */
     public Set<String> getOrganisationsHierarchy();
+
 }
