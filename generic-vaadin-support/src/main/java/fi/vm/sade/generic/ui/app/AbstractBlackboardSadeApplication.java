@@ -3,25 +3,30 @@ package fi.vm.sade.generic.ui.app;
 import com.github.wolfie.blackboard.Blackboard;
 import com.vaadin.Application;
 import com.vaadin.service.ApplicationContext;
+
 import fi.vm.sade.generic.ui.blackboard.BlackboardContext;
 
 /**
- * Super class for sade vaadin based applications which use Blackboard.
- * With this superclass Blackboard can be accessed always via BlackboardContext.getBlackboard().
- * This class handles blackboard binding and releasing.
- *
+ * Super class for sade vaadin based applications which use Blackboard. With
+ * this superclass Blackboard can be accessed always via
+ * BlackboardContext.getBlackboard(). This class handles blackboard binding and
+ * releasing.
+ * 
  * @see BlackboardContext
  * @see fi.vm.sade.generic.ui.blackboard.BlackboardProvider
  * @author Antti Salonen
  */
-public abstract class AbstractBlackboardSadeApplication extends AbstractSadeApplication implements ApplicationContext.TransactionListener {
+public abstract class AbstractBlackboardSadeApplication extends AbstractSadeApplication implements
+        ApplicationContext.TransactionListener {
+
+    private static final long serialVersionUID = 1L;
 
     private Blackboard blackboardInstance = new Blackboard();
 
     @Override
-    public synchronized void init() {
+    public void init() {
 
-        //Init blackboard event bus
+        // Init blackboard event bus
         registerListeners(blackboardInstance);
 
         // At every "transaction" start set the threadlocal blackboard instance
@@ -34,15 +39,16 @@ public abstract class AbstractBlackboardSadeApplication extends AbstractSadeAppl
     }
 
     /**
-     * Invoked at init to register event listeners and events with given event bus.
-     *
+     * Invoked at init to register event listeners and events with given event
+     * bus.
+     * 
      * @param blackboard
      */
     protected abstract void registerListeners(Blackboard blackboard);
 
     /*
-    * Implement TransactionListener interface
-    */
+     * Implement TransactionListener interface
+     */
     @Override
     public void transactionStart(Application application, Object transactionData) {
         if (application == this) {

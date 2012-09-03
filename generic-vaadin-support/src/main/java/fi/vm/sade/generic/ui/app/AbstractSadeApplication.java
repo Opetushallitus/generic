@@ -27,6 +27,8 @@ import org.springframework.context.i18n.LocaleContextHolder;
 
 import com.vaadin.Application;
 import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
+import com.vaadin.ui.Label;
+import com.vaadin.ui.Window;
 
 import fi.vm.sade.generic.common.I18N;
 
@@ -37,6 +39,8 @@ import fi.vm.sade.generic.common.I18N;
  * @author Marko Lyly
  */
 public abstract class AbstractSadeApplication extends Application implements HttpServletRequestListener {
+
+    private static final long serialVersionUID = 1L;
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -51,10 +55,13 @@ public abstract class AbstractSadeApplication extends Application implements Htt
      * When overriding this method, remember to call super as the first thing.
      */
     @Override
-    public synchronized void init() {
-        // log.info("init(), current locale: {}, reset to session locale: {}",
-        // I18N.getLocale(), sessionLocale);
-        // setLocale(sessionLocale);
+    public void init() {
+        setErrorHandler(this);
+        setTheme();
+    }
+
+    protected void setTheme() {
+        this.setTheme("oph");
     }
 
     /*
@@ -80,17 +87,41 @@ public abstract class AbstractSadeApplication extends Application implements Htt
         }
     }
 
+    /**
+     * shows modal error dialog, for testers, disable for production
+     * 
+     * @param t
+     */
+    protected void showStackTrace(Throwable t) {
+        if (getMainWindow() != null) {
+            final Window dialog = new Window("Exception occurred");
+            Label l = new Label(t.toString());
+            dialog.addComponent(l);
+            dialog.setModal(true);
+            getMainWindow().addWindow(dialog);
+        }
+    }
+
+    public void terminalError(ErrorEvent event) {
+        super.terminalError(event);
+        if (log.isDebugEnabled()) {
+            this.showStackTrace(event.getThrowable());
+        }
+    }
+
     /*
      * Implement HttpServletRequestListener interface
      */
     @Override
     public void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
+        // NO SUPER
         setUser(new UserLiferayImpl(request));
         setLang(getParameter(request, "lang"));
     }
 
     @Override
     public void onRequestEnd(HttpServletRequest request, HttpServletResponse response) {
+        // NO SUPER
         // empty
     }
 

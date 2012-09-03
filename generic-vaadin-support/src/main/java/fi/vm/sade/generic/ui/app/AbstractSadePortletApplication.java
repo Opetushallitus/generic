@@ -36,11 +36,22 @@ import fi.vm.sade.generic.ui.portlet.security.User;
 public abstract class AbstractSadePortletApplication extends AbstractBlackboardSadeApplication implements
         PortletRequestListener, ApplicationContext.TransactionListener {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     public void onRequestStart(PortletRequest portletRequest, PortletResponse portletResponse) {
         User user = new UserLiferayImpl(portletRequest);
         setUser(user);
         setLocale(user.getLang());
+    }
+
+    public User getUser() {
+        return (User) super.getUser();
+    }
+
+    @Override
+    protected void setTheme() {
+        // DO NOT CALL SUPER, PORTLETS DO NOT SET THEME
     }
 
     @Override

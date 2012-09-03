@@ -57,7 +57,8 @@ public class UserLiferayImpl implements User {
     @Override
     public String getOid() {
         if (portletRequest != null) {
-            return (String) getLiferayUser().getExpandoBridge().getAttribute(LiferayCustomAttributes.OID_HENKILO, false);
+            return (String) getLiferayUser().getExpandoBridge()
+                    .getAttribute(LiferayCustomAttributes.OID_HENKILO, false);
         } else if (servletRequest != null) {
             return "oidhenkilo8";
         }
@@ -65,6 +66,22 @@ public class UserLiferayImpl implements User {
     }
 
     @SuppressWarnings("unchecked")
+    @Override
+    public String getTicket() {
+        HttpServletRequest s = null;
+        String ticket = null;
+        if (portletRequest != null) {
+            s = PortalUtil.getHttpServletRequest(portletRequest);
+        } else {
+            s = this.servletRequest;
+        }
+        Object o = s.getSession().getAttribute(SecuritySessionAttributes.TICKET);
+        if (o != null && o instanceof String) {
+            ticket = (String) o;
+        }
+        return ticket;
+    }
+
     @Override
     public List<AccessRight> getRawAccessRights() {
 
@@ -84,8 +101,10 @@ public class UserLiferayImpl implements User {
                     list = (List<AccessRight>) o;
                     return list;
                 } catch (ClassCastException e) {
-                    log.warn("Failed to get " + SecuritySessionAttributes.AUTHENTICATION_DATA
-                            + " Attribute from session. Session contained something else than expected. Expected List<AccessRight> got: [" + o + "]");
+                    log.warn("Failed to get "
+                            + SecuritySessionAttributes.AUTHENTICATION_DATA
+                            + " Attribute from session. Session contained something else than expected. Expected List<AccessRight> got: ["
+                            + o + "]");
                 }
             }
         }
@@ -101,6 +120,25 @@ public class UserLiferayImpl implements User {
         }
         return null;
     }
+
+    // @Override
+    // public String getPassword() {
+    // if (this.portletRequest != null) {
+    // try {
+    // return PortalUtil.getUser(this.portletRequest).getPassword();
+    // } catch (PortalException e) {
+    // log.error("PortalException: PortalUtil.getUser(this.portletRequest).getPassword() failed",
+    // e);
+    // } catch (SystemException e) {
+    // log.error("SystemException: PortalUtil.getUser(this.portletRequest).getPassword() failed",
+    // e);
+    // }
+    // } else if (this.servletRequest != null) {
+    //
+    // }
+    // return null;
+    //
+    // }
 
     private com.liferay.portal.model.User getLiferayUser() {
         try {
@@ -121,7 +159,8 @@ public class UserLiferayImpl implements User {
         if (portletRequest != null) {
             try {
                 for (com.liferay.portal.model.Organization o : getLiferayUser().getOrganizations()) {
-                    organisaatioOids.add((String) o.getExpandoBridge().getAttribute(LiferayCustomAttributes.ORGANISAATIO_OID));
+                    organisaatioOids.add((String) o.getExpandoBridge().getAttribute(
+                            LiferayCustomAttributes.ORGANISAATIO_OID));
                 }
             } catch (PortalException e) {
                 log.error("Failed to get organizations for Liferay User, PortalException", e);
@@ -135,13 +174,15 @@ public class UserLiferayImpl implements User {
             organisaatioOids.add("1.2.2004.4");
             organisaatioOids.add("1.2.2004.9");
         }
-        
+
         return organisaatioOids;
     }
-    
+
     @Override
     public Set<String> getOrganisationsHierarchy() {
-        // FIXME: Figure out how to get the organisation hierarchy from organisaatio service
+        // FIXME: Figure out how to get the organisation hierarchy from
+        // organisaatio service
         return getOrganisations();
     }
+
 }
