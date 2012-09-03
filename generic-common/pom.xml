@@ -25,6 +25,11 @@
                         <Import-Package>
                             org.apache.commons.lang.builder,
                             javax.xml.datatype,
+                            javax.xml.bind,
+                            javax.xml.bind.annotation,
+                            javax.xml.bind.annotation.adapters,
+                            javax.xml.namespace,
+                            org.w3c.dom,
                             javax.validation,
                             javax.validation.constraints,
                             com_*;resolution:=optional<!-- com_*... is for

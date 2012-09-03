@@ -1,6 +1,6 @@
 package fi.vm.sade.generic.service.authz.aspect;
 
-import fi.vm.sade.generic.service.authz.annotation.RequiresRole;
+import fi.vm.sade.generic.common.auth.annotation.RequiresRole;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -33,7 +33,7 @@ public class AuthorizingAspect {
     @Around("serviceMethod()")
     public Object authorize(ProceedingJoinPoint pjp) throws Throwable {
         try {
-            LOGGER.info("Intercepting serviceMethod() call!");
+            LOGGER.info("Intercepting serviceMethod() call to " + pjp.getSignature().getName());
 
             AuthzData authzData = AuthzDataThreadLocal.get();
 

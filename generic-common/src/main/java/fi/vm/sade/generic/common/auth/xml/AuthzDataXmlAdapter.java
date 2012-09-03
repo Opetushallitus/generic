@@ -1,4 +1,4 @@
-package fi.vm.sade.generic.service.authz.interceptor;
+package fi.vm.sade.generic.common.auth.xml;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import java.util.HashMap;
@@ -7,9 +7,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * XML adapter for adapting the authorization map data into XML.
+ *
  * @author Eetu Blomqvist
  */
 public class AuthzDataXmlAdapter extends XmlAdapter<Organisations, Map<String, Set<String>>> {
+
     @Override
     public Map<String, Set<String>> unmarshal(Organisations v) throws Exception {
 
@@ -29,7 +32,8 @@ public class AuthzDataXmlAdapter extends XmlAdapter<Organisations, Map<String, S
 
     @Override
     public Organisations marshal(Map<String, Set<String>> v) throws Exception {
-        // TODO: implement this method.
+
+        // Doesn't need implementation at the moment.
         return null;
     }
 }

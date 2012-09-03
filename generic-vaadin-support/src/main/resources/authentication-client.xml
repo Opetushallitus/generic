@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:cxf="http://cxf.apache.org/core"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://cxf.apache.org/core http://cxf.apache.org/schemas/core.xsd">
+
+    <!-- Bean configuration for interceptor & callback -->
+    <bean id="ticketInterceptor" class="fi.vm.sade.generic.ui.portlet.security.SecurityTicketOutInterceptor">
+        <property name="callback" ref="callback" />
+    </bean>
+
+    <bean id="callback" class="fi.vm.sade.generic.auth.LiferaySecurityTicketCallback">
+
+    </bean>
+
+    <!-- Configure CXF bus to contain ticketInterceptor -->
+    <cxf:bus>
+        <cxf:outInterceptors>
+            <ref bean="ticketInterceptor" />
+        </cxf:outInterceptors>
+    </cxf:bus>
+
+</beans>

@@ -1,4 +1,4 @@
-package fi.vm.sade.generic.service.authz.annotation;
+package fi.vm.sade.generic.common.auth.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,4 +1,4 @@
-package fi.vm.sade.generic.service.authz.annotation;
+package fi.vm.sade.generic.common.auth;
 
 /**
  * Enumeration for role names.

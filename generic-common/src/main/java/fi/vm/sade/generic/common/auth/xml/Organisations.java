@@ -1,4 +1,4 @@
-package fi.vm.sade.generic.service.authz.interceptor;
+package fi.vm.sade.generic.common.auth.xml;
 
 import javax.xml.bind.annotation.XmlElement;
 
@@ -7,6 +7,6 @@ import javax.xml.bind.annotation.XmlElement;
  */
 public class Organisations {
 
-    @XmlElement(name = "organisaatio")
+    @XmlElement(name = ElementNames.ORGANISAATIO)
     public OrganisationRoles[] orgRoles;
 }

@@ -1,5 +1,8 @@
 package fi.vm.sade.generic.service.authz.interceptor;
 
+import fi.vm.sade.generic.common.JAXBUtils;
+import fi.vm.sade.generic.common.auth.xml.AuthzDataHolder;
+import fi.vm.sade.generic.common.auth.xml.ElementNames;
 import fi.vm.sade.generic.service.authz.aspect.AuthzData;
 import fi.vm.sade.generic.service.authz.aspect.AuthzDataThreadLocal;
 import org.apache.cxf.binding.soap.SoapMessage;
@@ -18,7 +21,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
-import javax.xml.bind.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
 import java.util.*;
 
@@ -53,31 +59,31 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
 
     public void handleMessage(SoapMessage soapMessage) throws Fault {
 
-        LOGGER.info("Security Audit handler called - not yet implemented.");
+        LOGGER.info(" -- Security Audit handler called. -- ");
 
         // first, look for authorization data from SOAP header and set it in thread local variable.
         List<Header> headers = soapMessage.getHeaders();
 
         Header header = null;
         for (Header h : headers) {
-            if (h.getName().getLocalPart().equals("AuthzData")) {
+            if (h.getName().getLocalPart().equals(ElementNames.AUTHZ_DATA)) {
                 header = h;
                 break;
             }
         }
 
         if (header == null) {
-            throw new Fault(new org.apache.cxf.common.i18n.Message("SOAP header is null", (ResourceBundle) null, null));
+            throw new Fault(new org.apache.cxf.common.i18n.Message("SOAP header for authorization data is null",
+                    (ResourceBundle) null, null));
         }
 
         Element elem = (Element) header.getObject();
         AuthzDataHolder holder = null;
 
         try {
-            JAXBContext jc = JAXBContext.newInstance(AuthzDataHolder.class);
-            Unmarshaller unmarshaller = jc.createUnmarshaller();
-            JAXBElement<AuthzDataHolder> jaxbElement = unmarshaller.unmarshal(elem, AuthzDataHolder.class);
-            holder = jaxbElement.getValue();
+
+            holder = JAXBUtils.unmarshal(elem, AuthzDataHolder.class);
+
         } catch (JAXBException e) {
             throw new Fault(new org.apache.cxf.common.i18n.Message("Can't read authz data.",
                     (ResourceBundle) null, null));
@@ -99,13 +105,13 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
 
 
         // do audit logging by mining some data out of the request
+
+        String operation = (String) soapMessage.get(Message.WSDL_OPERATION);
+        String iface = (String) soapMessage.get(Message.WSDL_INTERFACE);
+        String user = "";
         List<Object> results = (List<Object>) soapMessage.get(WSHandlerConstants.RECV_RESULTS);
 
         if (results != null) {
-
-            String operation = (String) soapMessage.get(Message.WSDL_OPERATION);
-            String iface = (String) soapMessage.get(Message.WSDL_INTERFACE);
-            String user = "";
 
             for (Object result : results) {
                 WSHandlerResult hr = (WSHandlerResult) result;
@@ -113,8 +119,10 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
                     break;
                 }
                 for (WSSecurityEngineResult engineResult : hr.getResults()) {
-                    if (engineResult != null && engineResult.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN) instanceof UsernameToken) {
-                        UsernameToken usernameToken = (UsernameToken) engineResult.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN);
+                    if (engineResult != null &&
+                            engineResult.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN) instanceof UsernameToken) {
+                        UsernameToken usernameToken =
+                                (UsernameToken) engineResult.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN);
                         user = usernameToken.getName();
                         break;
                     }
@@ -123,8 +131,10 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
                     break;
                 }
             }
-            LOGGER.info("User '" + user + "' called operation " + operation + " in " + iface);
             // TODO audit logging to sade log.
+        } else {
+            // TODO check ticket to get user.
         }
+        LOGGER.info("User '" + user + "' called operation " + operation + " in " + iface);
     }
 }
