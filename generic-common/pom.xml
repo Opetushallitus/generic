@@ -35,7 +35,10 @@
                             com_*;resolution:=optional<!-- com_*... is for
                                 clover -->
                         </Import-Package>
-                        <Export-Package>fi.vm.sade.generic.common</Export-Package>
+                        <Export-Package>
+                            fi.vm.sade.generic.common,
+                            fi.vm.sade.generic.common.auth.xml
+                        </Export-Package>
                     </instructions>
                 </configuration>
             </plugin>
