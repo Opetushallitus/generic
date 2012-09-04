@@ -1,25 +1,18 @@
 package fi.vm.sade.generic.ui.app;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-
-import javax.portlet.PortletRequest;
-import javax.servlet.http.HttpServletRequest;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.util.PortalUtil;
-
-import fi.vm.sade.authentication.constants.LiferayCustomAttributes;
+import fi.vm.sade.generic.auth.LiferayCustomAttributes;
 import fi.vm.sade.generic.ui.portlet.security.AccessRight;
 import fi.vm.sade.generic.ui.portlet.security.SecuritySessionAttributes;
 import fi.vm.sade.generic.ui.portlet.security.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.portlet.PortletRequest;
+import javax.servlet.http.HttpServletRequest;
+import java.util.*;
 
 /**
  * Consider writing this impl in different way that does not stash
