@@ -158,7 +158,7 @@ public class JSR303FieldValidator implements Validator {
         return constraintDescriptor.getConstraintValidatorClasses();
     }
 
-    private String getValidationMessage(Annotation annotation, Object value,
+    private static String getValidationMessage(Annotation annotation, Object value,
             ConstraintDescriptor<?> constraintDescriptor) {
         try {
             String messageTemplate = (String) annotation.annotationType().getMethod("message").invoke(annotation);
@@ -204,11 +204,20 @@ public class JSR303FieldValidator implements Validator {
                     if (propertyDescriptor != null) {
                         ((Field) javaValue).addValidator(new JSR303FieldValidator(form, javaField.getName(),
                                 propertyDescriptor));
-
+                        
                         // set field required
                         if (javaField.isAnnotationPresent(NotNull.class)) {
+                        	Set<ConstraintDescriptor<?>> constraintDescriptors2 = propertyDescriptor.getConstraintDescriptors();
+                        	ConstraintDescriptor<?> notNullDescriptor = null;
+                            for(ConstraintDescriptor<?> constraintDescriptor : constraintDescriptors2) {
+                            	if(constraintDescriptor.getAnnotation() instanceof NotNull) {
+                            		notNullDescriptor = constraintDescriptor;
+                            		break;
+                            	}
+                            }
+                        	
                             ((Field) javaValue).setRequired(true);
-                            ((Field) javaValue).setRequiredError(javaField.getAnnotation(NotNull.class).message());
+                            ((Field) javaValue).setRequiredError(getValidationMessage(javaField.getAnnotation(NotNull.class), null, notNullDescriptor));
                         }
                     }
                 }
