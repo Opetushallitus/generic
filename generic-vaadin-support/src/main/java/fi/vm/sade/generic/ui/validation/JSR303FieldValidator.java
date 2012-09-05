@@ -15,8 +15,13 @@ import javax.validation.metadata.ConstraintDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
 
 import org.hibernate.validator.engine.MessageInterpolatorContext;
+import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.validation.beanvalidation.MessageSourceResourceBundleLocator;
 
 import com.vaadin.data.Validator;
 import com.vaadin.ui.Field;
@@ -35,9 +40,8 @@ import fi.vm.sade.generic.common.I18N;
  * HINT: - You can use same annotations in corresponding JPA model class for
  * service side validation
  * <p/>
- * Supports following JSR-303 annotations: - NotNull, Size, Pattern, MLTextSize
- * <p/>
- * TODO: support for more annotations
+ * When initialized in Spring context, can also find I18N keys from message sources 
+ * present in application context.
  * <p/>
  * Example:
  * <p/>
@@ -60,7 +64,7 @@ import fi.vm.sade.generic.common.I18N;
  * 
  * @author Antti Salonen
  */
-public class JSR303FieldValidator implements Validator {
+public class JSR303FieldValidator implements Validator, ApplicationContextAware {
 
     private static final Logger log = LoggerFactory.getLogger(JSR303FieldValidator.class);
     private static ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
@@ -77,6 +81,13 @@ public class JSR303FieldValidator implements Validator {
     private Object form;
     private String property;
 
+    /**
+     * Default constructor should only be called from Spring context.
+     */
+    public JSR303FieldValidator() {
+		
+	}
+    
     public JSR303FieldValidator(Object form, String property) {
         this(form, property, null);
     }
@@ -227,4 +238,19 @@ public class JSR303FieldValidator implements Validator {
             }
         }
     }
+
+	public static MessageInterpolator getMessageInterpolator() {
+		return messageInterpolator;
+	}
+
+	public static void setMessageInterpolator(
+			MessageInterpolator messageInterpolator) {
+		JSR303FieldValidator.messageInterpolator = messageInterpolator;
+	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext)
+			throws BeansException {
+		messageInterpolator = new ResourceBundleMessageInterpolator(new MessageSourceResourceBundleLocator(applicationContext));
+	}
 }
