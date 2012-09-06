@@ -3,6 +3,7 @@ package fi.vm.sade.generic.service.authz.interceptor;
 import fi.vm.sade.generic.common.JAXBUtils;
 import fi.vm.sade.generic.common.auth.xml.AuthzDataHolder;
 import fi.vm.sade.generic.common.auth.xml.ElementNames;
+import fi.vm.sade.generic.common.auth.xml.Organisation;
 import fi.vm.sade.generic.service.authz.aspect.AuthzData;
 import fi.vm.sade.generic.service.authz.aspect.AuthzDataThreadLocal;
 import org.apache.cxf.binding.soap.SoapMessage;
@@ -93,8 +94,16 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
 
             LOGGER.info("Got authz data: " + holder.organisations.toString());
 
-            AuthzData ad = new AuthzData(holder.organisations);
+            Set<Organisation> organisations = holder.organisations;
+            Map<String, AuthzData.Organisation> map = new HashMap<String, AuthzData.Organisation>();
+
+            for (Organisation organisation : organisations) {
+                map.put(organisation.oid, new AuthzData.Organisation(organisation.children, organisation.roles));
+            }
+
+            AuthzData ad = new AuthzData(map);
             AuthzDataThreadLocal.set(ad);
+
         } else {
             // if this interceptor is configured, it assumes the data will be found.
             org.apache.cxf.common.i18n.Message msg =

@@ -16,4 +16,6 @@ public class ElementNames {
     public static final String AUTHENTICATION_FAILED = "AuthenticationFailed";
 
     public static final QName SECURITY_TICKET_QNAME = new QName(SADE_URI, SECURITY_TICKET);
+    public static final String OID = "oid";
+    public static final String ORG_CHILD = "child";
 }

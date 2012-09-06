@@ -10,17 +10,36 @@ import java.util.Set;
  */
 public class AuthzData {
 
-    private Map<String, Set<String>> dataMap;
+    private Map<String, Organisation> dataMap;
 
-    public AuthzData(Map<String, Set<String>> dataMap) {
+    public AuthzData(Map<String, Organisation> dataMap) {
         this.dataMap = dataMap;
     }
 
-    public Map<String, Set<String>> getDataMap() {
+    public Map<String, Organisation> getDataMap() {
         return dataMap;
     }
 
-    public void setDataMap(Map<String, Set<String>> dataMap) {
+    public void setDataMap(Map<String, Organisation> dataMap) {
         this.dataMap = dataMap;
+    }
+
+    public static class Organisation {
+
+        public Organisation(Set<String> children, Set<String> roles) {
+            this.children = children;
+            this.roles = roles;
+        }
+
+        public Set<String> children;
+        public Set<String> roles;
+
+        @Override
+        public String toString() {
+            return "Organisation{" +
+                    "children=" + children +
+                    ", roles=" + roles +
+                    '}';
+        }
     }
 }

@@ -6,6 +6,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -15,7 +16,10 @@ import java.util.Set;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AuthzDataHolder {
 
-    @XmlElement
-    @XmlJavaTypeAdapter(AuthzDataXmlAdapter.class)
-    public HashMap<String, Set<String>> organisations;
+    @XmlElement(name = ElementNames.ORGANISAATIO)
+    public Set<Organisation> organisations = new HashSet<Organisation>();
+
+//    @XmlElement
+//    @XmlJavaTypeAdapter(AuthzDataXmlAdapter.class)
+//    public HashMap<String, Set<String>> organisations;
 }

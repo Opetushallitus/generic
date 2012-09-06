@@ -17,4 +17,8 @@ public enum Role {
         }
         return null;
     }
+
+    public String toString(){
+        return name();
+    }
 }

@@ -1,5 +1,6 @@
 package fi.vm.sade.generic.service.authz.aspect;
 
+import fi.vm.sade.generic.common.auth.Role;
 import fi.vm.sade.generic.common.auth.annotation.RequiresRole;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -9,6 +10,8 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,40 +38,47 @@ public class AuthorizingAspect {
         try {
             LOGGER.info("Intercepting serviceMethod() call to " + pjp.getSignature().getName());
 
+            boolean authorized = false;
+            MethodSignature sig = (MethodSignature) pjp.getSignature();
             AuthzData authzData = AuthzDataThreadLocal.get();
 
-            LOGGER.info("Authzdata: " + authzData);
-
-            boolean authorized = false;
-
-            MethodSignature sig = (MethodSignature) pjp.getSignature();
-
-            LOGGER.info(sig.getDeclaringTypeName() + " - " + sig.getMethod());
+            LOGGER.info("Authzdata: " + authzData.getDataMap());
 
             RequiresRole annotation = pjp.getTarget().getClass().getMethod(sig.getName(),
                     sig.getParameterTypes()).getAnnotation(RequiresRole.class);
 
             if (annotation == null) {
-                throw new RuntimeException(sig.getMethod().getName() +  " - RequiresRole missing.");
+                throw new RuntimeException(sig.getMethod().getName() + " - RequiresRole missing.");
             }
 
-            String[] roleNames = annotation.roleNames();
+            Role[] roles = annotation.roles();
 
-            for (String roleName : roleNames) {
-                for (Map.Entry<String, Set<String>> entry : authzData.getDataMap().entrySet()) {
-                    if (entry.getValue().contains(roleName)) {
-                        authorized = true;
+            if(Arrays.asList(roles).contains(Role.NOT_REQUIRED)){
+                authorized = true;
+            }
+
+
+            if (!authorized) {
+                LOGGER.info("Method requires one of roles: " + Arrays.toString(roles));
+
+                for (Role role : roles) {
+                    for (Map.Entry<String, AuthzData.Organisation> entry : authzData.getDataMap().entrySet()) {
+                        if (entry.getValue().roles.contains(role.name())) {
+                            authorized = true;
+                            break;
+                        }
+                    }
+                    if (authorized) {
                         break;
                     }
-                }
-                if (authorized) {
-                    break;
                 }
             }
 
             if (!authorized) {
                 throw new RuntimeException("Not authorized.");
             }
+
+            LOGGER.info(" -- Authorized! -- ");
             // proceed to actual method call
             return pjp.proceed();
 

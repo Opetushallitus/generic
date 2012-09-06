@@ -1,5 +1,7 @@
 package fi.vm.sade.generic.common.auth.annotation;
 
+import fi.vm.sade.generic.common.auth.Role;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -12,6 +14,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface RequiresRole {
 
-    String[] roleNames();
+    Role[] roles();
 }
 
