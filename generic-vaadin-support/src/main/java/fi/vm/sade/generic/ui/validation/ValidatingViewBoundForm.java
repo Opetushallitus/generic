@@ -25,49 +25,55 @@ public class ValidatingViewBoundForm extends ViewBoundForm {
     /**
 	 * 
 	 */
-	private static final long serialVersionUID = -5199327413366176132L;
+    private static final long serialVersionUID = -5199327413366176132L;
 
     public ValidatingViewBoundForm(ComponentContainer form) {
         super(form);
+
+        // We don't want the form to show any errors the way Vaadin does it. You
+        // should use fi.vm.sade.generic.ui.validation.ErrorMessage to show
+        // errors on form
+        setValidationVisible(false);
+        setValidationVisibleOnCommit(false);
     }
 
     @Override
     public void validate() throws Validator.InvalidValueException {
         try {
-			super.validate();
-			// It's already valid.
-			return;
-		} catch (Validator.InvalidValueException e) {
-			// Exception thrown, create the list.
-		}
+            super.validate();
+            // It's already valid.
+            return;
+        } catch (Validator.InvalidValueException e) {
+            // Exception thrown, create the list.
+        }
 
         List<InvalidValueException> errors = new ArrayList<Validator.InvalidValueException>();
-        
+
         for (final Iterator<?> i = getItemPropertyIds().iterator(); i.hasNext();) {
-        	Object itemPropertyId = i.next();
-        	Field field = getField(itemPropertyId);
-        	
-        	if(field instanceof AbstractComponent) {
-				((AbstractComponent) field).setComponentError(null);
-        	}
-        	
+            Object itemPropertyId = i.next();
+            Field field = getField(itemPropertyId);
+
+            if (field instanceof AbstractComponent) {
+                ((AbstractComponent) field).setComponentError(null);
+            }
+
             try {
-				field.validate();
+                field.validate();
             } catch (EmptyValueException e) {
-            	if(field instanceof AbstractField) {
-            		((AbstractField) field).setValidationVisible(true);
-            	}
-            	errors.add(e);
+                if (field instanceof AbstractField) {
+                    ((AbstractField) field).setValidationVisible(true);
+                }
+                errors.add(e);
             } catch (InvalidValueException e) {
-				if(field instanceof AbstractComponent && field.getRequiredError() == null) {
-					((AbstractComponent) field).setComponentError(new UserError(e.getMessage()));
-				}
-				errors.add(e);
-			}
+                if (field instanceof AbstractComponent && field.getRequiredError() == null) {
+                    ((AbstractComponent) field).setComponentError(new UserError(e.getMessage()));
+                }
+                errors.add(e);
+            }
         }
-        
-        if(!errors.isEmpty()) {
-        	throw new InvalidValueException(getRequiredError(), errors.toArray(new InvalidValueException[0]));
+
+        if (!errors.isEmpty()) {
+            throw new InvalidValueException(getRequiredError(), errors.toArray(new InvalidValueException[0]));
         }
     }
 }
