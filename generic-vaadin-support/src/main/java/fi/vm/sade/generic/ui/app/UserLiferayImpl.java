@@ -23,6 +23,8 @@ import java.util.*;
  */
 public class UserLiferayImpl implements User {
 
+    private static final long serialVersionUID = 1L;
+
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
     private PortletRequest portletRequest;
