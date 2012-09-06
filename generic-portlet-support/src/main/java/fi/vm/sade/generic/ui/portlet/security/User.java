@@ -1,10 +1,11 @@
 package fi.vm.sade.generic.ui.portlet.security;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-public interface User {
+public interface User extends Serializable {
 
     public boolean isUserInRole(String role);
 
