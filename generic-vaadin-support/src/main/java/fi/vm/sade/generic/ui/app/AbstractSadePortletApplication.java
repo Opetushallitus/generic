@@ -27,6 +27,7 @@ import com.vaadin.service.ApplicationContext;
 import com.vaadin.terminal.gwt.server.PortletRequestListener;
 
 import fi.vm.sade.generic.ui.portlet.security.User;
+import fi.vm.sade.generic.ui.portlet.security.UserMock;
 
 /**
  * @author Antti
@@ -40,22 +41,16 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
 
     @Override
     public void onRequestStart(PortletRequest portletRequest, PortletResponse portletResponse) {
-        User user = new UserLiferayImpl(portletRequest);
-        setUser(user);
+        // User user = new UserLiferayImpl(portletRequest);
+        User user = new UserMock();
+        // setUser(user);
         setLocale(user.getLang());
-    }
-
-    public User getUser() {
-        return (User) super.getUser();
-    }
-
-    @Override
-    protected void setTheme() {
-        // DO NOT CALL SUPER, PORTLETS DO NOT SET THEME
+        userThreadLocal.set(user);
     }
 
     @Override
     public void onRequestEnd(PortletRequest portletRequest, PortletResponse portletResponse) {
+        userThreadLocal.remove();
     }
 
     @Override

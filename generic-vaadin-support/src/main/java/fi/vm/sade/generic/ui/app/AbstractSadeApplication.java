@@ -31,6 +31,8 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.Window;
 
 import fi.vm.sade.generic.common.I18N;
+import fi.vm.sade.generic.ui.portlet.security.User;
+import fi.vm.sade.generic.ui.portlet.security.UserMock;
 
 /**
  * Super class for sade vaadin based vaadin applications, handles locale.
@@ -44,12 +46,9 @@ public abstract class AbstractSadeApplication extends Application implements Htt
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
-    /**
-     * System default locale - defined to be "fi".
-     */
     public static final String DEFAULT_LOCALE = "fi_FI";
 
-    // protected Locale sessionLocale = new Locale(DEFAULT_LOCALE);
+    protected static ThreadLocal<User> userThreadLocal = new ThreadLocal<User>();
 
     /**
      * When overriding this method, remember to call super as the first thing.
@@ -57,11 +56,10 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     @Override
     public void init() {
         setErrorHandler(this);
-        setTheme();
     }
 
-    protected void setTheme() {
-        this.setTheme("oph");
+    public User getUser() {
+        return userThreadLocal.get();
     }
 
     /*
@@ -115,14 +113,16 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     @Override
     public void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
         // NO SUPER
-        setUser(new UserLiferayImpl(request));
-        setLang(getParameter(request, "lang"));
+        // User user = new UserLiferayImpl(request);
+        User user = new UserMock();
+        userThreadLocal.set(user);
+        setLocale(user.getLang());
     }
 
     @Override
     public void onRequestEnd(HttpServletRequest request, HttpServletResponse response) {
         // NO SUPER
-        // empty
+        userThreadLocal.remove();
     }
 
     /**
