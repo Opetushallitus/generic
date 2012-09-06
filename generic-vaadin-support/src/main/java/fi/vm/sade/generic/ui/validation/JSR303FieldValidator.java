@@ -24,6 +24,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.validation.beanvalidation.MessageSourceResourceBundleLocator;
 
 import com.vaadin.data.Validator;
+import com.vaadin.ui.AbstractField;
 import com.vaadin.ui.Field;
 
 import fi.vm.sade.generic.common.ClassUtils;
@@ -66,7 +67,11 @@ import fi.vm.sade.generic.common.I18N;
  */
 public class JSR303FieldValidator implements Validator, ApplicationContextAware {
 
-    private static final Logger log = LoggerFactory.getLogger(JSR303FieldValidator.class);
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -4965493581301870157L;
+	private static final Logger log = LoggerFactory.getLogger(JSR303FieldValidator.class);
     private static ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     private static javax.validation.Validator javaxValidator = factory.getValidator();
     private static MessageInterpolator messageInterpolator = factory.getMessageInterpolator();
@@ -110,7 +115,7 @@ public class JSR303FieldValidator implements Validator, ApplicationContextAware 
         String message = null;
         InvalidValueException invalidValueException = null;
 
-        for (ConstraintDescriptor constraintDescriptor : constraintDescriptors) {
+        for (ConstraintDescriptor<?> constraintDescriptor : constraintDescriptors) {
 
             boolean b = validateByTrialAndError(constraintDescriptor, value);
 
@@ -144,7 +149,7 @@ public class JSR303FieldValidator implements Validator, ApplicationContextAware 
      * @return initialized constraint validator for constraintDescriptor's
      *         annotation
      */
-    private boolean validateByTrialAndError(ConstraintDescriptor constraintDescriptor, Object value) {
+    private boolean validateByTrialAndError(ConstraintDescriptor<?> constraintDescriptor, Object value) {
 
         final List<Class<? extends ConstraintValidator<Annotation, Object>>> constraintValidatorClasses = getValidatorClasses(constraintDescriptor);
         ConstraintValidator<Annotation, Object> constraintValidatator = null;
@@ -229,6 +234,9 @@ public class JSR303FieldValidator implements Validator, ApplicationContextAware 
                         	
                             ((Field) javaValue).setRequired(true);
                             ((Field) javaValue).setRequiredError(getValidationMessage(javaField.getAnnotation(NotNull.class), null, notNullDescriptor));
+                            if(javaValue instanceof AbstractField) {
+                            	((AbstractField) javaValue).setValidationVisible(false);
+                            }
                         }
                     }
                 }
