@@ -32,7 +32,6 @@ import com.vaadin.ui.Window;
 
 import fi.vm.sade.generic.common.I18N;
 import fi.vm.sade.generic.ui.portlet.security.User;
-import fi.vm.sade.generic.ui.portlet.security.UserMock;
 
 /**
  * Super class for sade vaadin based vaadin applications, handles locale.
@@ -113,8 +112,8 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     @Override
     public void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
         // NO SUPER
-        // User user = new UserLiferayImpl(request);
-        User user = new UserMock();
+        User user = new UserLiferayImpl(request);
+        // User user = new UserMock();
         userThreadLocal.set(user);
         setLocale(user.getLang());
     }
