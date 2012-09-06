@@ -42,7 +42,10 @@ public class AuthorizingAspect {
             MethodSignature sig = (MethodSignature) pjp.getSignature();
             AuthzData authzData = AuthzDataThreadLocal.get();
 
-            LOGGER.info("Authzdata: " + authzData.getDataMap());
+            LOGGER.info("User " + authzData.getUser() + " calling operation " + sig.getMethod().getName()
+                    + " in " + sig.getDeclaringType());
+
+            LOGGER.info("Authzdata: " + authzData);
 
             RequiresRole annotation = pjp.getTarget().getClass().getMethod(sig.getName(),
                     sig.getParameterTypes()).getAnnotation(RequiresRole.class);
@@ -75,6 +78,7 @@ public class AuthorizingAspect {
             }
 
             if (!authorized) {
+                LOGGER.info(" -- Not authorized. -- ");
                 throw new RuntimeException("Not authorized.");
             }
 

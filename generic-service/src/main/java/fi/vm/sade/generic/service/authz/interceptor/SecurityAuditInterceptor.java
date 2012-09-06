@@ -4,6 +4,7 @@ import fi.vm.sade.generic.common.JAXBUtils;
 import fi.vm.sade.generic.common.auth.xml.AuthzDataHolder;
 import fi.vm.sade.generic.common.auth.xml.ElementNames;
 import fi.vm.sade.generic.common.auth.xml.Organisation;
+import fi.vm.sade.generic.common.auth.xml.TicketHeader;
 import fi.vm.sade.generic.service.authz.aspect.AuthzData;
 import fi.vm.sade.generic.service.authz.aspect.AuthzDataThreadLocal;
 import org.apache.cxf.binding.soap.SoapMessage;
@@ -60,7 +61,7 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
 
     public void handleMessage(SoapMessage soapMessage) throws Fault {
 
-        LOGGER.info(" -- Security Audit handler called. -- ");
+        LOGGER.info(" -- Authorization data handler -- ");
 
         // first, look for authorization data from SOAP header and set it in thread local variable.
         List<Header> headers = soapMessage.getHeaders();
@@ -91,9 +92,6 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
         }
 
         if (holder != null) {
-
-            LOGGER.info("Got authz data: " + holder.organisations.toString());
-
             Set<Organisation> organisations = holder.organisations;
             Map<String, AuthzData.Organisation> map = new HashMap<String, AuthzData.Organisation>();
 
@@ -102,7 +100,51 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
             }
 
             AuthzData ad = new AuthzData(map);
+
+            String user = null;
+
+            // find user for authz data
+            List<Object> results = (List<Object>) soapMessage.get(WSHandlerConstants.RECV_RESULTS);
+
+            if (results != null) {
+
+                 // TODO this doesn't work, find the user from WS-Security headers some other way.
+
+                for (Object result : results) {
+                    WSHandlerResult hr = (WSHandlerResult) result;
+                    if (hr == null || hr.getResults() == null) {
+                        break;
+                    }
+                    for (WSSecurityEngineResult engineResult : hr.getResults()) {
+                        if (engineResult != null &&
+                                engineResult.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN) instanceof UsernameToken) {
+                            UsernameToken usernameToken =
+                                    (UsernameToken) engineResult.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN);
+                            user = usernameToken.getName();
+                            break;
+                        }
+                    }
+                    if (user != null) {
+                        break;
+                    }
+                }
+            } else {
+                Header h = soapMessage.getHeader(ElementNames.SECURITY_TICKET_QNAME);
+                if(h != null){
+                    try {
+                        TicketHeader th = JAXBUtils.unmarshal((Element)h.getObject(), TicketHeader.class);
+                        user = th.username;
+
+                    } catch (JAXBException e) {
+                        throw new Fault(e, ElementNames.FAULT_Q_NAME);
+                    }
+                }
+            }
+
+            ad.setUser(user);
             AuthzDataThreadLocal.set(ad);
+
+            LOGGER.info(" -- Security data transformed for thread. -- ");
 
         } else {
             // if this interceptor is configured, it assumes the data will be found.
@@ -111,39 +153,5 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
                             (ResourceBundle) null, null);
             throw new Fault(msg);
         }
-
-
-        // do audit logging by mining some data out of the request
-
-        String operation = (String) soapMessage.get(Message.WSDL_OPERATION);
-        String iface = (String) soapMessage.get(Message.WSDL_INTERFACE);
-        String user = "";
-        List<Object> results = (List<Object>) soapMessage.get(WSHandlerConstants.RECV_RESULTS);
-
-        if (results != null) {
-
-            for (Object result : results) {
-                WSHandlerResult hr = (WSHandlerResult) result;
-                if (hr == null || hr.getResults() == null) {
-                    break;
-                }
-                for (WSSecurityEngineResult engineResult : hr.getResults()) {
-                    if (engineResult != null &&
-                            engineResult.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN) instanceof UsernameToken) {
-                        UsernameToken usernameToken =
-                                (UsernameToken) engineResult.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN);
-                        user = usernameToken.getName();
-                        break;
-                    }
-                }
-                if (user != null) {
-                    break;
-                }
-            }
-            // TODO audit logging to sade log.
-        } else {
-            // TODO check ticket to get user.
-        }
-        LOGGER.info("User '" + user + "' called operation " + operation + " in " + iface);
     }
 }

@@ -13,6 +13,7 @@ public class ElementNames {
     public static final String SECURITY_TICKET = "SecurityTicket";
     public static final String SADE_URI = "http://service.sade.vm.fi";
     public static final String NOT_AUTHORIZED = "NotAuthorized";
+    public static final QName FAULT_Q_NAME = new QName(SADE_URI, NOT_AUTHORIZED);
     public static final String AUTHENTICATION_FAILED = "AuthenticationFailed";
 
     public static final QName SECURITY_TICKET_QNAME = new QName(SADE_URI, SECURITY_TICKET);

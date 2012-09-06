@@ -10,6 +10,7 @@ import java.util.Set;
  */
 public class AuthzData {
 
+    private String user;
     private Map<String, Organisation> dataMap;
 
     public AuthzData(Map<String, Organisation> dataMap) {
@@ -22,6 +23,22 @@ public class AuthzData {
 
     public void setDataMap(Map<String, Organisation> dataMap) {
         this.dataMap = dataMap;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    @Override
+    public String toString() {
+        return "AuthzData{" +
+                "user='" + user + '\'' +
+                ", dataMap=" + dataMap +
+                '}';
     }
 
     public static class Organisation {
