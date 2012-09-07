@@ -10,7 +10,7 @@
         <property name="callback" ref="callback" />
     </bean>
 
-    <bean id="callback" class="fi.vm.sade.generic.auth.LiferaySecurityTicketCallback">
+    <bean id="callback" class="fi.vm.sade.generic.ui.app.LiferaySecurityTicketCallback">
 
     </bean>
 
