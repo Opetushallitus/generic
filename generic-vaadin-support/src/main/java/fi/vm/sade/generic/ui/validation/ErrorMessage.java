@@ -24,6 +24,7 @@ public class ErrorMessage extends CustomComponent {
     public ErrorMessage() {
         setCompositionRoot(mainLayout);
         addStyleName("error-container");
+        setVisible(false);
     }
 
     public ErrorMessage(InvalidValueException e) {
@@ -45,10 +46,12 @@ public class ErrorMessage extends CustomComponent {
         errorLabel.addStyleName("error");
         mainLayout.addComponent(errorLabel);
         hasErrors = true;
+        setVisible(true);
     }
 
     public void resetErrors() {
         hasErrors = false;
+        setVisible(false);
         mainLayout.removeAllComponents();
     }
 
