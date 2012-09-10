@@ -60,6 +60,13 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     public User getUser() {
         return userThreadLocal.get();
     }
+    
+    
+
+    @Override
+    public void setUser(Object user) {
+        throw new RuntimeException("DO NOT USE SET USER, THIS HAS BEEN OVERWRITTEN IN AbstractSadeApplication");
+    }
 
     /*
      * override Application.setLocale to set locale also to I18N and to the
@@ -113,7 +120,6 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     public void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
         // NO SUPER
         User user = new UserLiferayImpl(request);
-        // User user = new UserMock();
         userThreadLocal.set(user);
         setLocale(user.getLang());
     }
