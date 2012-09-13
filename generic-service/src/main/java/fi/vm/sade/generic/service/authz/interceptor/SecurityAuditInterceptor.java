@@ -38,6 +38,7 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityAuditInterceptor.class);
     private static final Set<QName> HEADERS = new HashSet<QName>();
     private static ThreadLocal<Map<String, Set<String>>> foo;
+    private boolean ignoreMissing = false;
 
     static {
         HEADERS.add(new QName(WSConstants.WSSE_NS, WSConstants.WSSE_LN));
@@ -75,8 +76,13 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
         }
 
         if (header == null) {
+            if(!ignoreMissing){
             throw new Fault(new org.apache.cxf.common.i18n.Message("SOAP header for authorization data is null",
                     (ResourceBundle) null, null));
+            }else{
+                // missing header can be ignored. Nothing to do then, return...
+                return;
+            }
         }
 
         Element elem = (Element) header.getObject();
@@ -153,5 +159,9 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
                             (ResourceBundle) null, null);
             throw new Fault(msg);
         }
+    }
+
+    public void setIgnoreMissing(boolean ignoreMissing) {
+        this.ignoreMissing = ignoreMissing;
     }
 }

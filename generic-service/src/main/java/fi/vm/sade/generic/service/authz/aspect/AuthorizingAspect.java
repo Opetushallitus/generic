@@ -2,6 +2,7 @@ package fi.vm.sade.generic.service.authz.aspect;
 
 import fi.vm.sade.generic.common.auth.Role;
 import fi.vm.sade.generic.common.auth.annotation.RequiresRole;
+import fi.vm.sade.generic.service.exception.NotAuthorizedException;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -44,11 +45,6 @@ public class AuthorizingAspect {
             MethodSignature sig = (MethodSignature) pjp.getSignature();
             AuthzData authzData = AuthzDataThreadLocal.get();
 
-            LOGGER.info("User " + authzData.getUser() + " calling operation " + sig.getMethod().getName()
-                    + " in " + sig.getDeclaringType());
-
-            LOGGER.info("Authzdata: " + authzData);
-
             RequiresRole annotation = pjp.getTarget().getClass().getMethod(sig.getName(),
                     sig.getParameterTypes()).getAnnotation(RequiresRole.class);
 
@@ -62,6 +58,14 @@ public class AuthorizingAspect {
                 authorized = true;
             }
 
+            String user = "";
+
+            if(authzData != null){
+                user = authzData.getUser();
+            }
+
+            LOGGER.info("User '" + user + "' calling operation " + sig.getMethod().getName()
+                    + " in " + sig.getDeclaringType());
 
             if (!authorized) {
                 LOGGER.info("Method requires one of roles: " + Arrays.toString(roles));
@@ -81,7 +85,7 @@ public class AuthorizingAspect {
 
             if (!authorized) {
                 LOGGER.info(" -- Not authorized. -- ");
-                throw new RuntimeException("Not authorized.");
+                throw new NotAuthorizedException("Not authorized.");
             }
 
             LOGGER.info(" -- Authorized! -- ");
