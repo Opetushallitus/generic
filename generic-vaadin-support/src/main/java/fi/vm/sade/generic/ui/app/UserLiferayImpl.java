@@ -154,8 +154,9 @@ public class UserLiferayImpl implements User {
         if (portletRequest != null) {
             try {
                 for (com.liferay.portal.model.Organization o : getLiferayUser().getOrganizations()) {
-                    organisaatioOids.add((String) o.getExpandoBridge().getAttribute(
-                            LiferayCustomAttributes.ORGANISAATIO_OID));
+                	String organizationOid = (String) o.getExpandoBridge().getAttribute(LiferayCustomAttributes.ORGANISAATIO_OID);
+                	log.info("Adding organization oid to user: " + organizationOid);
+                    organisaatioOids.add(organizationOid);
                 }
             } catch (PortalException e) {
                 log.error("Failed to get organizations for Liferay User, PortalException", e);
