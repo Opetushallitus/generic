@@ -17,11 +17,10 @@ import org.apache.cxf.headers.Header;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.phase.Phase;
 import org.apache.ws.security.WSConstants;
+import org.apache.ws.security.util.WSSecurityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import fi.vm.sade.generic.common.JAXBUtils;
 import fi.vm.sade.generic.common.auth.xml.AuthzDataHolder;
@@ -113,27 +112,23 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
             String user = null;
 
             // find user for authz data
-
             Header h = soapMessage.getHeader(ElementNames.SECURITY_HEADER_QN);
             if (h != null) {
 
                 // TODO: korvata unmarshallilla
-                Element object = (Element) h.getObject();
-                NodeList elementsByTagName = object.getElementsByTagNameNS(ElementNames.WSS,
-                        ElementNames.USERNAME_TOKEN);
-                for (int i = 0; i < elementsByTagName.getLength(); i++) {
-                    Node item = elementsByTagName.item(i);
-
-                    for (int j = 0; j < item.getChildNodes().getLength(); j++) {
-                        Node item2 = item.getChildNodes().item(j);
-                        if (item2.getLocalName().equals(ElementNames.USERNAME)) {
-                            user = item2.getTextContent();
-                        }
-                    }
-
-                    // SecurityHeader th = JAXBUtils.unmarshal(item, //
-                    // SecurityHeader.class);
+                Element username = WSSecurityUtil.findElement((Element) h.getObject(), ElementNames.USERNAME,
+                        ElementNames.WSS);
+                if (username != null) {
+                    user = username.getTextContent();
+                } else {
+                    org.apache.cxf.common.i18n.Message msg = new org.apache.cxf.common.i18n.Message(
+                            "Username not found", (ResourceBundle) null, null);
+                    throw new Fault(msg, ElementNames.FAULT_Q_NAME);
                 }
+
+                // SecurityHeader th =
+                // JAXBUtils.unmarshal(item,SecurityHeader.class);
+
             } else {
                 h = soapMessage.getHeader(ElementNames.SECURITY_TICKET_QNAME);
                 if (h != null) {
