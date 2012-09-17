@@ -19,14 +19,18 @@ public abstract class AbstractPortalSmokeTst extends SeleniumTestCaseSupport {
     }
 
     public void loginToPortal() {
+        loginToPortal("joebloggs", "oph");
+    }
+
+    public void loginToPortal(String username, String password) {
         int attempts = 5;
         for (int i = 1; i <= attempts; i++) {
             try {
                 log.info("loginToPortal...");
                 openRelative(":8180/c/portal/logout"); // first logout
                 openRelative(":8180/c/portal/login");
-                SeleniumUtils.input("_58_login", "joebloggs");
-                SeleniumUtils.input("_58_password", "oph");
+                SeleniumUtils.input("_58_login", username);
+                SeleniumUtils.input("_58_password", password);
                 driver.findElement(By.xpath("//input[@type='submit']")).click();
                 break;
             } catch (NullPointerException e) {
