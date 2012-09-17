@@ -116,25 +116,6 @@ public class UserLiferayImpl implements User {
         return null;
     }
 
-    // @Override
-    // public String getPassword() {
-    // if (this.portletRequest != null) {
-    // try {
-    // return PortalUtil.getUser(this.portletRequest).getPassword();
-    // } catch (PortalException e) {
-    // log.error("PortalException: PortalUtil.getUser(this.portletRequest).getPassword() failed",
-    // e);
-    // } catch (SystemException e) {
-    // log.error("SystemException: PortalUtil.getUser(this.portletRequest).getPassword() failed",
-    // e);
-    // }
-    // } else if (this.servletRequest != null) {
-    //
-    // }
-    // return null;
-    //
-    // }
-
     private com.liferay.portal.model.User getLiferayUser() {
         try {
             return PortalUtil.getUser(this.portletRequest);
@@ -154,8 +135,8 @@ public class UserLiferayImpl implements User {
         if (portletRequest != null) {
             try {
                 for (com.liferay.portal.model.Organization o : getLiferayUser().getOrganizations()) {
-                	String organizationOid = (String) o.getExpandoBridge().getAttribute(LiferayCustomAttributes.ORGANISAATIO_OID);
-                	log.info("Adding organization oid to user: " + organizationOid);
+                    String organizationOid = (String) o.getExpandoBridge().getAttribute(LiferayCustomAttributes.ORGANISAATIO_OID, false);
+                    log.info("Adding organization oid to user: " + organizationOid);
                     organisaatioOids.add(organizationOid);
                 }
             } catch (PortalException e) {
