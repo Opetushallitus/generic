@@ -1,5 +1,28 @@
 package fi.vm.sade.generic.service.authz.interceptor;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.Set;
+
+import javax.xml.bind.JAXBException;
+import javax.xml.namespace.QName;
+
+import org.apache.cxf.binding.soap.SoapMessage;
+import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
+import org.apache.cxf.binding.soap.interceptor.SoapActionInInterceptor;
+import org.apache.cxf.headers.Header;
+import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.phase.Phase;
+import org.apache.ws.security.WSConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import fi.vm.sade.generic.common.JAXBUtils;
 import fi.vm.sade.generic.common.auth.xml.AuthzDataHolder;
 import fi.vm.sade.generic.common.auth.xml.ElementNames;
@@ -7,28 +30,6 @@ import fi.vm.sade.generic.common.auth.xml.Organisation;
 import fi.vm.sade.generic.common.auth.xml.TicketHeader;
 import fi.vm.sade.generic.service.authz.aspect.AuthzData;
 import fi.vm.sade.generic.service.authz.aspect.AuthzDataThreadLocal;
-import org.apache.cxf.binding.soap.SoapMessage;
-import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
-import org.apache.cxf.binding.soap.interceptor.SoapActionInInterceptor;
-import org.apache.cxf.headers.Header;
-import org.apache.cxf.interceptor.Fault;
-import org.apache.cxf.message.Message;
-import org.apache.cxf.phase.Phase;
-import org.apache.ws.security.WSConstants;
-import org.apache.ws.security.WSSecurityEngineResult;
-import org.apache.ws.security.handler.WSHandlerConstants;
-import org.apache.ws.security.handler.WSHandlerResult;
-import org.apache.ws.security.message.token.UsernameToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Element;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.namespace.QName;
-import java.util.*;
 
 /**
  * @author Eetu Blomqvist
@@ -64,11 +65,13 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
 
         LOGGER.info(" -- Authorization data handler -- ");
 
-        // first, look for authorization data from SOAP header and set it in thread local variable.
+        // first, look for authorization data from SOAP header and set it in
+        // thread local variable.
         List<Header> headers = soapMessage.getHeaders();
 
         Header header = null;
         for (Header h : headers) {
+
             if (h.getName().getLocalPart().equals(ElementNames.AUTHZ_DATA)) {
                 header = h;
                 break;
@@ -76,10 +79,10 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
         }
 
         if (header == null) {
-            if(!ignoreMissing){
-            throw new Fault(new org.apache.cxf.common.i18n.Message("SOAP header for authorization data is null",
-                    (ResourceBundle) null, null));
-            }else{
+            if (!ignoreMissing) {
+                throw new Fault(new org.apache.cxf.common.i18n.Message("SOAP header for authorization data is null",
+                        (ResourceBundle) null, null));
+            } else {
                 // missing header can be ignored. Nothing to do then, return...
                 return;
             }
@@ -93,8 +96,8 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
             holder = JAXBUtils.unmarshal(elem, AuthzDataHolder.class);
 
         } catch (JAXBException e) {
-            throw new Fault(new org.apache.cxf.common.i18n.Message("Can't read authz data.",
-                    (ResourceBundle) null, null));
+            throw new Fault(new org.apache.cxf.common.i18n.Message("Can't read authz data.", (ResourceBundle) null,
+                    null));
         }
 
         if (holder != null) {
@@ -110,35 +113,32 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
             String user = null;
 
             // find user for authz data
-            List<Object> results = (List<Object>) soapMessage.get(WSHandlerConstants.RECV_RESULTS);
 
-            if (results != null) {
+            Header h = soapMessage.getHeader(ElementNames.SECURITY_HEADER_QN);
+            if (h != null) {
 
-                 // TODO this doesn't work, find the user from WS-Security headers some other way.
+                // TODO: korvata unmarshallilla
+                Element object = (Element) h.getObject();
+                NodeList elementsByTagName = object.getElementsByTagNameNS(ElementNames.WSS,
+                        ElementNames.USERNAME_TOKEN);
+                for (int i = 0; i < elementsByTagName.getLength(); i++) {
+                    Node item = elementsByTagName.item(i);
 
-                for (Object result : results) {
-                    WSHandlerResult hr = (WSHandlerResult) result;
-                    if (hr == null || hr.getResults() == null) {
-                        break;
-                    }
-                    for (WSSecurityEngineResult engineResult : hr.getResults()) {
-                        if (engineResult != null &&
-                                engineResult.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN) instanceof UsernameToken) {
-                            UsernameToken usernameToken =
-                                    (UsernameToken) engineResult.get(WSSecurityEngineResult.TAG_USERNAME_TOKEN);
-                            user = usernameToken.getName();
-                            break;
+                    for (int j = 0; j < item.getChildNodes().getLength(); j++) {
+                        Node item2 = item.getChildNodes().item(j);
+                        if (item2.getLocalName().equals(ElementNames.USERNAME)) {
+                            user = item2.getTextContent();
                         }
                     }
-                    if (user != null) {
-                        break;
-                    }
+
+                    // SecurityHeader th = JAXBUtils.unmarshal(item, //
+                    // SecurityHeader.class);
                 }
             } else {
-                Header h = soapMessage.getHeader(ElementNames.SECURITY_TICKET_QNAME);
-                if(h != null){
+                h = soapMessage.getHeader(ElementNames.SECURITY_TICKET_QNAME);
+                if (h != null) {
                     try {
-                        TicketHeader th = JAXBUtils.unmarshal((Element)h.getObject(), TicketHeader.class);
+                        TicketHeader th = JAXBUtils.unmarshal((Element) h.getObject(), TicketHeader.class);
                         user = th.username;
 
                     } catch (JAXBException e) {
@@ -147,16 +147,17 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
                 }
             }
 
+            LOGGER.info("User: " + user);
             ad.setUser(user);
             AuthzDataThreadLocal.set(ad);
 
             LOGGER.info(" -- Security data transformed for thread. -- ");
 
         } else {
-            // if this interceptor is configured, it assumes the data will be found.
-            org.apache.cxf.common.i18n.Message msg =
-                    new org.apache.cxf.common.i18n.Message("Authorization data missing",
-                            (ResourceBundle) null, null);
+            // if this interceptor is configured, it assumes the data will be
+            // found.
+            org.apache.cxf.common.i18n.Message msg = new org.apache.cxf.common.i18n.Message(
+                    "Authorization data missing", (ResourceBundle) null, null);
             throw new Fault(msg);
         }
     }
