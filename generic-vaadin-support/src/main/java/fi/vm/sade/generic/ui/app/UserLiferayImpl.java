@@ -51,13 +51,15 @@ public class UserLiferayImpl implements User {
 
     @Override
     public String getOid() {
+        String oid = null;
         if (portletRequest != null) {
-            return (String) getLiferayUser().getExpandoBridge()
+            oid =  (String) getLiferayUser().getExpandoBridge()
                     .getAttribute(LiferayCustomAttributes.OID_HENKILO, false);
         } else if (servletRequest != null) {
-            return "oidhenkilo8";
+            oid =  "oidhenkilo8";
         }
-        return null;
+        log.debug("getOid::" + oid);
+        return oid;
     }
 
     @SuppressWarnings("unchecked")
@@ -74,6 +76,11 @@ public class UserLiferayImpl implements User {
         if (o != null && o instanceof String) {
             ticket = (String) o;
         }
+        
+        
+        
+        log.info("getTicket::" + ticket + "::" + o);
+        
         return ticket;
     }
 
