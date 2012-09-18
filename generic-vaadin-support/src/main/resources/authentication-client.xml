@@ -19,6 +19,9 @@
         <cxf:outInterceptors>
             <ref bean="ticketInterceptor" />
         </cxf:outInterceptors>
+        <cxf:features>
+        	<cxf:logging/>
+        </cxf:features>
     </cxf:bus>
 
 </beans>
