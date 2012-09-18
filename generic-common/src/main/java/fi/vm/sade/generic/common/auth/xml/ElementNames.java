@@ -6,9 +6,12 @@ import javax.xml.namespace.QName;
  * @author Eetu Blomqvist
  */
 public class ElementNames {
-    public static final String WSS = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
+    public static final String WSSE = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
+    public static final String WSU = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd";
+    public static final String SOAP = "http://schemas.xmlsoap.org/soap/envelope/";
+
     public static final String SECURITY_HEADER = "Security";
-    public static final QName SECURITY_HEADER_QN = new QName(WSS, SECURITY_HEADER);
+    public static final QName SECURITY_HEADER_QN = new QName(WSSE, SECURITY_HEADER);
     public static final String AUTHZ_DATA = "AuthzData";
     public static final String ROLE = "role";
     public static final String ORGANISAATIO = "organisaatio";

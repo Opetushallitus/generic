@@ -117,7 +117,7 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
 
                 // TODO: korvata unmarshallilla
                 Element username = WSSecurityUtil.findElement((Element) h.getObject(), ElementNames.USERNAME,
-                        ElementNames.WSS);
+                        ElementNames.WSSE);
                 if (username != null) {
                     user = username.getTextContent();
                 } else {
