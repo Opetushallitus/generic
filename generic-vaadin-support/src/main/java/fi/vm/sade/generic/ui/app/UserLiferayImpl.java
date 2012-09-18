@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.portlet.PortletRequest;
+import javax.portlet.PortletSession;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
@@ -65,22 +66,34 @@ public class UserLiferayImpl implements User {
     @SuppressWarnings("unchecked")
     @Override
     public String getTicket() {
-        HttpServletRequest s = null;
         String ticket = null;
         if (portletRequest != null) {
-            s = PortalUtil.getHttpServletRequest(portletRequest);
+            Object o =  portletRequest.getPortletSession().getAttribute(SecuritySessionAttributes.TICKET, PortletSession.APPLICATION_SCOPE);
+            if (o != null && o instanceof String) {
+                ticket = (String) o;
+            }
+//            log.info("trying to get ticket [" +SecuritySessionAttributes.TICKET + "] from application scope portlet request ticket=[" + ticket + "] object[" + o +"]");
+
+//            if(ticket == null) {
+//                log.info("no luck");
+//
+//                HttpServletRequest s = PortalUtil.getHttpServletRequest(portletRequest);
+//
+//                o = s.getSession().getAttribute(SecuritySessionAttributes.TICKET);
+//                if (o != null && o instanceof String) {
+//                    ticket = (String) o;
+//                }
+//                log.info("trying to get ticket [" +SecuritySessionAttributes.TICKET + "] from HttpServletRequest ticket=[" + ticket + "] object[" + o +"]");
+//            }
+//            return ticket;
         } else {
-            s = this.servletRequest;
+            Object o = this.servletRequest.getSession().getAttribute(SecuritySessionAttributes.TICKET);
+            if (o != null && o instanceof String) {
+                ticket = (String) o;
+            }
         }
-        Object o = s.getSession().getAttribute(SecuritySessionAttributes.TICKET);
-        if (o != null && o instanceof String) {
-            ticket = (String) o;
-        }
         
-        
-        
-        log.info("getTicket::" + ticket + "::" + o);
-        
+        log.info("getTicket: [" + ticket + "]");
         return ticket;
     }
 
