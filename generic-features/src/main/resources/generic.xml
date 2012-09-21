@@ -13,6 +13,8 @@
         <feature>activemq</feature>
         <feature>camel-jms</feature>
         <feature>camel-activemq</feature>
+        <feature>war</feature>
+        <feature>activemq-web-console</feature>
 
         <bundle>mvn:javax.validation/com.springsource.javax.validation/1.0.0.GA</bundle>
         <bundle>mvn:org.hibernate/com.springsource.org.hibernate.validator/4.2.0.Final</bundle>
