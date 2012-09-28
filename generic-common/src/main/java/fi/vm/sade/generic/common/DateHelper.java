@@ -1,8 +1,10 @@
 package fi.vm.sade.generic.common;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import javax.xml.bind.DatatypeConverter;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -49,5 +51,35 @@ public final class DateHelper {
             throw new RuntimeException("Operation with XMLGregorianCalendar failed", e);
         }
     }
+    
+       /**
+	 * Converts a String representing a {@link XMLGregorianCalendar} to a
+	 * {@link Date}.
+	 * 
+	 * @param xgc
+	 *            String to convert from
+	 * @return Computed date
+	 */
+	public static Date parseDate(String xgc) {
+
+		return DatatypeConverter.parseDate(xgc).getTime();
+	}
+
+	/**
+	 * Converts a {@link Date} to a String representing a
+	 * {@link XMLGregorianCalendar}.
+	 * 
+	 * @param date
+	 *            Date to convert from
+	 * @return String representation
+	 */
+	public static String printDate(Date date) {
+
+		Calendar calendar = Calendar.getInstance();
+
+		calendar.setTime(date);
+
+		return DatatypeConverter.printDate(calendar);
+	}
 
 }
