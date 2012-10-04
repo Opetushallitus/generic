@@ -62,7 +62,7 @@ public class AuthorizingAspect {
 
             if(authzData != null){
                 user = authzData.getUser();
-            } else {
+            } else if(!authorized) {
                 throw new NotAuthorizedException("Not authorized.");
             }
 
