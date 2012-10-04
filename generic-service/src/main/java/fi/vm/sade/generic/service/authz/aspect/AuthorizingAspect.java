@@ -69,7 +69,7 @@ public class AuthorizingAspect {
 
             if (!authorized) {
                 LOGGER.info("Method requires one of roles: " + Arrays.toString(roles));
-                if(authzData.getDataMap() != null) {
+                if(authzData != null && authzData.getDataMap() != null) {
                     for (Role role : roles) {
                         for (Map.Entry<String, AuthzData.Organisation> entry : authzData.getDataMap().entrySet()) {
                             if (entry.getValue().roles.contains(role.name())) {
