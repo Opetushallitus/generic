@@ -62,8 +62,6 @@ public class AuthorizingAspect {
 
             if(authzData != null){
                 user = authzData.getUser();
-            } else if(!authorized) {
-                throw new NotAuthorizedException("Not authorized.");
             }
 
             LOGGER.info("User '" + user + "' calling operation " + sig.getMethod().getName()
@@ -71,16 +69,17 @@ public class AuthorizingAspect {
 
             if (!authorized) {
                 LOGGER.info("Method requires one of roles: " + Arrays.toString(roles));
-
-                for (Role role : roles) {
-                    for (Map.Entry<String, AuthzData.Organisation> entry : authzData.getDataMap().entrySet()) {
-                        if (entry.getValue().roles.contains(role.name())) {
-                            authorized = true;
+                if(authzData.getDataMap() != null) {
+                    for (Role role : roles) {
+                        for (Map.Entry<String, AuthzData.Organisation> entry : authzData.getDataMap().entrySet()) {
+                            if (entry.getValue().roles.contains(role.name())) {
+                                authorized = true;
+                                break;
+                            }
+                        }
+                        if (authorized) {
                             break;
                         }
-                    }
-                    if (authorized) {
-                        break;
                     }
                 }
             }
