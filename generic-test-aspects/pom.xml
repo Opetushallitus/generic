@@ -8,7 +8,8 @@
 		<relativePath>..</relativePath>
 	</parent>
 	<artifactId>generic-test-aspects</artifactId>
-        <name>Generic :: Test Aspects</name>
+    <name>Generic :: Test Aspects</name>
+    <version>1.0-SNAPSHOT</version>
 
 	<dependencies>
 		<dependency>

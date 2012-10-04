@@ -11,6 +11,7 @@
     <artifactId>transaction-osgi</artifactId>
     <name>Generic :: Transaction OSGI</name>
     <packaging>bundle</packaging>
+    <version>1.0-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
