@@ -38,6 +38,7 @@
         <bundle>mvn:fi.vm.sade.auth/authentication-technical-api/${project.version}</bundle>
         <bundle>mvn:fi.vm.sade.auth/esb-authorization-support/${project.version}</bundle>
         <bundle>mvn:fi.vm.sade.koodisto/koodisto-api/${project.version}</bundle>
+        <bundle>mvn:fi.vm.sade.tarjonta/tarjonta-api/${project.version}</bundle>
     </feature>
 
     <feature name="oph-esb" version="${project.version}">
@@ -51,6 +52,7 @@
         <bundle>mvn:fi.vm.sade.oid/oid-esb/${project.version}</bundle>
         <bundle>mvn:fi.vm.sade.koodisto/koodisto-esb/${project.version}</bundle>
         <bundle>mvn:fi.vm.sade.mail/mail-esb/${project.version}</bundle>
+        <bundle>mvn:fi.vm.sade.tarjonta/tarjonta-esb/${project.version}</bundle>
     </feature>
 
 </features>
