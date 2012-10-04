@@ -62,6 +62,8 @@ public class AuthorizingAspect {
 
             if(authzData != null){
                 user = authzData.getUser();
+            } else {
+                throw new NotAuthorizedException("Not authorized.");
             }
 
             LOGGER.info("User '" + user + "' calling operation " + sig.getMethod().getName()
