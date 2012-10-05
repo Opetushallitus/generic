@@ -7,6 +7,7 @@
         <artifactId>build-parent</artifactId>
         <groupId>fi.vm.sade.generic</groupId>
         <version>1.0-SNAPSHOT</version>
+		<relativePath>..</relativePath>
     </parent>
 
     <artifactId>generic-vaadin-widgetset</artifactId>

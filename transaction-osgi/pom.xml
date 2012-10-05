@@ -7,6 +7,7 @@
         <artifactId>generic</artifactId>
         <groupId>fi.vm.sade.generic</groupId>
         <version>1.0-SNAPSHOT</version>
+		<relativePath>..</relativePath>
     </parent>
     <artifactId>transaction-osgi</artifactId>
     <name>Generic :: Transaction OSGI</name>
