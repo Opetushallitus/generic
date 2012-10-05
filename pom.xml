@@ -11,6 +11,7 @@
 		<groupId>fi.vm.sade.generic</groupId>
 		<artifactId>build-parent</artifactId>
 		<version>1.0-SNAPSHOT</version>
+		<relativePath>../../GENERIC-BUILDPARENT-JOB1/</relativePath>
 	</parent>
 
 	<modules>
@@ -140,13 +141,4 @@
             </dependency>
 		</dependencies>
 	</dependencyManagement>
-
-	<profiles>
-		<profile>
-			<id>bamboo</id>
-			<parent>
-				<relativePath>../../GENERIC-BUILDPARENT-JOB1/</relativePath>
-			</parent>
-		</profile>
-	</profiles>
 </project>
