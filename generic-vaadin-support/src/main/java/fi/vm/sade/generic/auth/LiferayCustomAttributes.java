@@ -27,8 +27,9 @@ public class LiferayCustomAttributes {
     public static final String ORGANISAATIO_OID = "organisaatio_oid";
     
     public static final String DEFAULT_USER_ROLE_NAME="User";
-    
-    public static final String DEFAULT_SITE_NAME="Guest"; //this is the "Liferay" group
+
+//    public static final String DEFAULT_SITE_NAME="Guest"; //this is the "Liferay" group
+    public static final String DEFAULT_SITE_NAME="Virkailijan ty\u00f6p\u00f6yt\u00e4"; //this is the "Liferay" group
 
     /**
      * Set custom attribute to liferay user
