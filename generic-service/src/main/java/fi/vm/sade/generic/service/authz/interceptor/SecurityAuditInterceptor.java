@@ -83,6 +83,7 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
                         (ResourceBundle) null, null));
             } else {
                 // missing header can be ignored. Nothing to do then, return...
+                LOGGER.info("Ignoring missing authorization data header.");
                 return;
             }
         }
