@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
+import javax.xml.namespace.QName;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,11 +21,12 @@ import java.util.List;
  * headers from current CXF call to given proxy.
  * This processor can only be used when endpoint is in PAYLOAD mode.
  */
-public class CxfProxyAuthenticationProcessor implements Processor, InitializingBean {
+public class SoapHeaderDelegatingProcessor implements Processor, InitializingBean {
 
-    private static final Logger logger = LoggerFactory.getLogger(CxfProxyAuthenticationProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(SoapHeaderDelegatingProcessor.class);
 
     private Object client;
+    private List<QName> qNames;
 
     @Override
     public void process(Exchange exchange) throws Exception {
@@ -32,7 +34,9 @@ public class CxfProxyAuthenticationProcessor implements Processor, InitializingB
             CxfPayload<SoapHeader> payload = exchange.getIn().getBody(CxfPayload.class);
             List<SoapHeader> invokeHeaders = new ArrayList<SoapHeader>();
             for (SoapHeader header : payload.getHeaders()) {
-                invokeHeaders.add(new SoapHeader(header.getName(), header.getObject()));
+                if(qNames.contains(header.getName())) {
+                    invokeHeaders.add(new SoapHeader(header.getName(), header.getObject()));
+                }
             }
 
             Client proxy = ClientProxy.getClient(this.client);
@@ -51,8 +55,17 @@ public class CxfProxyAuthenticationProcessor implements Processor, InitializingB
         this.client = client;
     }
 
+    public List<QName> getqNames() {
+        return qNames;
+    }
+
+    public void setqNames(List<QName> qNames) {
+        this.qNames = qNames;
+    }
+
     @Override
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(client, "You must set CXF client proxy to the processor");
+        Assert.notNull(qNames, "List of delegated qnames is null.");
     }
 }
