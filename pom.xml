@@ -26,6 +26,7 @@
 		<module>generic-vaadin-widgetset</module>
 		<module>generic-vaadin-support</module>
 		<module>generic-configuration</module>
+        <module>generic-esb</module>
   </modules>
 
 	<!-- Here comes all the dependencies used in modules. Versions can be managed 
