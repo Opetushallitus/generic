@@ -3,4 +3,6 @@
     <inherits name="com.vaadin.terminal.gwt.DefaultWidgetSet" />
 
     <inherits name="org.vaadin.hezamu.googlemapwidget.widgetset.GooglemapwidgetWidgetset" />
+
+    <inherits name="org.vaadin.tinymceeditor.widgetset.TinymceeditorWidgetset" />
 </module>
