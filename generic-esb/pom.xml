@@ -20,6 +20,7 @@
             org.apache.cxf.endpoint,
             org.apache.cxf.frontend,
             org.apache.cxf.headers,
+            org.apache.cxf.message,
             org.apache.camel,
             org.apache.camel.component.cxf,
             org.springframework.beans.factory,
