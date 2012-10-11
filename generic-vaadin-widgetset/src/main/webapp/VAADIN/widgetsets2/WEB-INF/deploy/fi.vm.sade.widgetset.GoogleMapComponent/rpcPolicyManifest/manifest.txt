@@ -1,2 +1,0 @@
-# Module fi.vm.sade.widgetset.GoogleMapComponent
-# RPC service class, partial path of RPC policy file
