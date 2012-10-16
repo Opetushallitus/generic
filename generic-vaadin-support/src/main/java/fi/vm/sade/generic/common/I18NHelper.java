@@ -57,10 +57,17 @@ public class I18NHelper {
     /**
      * Build translation key.
      *
+     * If key is like "/XXX" then the real key will be "XXX" without prefix.
+     *
      * @param key
      * @return prefix + key
      */
     private String makeKey(String key) {
+        // Check for global key
+        if (key.startsWith("/")) {
+            return key.substring(1);
+        }
+
         keyBuilder.setLength(prefixLength);
         keyBuilder.append(key);
         return keyBuilder.toString();
