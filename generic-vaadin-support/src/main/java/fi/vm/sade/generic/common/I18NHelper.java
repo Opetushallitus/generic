@@ -57,14 +57,14 @@ public class I18NHelper {
     /**
      * Build translation key.
      *
-     * If key is like "/XXX" then the real key will be "XXX" without prefix.
+     * If key is like "_XXX" then the real key will be "XXX" without any prefix.
      *
      * @param key
-     * @return prefix + key
+     * @return prefix + key OR key - "underscore"
      */
     private String makeKey(String key) {
         // Check for global key
-        if (key.startsWith("/")) {
+        if (key.startsWith("_")) {
             return key.substring(1);
         }
 
