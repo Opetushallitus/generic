@@ -9,7 +9,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractFaultWrapper<T extends RuntimeException> {
+public abstract class AbstractFaultWrapper<T extends Exception> {
     protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractFaultWrapper.class);
 
     private Class<T> clazz;
