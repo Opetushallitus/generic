@@ -37,6 +37,13 @@
 
     </build>
     <dependencies>
+
+        <dependency>
+            <groupId>org.vaadin.addons</groupId>
+            <artifactId>vaadin-wrapper-for-tinymce</artifactId>
+            <version>1.5.0</version>
+        </dependency>
+
         <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
@@ -52,13 +59,13 @@
             <artifactId>portlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
-		
-		<!--  uncomment if you choose to use getRawAccessRights 	
+
+		<!--  uncomment if you choose to use getRawAccessRights
 	   <dependency>
 	       <groupId>com.liferay.portal</groupId>
 	       <artifactId>util-taglib</artifactId>
 	       <version>${liferay.version}</version>
-	       <scope>provided</scope> 
+	       <scope>provided</scope>
 	   </dependency>
 -->
 		<dependency>
