@@ -209,9 +209,9 @@ public class SearchableTree<T> extends VerticalLayout {
         // set parent-child relationships
         for (T node : all) {
             Object parentId = treeAdapter.getParentId(node);
-            LOG.debug("    tree.reload, id: " + treeAdapter.getId(node) + ", parentId: " + parentId + ", caption: " + treeAdapter.getCaption(node));
+            //DEBUGSAWAY:LOG.debug("    tree.reload, id: " + treeAdapter.getId(node) + ", parentId: " + parentId + ", caption: " + treeAdapter.getCaption(node));
             if (parentId != null) {
-                LOG.debug("    tree, set child->parent: "+treeAdapter.getId(node)+"->"+parentId);
+                //DEBUGSAWAY:LOG.debug("    tree, set child->parent: "+treeAdapter.getId(node)+"->"+parentId);
                 Object parent = nodesById.get(parentId);
                 dataSource.setChildrenAllowed(parent, true);
                 dataSource.setParent(node, parent);

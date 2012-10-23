@@ -74,10 +74,10 @@ public abstract class AbstractSadeApplication extends Application implements Htt
      */
     @Override
     public void setLocale(Locale locale) {
-        log.debug("setLocale({})", locale);
+        //DEBUGSAWAY:log.debug("setLocale({})", locale);
         if (locale == null) {
             locale = new Locale(DEFAULT_LOCALE);
-            log.debug("locale was null, defaulting({})", locale);
+            //DEBUGSAWAY:log.debug("locale was null, defaulting({})", locale);
         }
         I18N.setLocale(locale);
         LocaleContextHolder.setLocale(locale);

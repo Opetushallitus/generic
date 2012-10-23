@@ -33,7 +33,7 @@ public class ApplicationAspect implements InitializingBean {
         if(!initialized) {
             return;
         }
-        logger.debug("Invoked after Application: " + pjp.getTarget());
+        //DEBUGSAWAY:logger.debug("Invoked after Application: " + pjp.getTarget());
         Application application = (Application) pjp.getTarget();
         catcher.execute(application);
     }
@@ -43,7 +43,7 @@ public class ApplicationAspect implements InitializingBean {
         if(!initialized) {
             return;
         }
-        logger.debug("Invoked after Component: " + pjp.getTarget());
+        //DEBUGSAWAY:logger.debug("Invoked after Component: " + pjp.getTarget());
         Component component = (Component) pjp.getTarget();
         catcher.execute(component);
     }

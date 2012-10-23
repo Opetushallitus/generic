@@ -41,7 +41,7 @@ public class CustomBeanValidationValidator extends BeanValidationValidator {
         this.clazz = clazz;
         this.fieldName = fieldName;
         setLocale(I18N.getLocale());
-        LOG.debug("CustomBeanValidationValidator created, locale: " + getLocale());
+        //DEBUGSAWAY:LOG.debug("CustomBeanValidationValidator created, locale: " + getLocale());
     }
 
     @Override

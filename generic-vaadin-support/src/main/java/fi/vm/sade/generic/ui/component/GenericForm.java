@@ -113,7 +113,7 @@ public abstract class GenericForm<MODELCLASS> extends CustomComponent {
 
     protected void processSave() {
         try {
-            LOG.debug("SAVEFORM commit...");
+            //DEBUGSAWAY:LOG.debug("SAVEFORM commit...");
             form.commit();
             save((MODELCLASS) getBeanItem().getBean());
             form.getWindow().showNotification(I18N.getMessage("c_save_successful"));

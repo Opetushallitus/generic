@@ -307,7 +307,7 @@ public class SeleniumUtils {
      */
     public static WebElement click(final By parent, final String matchElementName) {
         
-        log.debug("trying click element of type: " + matchElementName + " from parent by: " + parent);
+        //DEBUGSAWAY:log.debug("trying click element of type: " + matchElementName + " from parent by: " + parent);
 
         return waitFor("failed to find element: " + parent, new ExpectedCondition<WebElement>() {
 
@@ -318,13 +318,13 @@ public class SeleniumUtils {
                     WebElement element = getDriver().findElement(parent);
                     final String parentType = element.getTagName();
                     if (parentType.equals(matchElementName)) {
-                        log.debug("element type matches parent directly: " + matchElementName + ", parent: " + parent);
+                        //DEBUGSAWAY:log.debug("element type matches parent directly: " + matchElementName + ", parent: " + parent);
                         return element;
                     } else {
                         List<WebElement> children = element.findElements(By.tagName(matchElementName));                        
                         for (WebElement child : children) {
                             if (child.getTagName().equals(matchElementName)) {
-                                log.debug("clicking first child of type: " + matchElementName + " of parent: " + parent);
+                                //DEBUGSAWAY:log.debug("clicking first child of type: " + matchElementName + " of parent: " + parent);
                                 child.click();
                                 return child;
                             }

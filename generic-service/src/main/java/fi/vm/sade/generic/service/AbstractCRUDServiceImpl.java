@@ -37,7 +37,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
      */
     @Transactional(readOnly = true)
     protected FATDTOCLASS read(IDCLASS key) {
-        log.debug("Reading record by primary key: " + key);
+        //DEBUGSAWAY:log.debug("Reading record by primary key: " + key);
         return convertToFatDTO(dao.read(key));
     }
 
@@ -55,7 +55,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
         if (entity == null) {
             throw new RuntimeException("Entity is null.");
         }
-        log.debug("Updating record: " + entity);
+        //DEBUGSAWAY:log.debug("Updating record: " + entity);
         validateJPA(entity);
         dao.update(entity);
     }
@@ -72,7 +72,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
     }
 
     protected JPACLASS insertJPA(JPACLASS entity) throws ValidationException {
-        log.debug("Inserting record: " + entity);
+        //DEBUGSAWAY:log.debug("Inserting record: " + entity);
 
         try {
 
@@ -96,7 +96,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
      */
     protected void delete(DTOCLASS dto) {
         JPACLASS entity = convertToJPA(dto, true);
-        log.debug("Deleting record: " + entity);
+        //DEBUGSAWAY:log.debug("Deleting record: " + entity);
         dao.remove(entity);
     }
 
@@ -106,7 +106,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
      */
     protected void deleteById(IDCLASS id) {
         JPACLASS entity = dao.read(id);
-        log.debug("Deleting record: " + entity);
+        //DEBUGSAWAY:log.debug("Deleting record: " + entity);
         dao.remove(entity);
     }
 
@@ -162,7 +162,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
     protected void validate(Object dtoOrEntity) throws ValidationException {
         Validator validator = ValidatorFactoryBean.getValidator();
         Set<ConstraintViolation<Object>> validationResult = validator.validate(dtoOrEntity);
-        log.debug("validate, validator: "+validator + ", validationResult: " + validationResult);
+        //DEBUGSAWAY:log.debug("validate, validator: "+validator + ", validationResult: " + validationResult);
         if (validationResult.size() > 0) {
             ValidationException validationException = new ValidationException(validationResult);
             for (ConstraintViolation<Object> violation : validationResult) {
@@ -176,7 +176,7 @@ public abstract class AbstractCRUDServiceImpl<DTOCLASS, FATDTOCLASS, JPACLASS, I
     protected void validateProperty(Object dtoOrEntity, String propertyName) throws ValidationException {
         Validator validator = ValidatorFactoryBean.getValidator();
         Set<ConstraintViolation<Object>> validationResult = validator.validateProperty(dtoOrEntity, propertyName);
-        log.debug("validate, validator: "+validator + ", validationResult: " + validationResult);
+        //DEBUGSAWAY:log.debug("validate, validator: "+validator + ", validationResult: " + validationResult);
         if (validationResult.size() > 0) {
             ValidationException validationException = new ValidationException();
             for (ConstraintViolation<Object> violation : validationResult) {

@@ -59,7 +59,7 @@ public class UserLiferayImpl implements User {
         } else if (servletRequest != null) {
             oid =  "oidhenkilo8";
         }
-        log.debug("getOid::" + oid);
+        //DEBUGSAWAY:log.debug("getOid::" + oid);
         return oid;
     }
 

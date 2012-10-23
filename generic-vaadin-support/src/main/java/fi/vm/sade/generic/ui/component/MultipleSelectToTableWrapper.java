@@ -74,7 +74,7 @@ public class MultipleSelectToTableWrapper<FIELDCLASS extends Field> extends Cust
                     public void buttonClick(Button.ClickEvent clickEvent) {
                         getDataSource().removeItem(itemId);
                         //table.requestRepaint();
-                        log.debug("removed value from multiselect, removed: " + itemId + ", values now: " + getValueList());
+                        //DEBUGSAWAY:log.debug("removed value from multiselect, removed: " + itemId + ", values now: " + getValueList());
                     }
                 });
             }
@@ -143,7 +143,7 @@ public class MultipleSelectToTableWrapper<FIELDCLASS extends Field> extends Cust
         //validate();
         targetCollection.clear();
         targetCollection.addAll((Collection) getValue());
-        log.debug("commit MultipleSelect, targetList: " + targetCollection);
+        //DEBUGSAWAY:log.debug("commit MultipleSelect, targetList: " + targetCollection);
     }
 
     private BeanItemContainer getDataSource() {
@@ -161,13 +161,13 @@ public class MultipleSelectToTableWrapper<FIELDCLASS extends Field> extends Cust
     /*
     @Override
     public void addValidator(Validator validator) {
-        log.debug(" ========== MultipleSelect.addValidator: " + validator);
+        //DEBUGSAWAY:log.debug(" ========== MultipleSelect.addValidator: " + validator);
         this.beanValidator = validator;
     }
 
     @Override
     public void validate() throws Validator.InvalidValueException {
-        log.debug(" ========== MultipleSelect.validate, value: " + getValue());
+        //DEBUGSAWAY:log.debug(" ========== MultipleSelect.validate, value: " + getValue());
 
         // temp poc validointi koska vaatimen validointi listoille on rikki
 
@@ -177,8 +177,8 @@ public class MultipleSelectToTableWrapper<FIELDCLASS extends Field> extends Cust
             String propertyName = (String) getField("propertyName").get(beanValidator);
             Object value = getValue();
             Set<ConstraintViolation> violations = validator.validateValue(beanClass, propertyName, value, new Class[0]);
-            log.debug("    VALIDATOR: " + validator + ", BEANCLASS: " + beanClass + ", PROPERTY: " + propertyName + ", VALUE: " + value);
-            log.debug("    VIOLATIONS: " + violations);
+            //DEBUGSAWAY:log.debug("    VALIDATOR: " + validator + ", BEANCLASS: " + beanClass + ", PROPERTY: " + propertyName + ", VALUE: " + value);
+            //DEBUGSAWAY:log.debug("    VIOLATIONS: " + violations);
             if (!violations.isEmpty()) {
                 throw new Validator.InvalidValueException(violations.iterator().next().getMessage());
             }
