@@ -2,6 +2,7 @@ package fi.vm.sade.generic.service.authz.aspect;
 
 import fi.vm.sade.generic.common.auth.Role;
 import fi.vm.sade.generic.common.auth.annotation.RequiresRole;
+import fi.vm.sade.generic.service.authz.util.AuthorizationUtil;
 import fi.vm.sade.generic.service.exception.NotAuthorizedException;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -69,19 +70,7 @@ public class AuthorizingAspect {
 
             if (!authorized) {
                 LOGGER.info("Method requires one of roles: " + Arrays.toString(roles));
-                if(authzData != null && authzData.getDataMap() != null) {
-                    for (Role role : roles) {
-                        for (Map.Entry<String, AuthzData.Organisation> entry : authzData.getDataMap().entrySet()) {
-                            if (entry.getValue().roles.contains(role.name())) {
-                                authorized = true;
-                                break;
-                            }
-                        }
-                        if (authorized) {
-                            break;
-                        }
-                    }
-                }
+                authorized = AuthorizationUtil.currentUserHasAnyRole(roles);
             }
 
             if (!authorized) {

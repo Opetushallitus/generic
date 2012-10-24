@@ -68,22 +68,23 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
         // thread local variable.
         List<Header> headers = soapMessage.getHeaders();
 
-        Header header = null;
-        for (Header h : headers) {
-
-            if (h.getName().getLocalPart().equals(ElementNames.AUTHZ_DATA)) {
-                header = h;
-                break;
-            }
-        }
+        Header header = findHeader(ElementNames.AUTHZ_DATA, headers);
 
         if (header == null) {
             if (!ignoreMissing) {
                 throw new Fault(new org.apache.cxf.common.i18n.Message("SOAP header for authorization data is null",
                         (ResourceBundle) null, null));
             } else {
-                // missing header can be ignored. Nothing to do then, return...
+                // missing header can be ignored. Let's find user then, return...
                 LOGGER.info("Ignoring missing authorization data header.");
+
+                String user = findUserOid(soapMessage);
+                LOGGER.info("User: " + user);
+
+                AuthzData ad = new AuthzData(new HashMap<String, AuthzData.Organisation>());
+                ad.setUser(user);
+
+                AuthzDataThreadLocal.set(ad);
                 return;
             }
         }
@@ -109,39 +110,7 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
             }
 
             AuthzData ad = new AuthzData(map);
-
-            String user = null;
-
-            // find user for authz data
-            Header h = soapMessage.getHeader(ElementNames.SECURITY_HEADER_QN);
-            if (h != null) {
-
-                // TODO: korvata unmarshallilla
-                Element username = WSSecurityUtil.findElement((Element) h.getObject(), ElementNames.USERNAME,
-                        ElementNames.WSSE);
-                if (username != null) {
-                    user = username.getTextContent();
-                } else {
-                    org.apache.cxf.common.i18n.Message msg = new org.apache.cxf.common.i18n.Message(
-                            "Username not found", (ResourceBundle) null, null);
-                    throw new Fault(msg, ElementNames.FAULT_Q_NAME);
-                }
-
-                // SecurityHeader th =
-                // JAXBUtils.unmarshal(item,SecurityHeader.class);
-
-            } else {
-                h = soapMessage.getHeader(ElementNames.SECURITY_TICKET_QNAME);
-                if (h != null) {
-                    try {
-                        TicketHeader th = JAXBUtils.unmarshal((Element) h.getObject(), TicketHeader.class);
-                        user = th.username;
-
-                    } catch (JAXBException e) {
-                        throw new Fault(e, ElementNames.FAULT_Q_NAME);
-                    }
-                }
-            }
+            String user = findUserOid(soapMessage);
 
             LOGGER.info("User: " + user);
             ad.setUser(user);
@@ -156,6 +125,59 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
                     "Authorization data missing", (ResourceBundle) null, null);
             throw new Fault(msg);
         }
+    }
+
+    /**
+     * Extracts user name from soap headers.
+     * @param soapMessage
+     * @return
+     */
+    private String findUserOid(SoapMessage soapMessage) {
+        String user = null;
+
+        // find user for authz data
+        Header h = soapMessage.getHeader(ElementNames.SECURITY_HEADER_QN);
+        if (h != null) {
+
+            // TODO: korvaa unmarshallilla
+            Element username = WSSecurityUtil.findElement((Element) h.getObject(), ElementNames.USERNAME,
+                    ElementNames.WSSE);
+            if (username != null) {
+                user = username.getTextContent();
+            } else {
+                org.apache.cxf.common.i18n.Message msg = new org.apache.cxf.common.i18n.Message(
+                        "Username not found", (ResourceBundle) null, null);
+                throw new Fault(msg, ElementNames.FAULT_Q_NAME);
+            }
+
+            // SecurityHeader th =
+            // JAXBUtils.unmarshal(item,SecurityHeader.class);
+
+        } else {
+            h = soapMessage.getHeader(ElementNames.SECURITY_TICKET_QNAME);
+            if (h != null) {
+                try {
+                    TicketHeader th = JAXBUtils.unmarshal((Element) h.getObject(), TicketHeader.class);
+                    user = th.username;
+
+                } catch (JAXBException e) {
+                    throw new Fault(e, ElementNames.FAULT_Q_NAME);
+                }
+            }
+        }
+        return user;
+    }
+
+    private Header findHeader(String headerName, List<Header> headers) {
+        Header header = null;
+        for (Header h : headers) {
+
+            if (h.getName().getLocalPart().equals(headerName)) {
+                header = h;
+                break;
+            }
+        }
+        return header;
     }
 
     public void setIgnoreMissing(boolean ignoreMissing) {
