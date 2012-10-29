@@ -66,14 +66,6 @@ public class SearchableTree<T> extends VerticalLayout {
     // add tabpanel
     TabSheet tabSheet = new TabSheet();
 
-    @DebugId(id = "org_tree_refresh")
-    private Button buttonRefresh = new Button(I18N.getMessage("Hakupuu.lblRefresh"), new Button.ClickListener() { // TODO: parametrisoi, ei tarvita aina
-        @Override
-        public void buttonClick(Button.ClickEvent clickEvent) {
-            reload();
-        }
-    });
-    
 
     @DebugId(id = "org_resultcount")
     private Label labelResultCount = new Label();
@@ -95,8 +87,6 @@ public class SearchableTree<T> extends VerticalLayout {
     }
 
     public void init() {
-        
-        buttonRefresh.addStyleName(StyleNames.B_PRIMARY_SMALL);
         
         dataSource.addContainerProperty("caption", String.class, "");
         tree.setItemCaptionPropertyId("caption");
@@ -125,9 +115,6 @@ public class SearchableTree<T> extends VerticalLayout {
         Panel panel = new Panel();
         panel.addComponent(tree);
         basicSearch.addComponent(panel);
-
-        // add refresh button
-        basicSearch.addComponent(buttonRefresh);
 
         processDebugIds(debugIdPrefix);
     }
@@ -225,10 +212,6 @@ public class SearchableTree<T> extends VerticalLayout {
 
     public TextField getSearchBox() {
         return searchBox;
-    }
-
-    public Button getButtonRefresh() {
-        return buttonRefresh;
     }
 
     private void processDebugIds(String debugIdPrefix) {
