@@ -19,6 +19,7 @@ package fi.vm.sade.generic.common;
  * Simple helper to append prefixes to the translated keys.
  *
  * @author Jukka Raanamo
+ * @author mlyly
  */
 public class I18NHelper {
 

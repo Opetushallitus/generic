@@ -28,7 +28,7 @@ public class OphRichTextArea extends TinyMCETextField {
      * Default configuration for OPH Rich Text Areas.
      */
     private static final String _config = "{theme : 'advanced', "
-            + "theme_advanced_buttons1 : 'formatselect,bold,italic,underline,strikethrough,numlist,bullist,|,undo,redo,|,link,table,|,removeformat', "
+            + "theme_advanced_buttons1 : 'formatselect,bold,italic,underline,strikethrough,numlist,bullist,|,undo,redo,|,link,table,|,pastetext,pasteword,selectall,|,removeformat', "
             + "theme_advanced_buttons2 : '', "
             + "theme_advanced_buttons3 : '', "
             + "theme_advanced_statusbar_location : ''}";
