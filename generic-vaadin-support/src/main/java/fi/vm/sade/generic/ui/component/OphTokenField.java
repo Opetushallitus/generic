@@ -162,9 +162,9 @@ public class OphTokenField extends CustomField {
 
         // Not yet initialized, do it now
 
-        // If selection and selection layout has been "given" from outside - we will not do any layout/component adding.
-        boolean addSelectionLayout = _selectionLayout == null;
-        boolean addSelectionComponent = _selectionComponent == null;
+        // If selection and selection layout has been "given"/attached from outside - we will not do any layout/component adding.
+        boolean addSelectionLayout = _selectionLayout == null || _selectionLayout.getParent() == null;
+        boolean addSelectionComponent = _selectionComponent == null || _selectionComponent.getParent() == null;
 
         _fieldLayout = _fieldLayout != null ? _fieldLayout : onCreateLayout();
         _selectionLayout = _selectionLayout != null ? _selectionLayout : onCreateSelectionLayout();
