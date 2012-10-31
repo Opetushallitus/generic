@@ -24,6 +24,7 @@ import com.vaadin.ui.Component;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Layout;
+import java.util.ArrayList;
 import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,7 +140,9 @@ public class OphTokenField extends CustomField {
         LOG.info("removeToken({})", selectedToken);
 
         Collection values = (Collection) getValue();
-        values.remove(selectedToken);
+        if (values != null) {
+            values.remove(selectedToken);
+        }
 
         fireValueChange(true);
     }
@@ -188,6 +191,10 @@ public class OphTokenField extends CustomField {
             @Override
             public void valueChange(Property.ValueChangeEvent event) {
                 Collection values = (Collection) getValue();
+                if (values == null) {
+                    values = new ArrayList();
+                    setValue(values);
+                }
 
                 if (values.contains(event.getProperty().getValue())) {
                     // Already in token list, nothing to do
@@ -213,6 +220,9 @@ public class OphTokenField extends CustomField {
             }
         };
         this.addListener(valueChangeListener);
+
+        // Initial drawing - component may contain data already
+        updateSelections();
     }
 
 
