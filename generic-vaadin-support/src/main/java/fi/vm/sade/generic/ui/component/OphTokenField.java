@@ -24,6 +24,7 @@ import com.vaadin.ui.Component;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Layout;
+import com.vaadin.ui.themes.BaseTheme;
 import java.util.ArrayList;
 import java.util.Collection;
 import org.slf4j.Logger;
@@ -327,7 +328,7 @@ public class OphTokenField extends CustomField {
         singleTokenLayout.addStyleName(SELECTED_SINGLE_TOKEN_LAYOUT_STYLE);
 
         Button removeTokenButton = new Button("(x)");
-        removeTokenButton.addStyleName(Button.STYLE_LINK);
+        removeTokenButton.addStyleName(BaseTheme.BUTTON_LINK);
         removeTokenButton.addListener(new Button.ClickListener() {
 
             @Override
@@ -340,7 +341,7 @@ public class OphTokenField extends CustomField {
 
         // Maximum simplicity for the token text creation
         Button selectTokenButton = new Button("" + selectedToken);
-        selectTokenButton.addStyleName(Button.STYLE_LINK);
+        selectTokenButton.addStyleName(BaseTheme.BUTTON_LINK);
         selectTokenButton.addListener(new Button.ClickListener() {
 
             @Override
