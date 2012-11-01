@@ -21,6 +21,7 @@ import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Component;
+import com.vaadin.ui.Field;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Layout;
@@ -44,23 +45,23 @@ import org.vaadin.addon.customfield.CustomField;
  *   f.setPropertyDataSource(new BeanItem(model).getItemProperty("opetuskielet"));
  * </pre>
  *
- * Note: if you do setSelectionComponent it will not be added to this components layout.
- * Note: if you do setSelectionLayout it will not be added to this components layout.
+ * Note: if you do setSelectionComponent it will not be added to this components layout. Note: if you do setSelectionLayout it will not be added to this
+ * components layout.
  *
  * You can also separate selection field and list view yourself.
  * <pre>
  *   Layout l = new HorizontalLayout();
- *   window.addComponent(l);
+ *   addComponent(l); // Selection list updated here
  *
- *   KoodistoComponent kc = UiBuilder.koodistoComboBox(null, KoodistoURIHelper.KOODISTO_KIELI_URI);
+ *   KoodistoComponent kc = koodistoComboBox(null, KoodistoURIHelper.KOODISTO_KIELI_URI);
  *   kc.setImmediate(true);
- *   window.addComponent(kc);
+ *   addComponent(kc); // manage selector placement
  *
  *   OphTokenField f = new OphTokenField();
- *   f.setSelectionComponent(kc.getField());
+ *   f.setSelectionComponent(kc);
  *   f.setSelectionLayout(l);
- *
- *   window.addComponent(f);
+ *   f.setPropertyDataSource(new BeanItem(model).getItemProperty("opetuskielet"));
+ *   addComponent(f);
  * </pre>
  *
  * @author mlyly
@@ -68,33 +69,71 @@ import org.vaadin.addon.customfield.CustomField;
 public class OphTokenField extends CustomField {
 
     private static final Logger LOG = LoggerFactory.getLogger(OphTokenField.class);
-
     public static final String LAYOUT_STYLE = "TokenField_layout";
     public static final String SELECTION_LAYOUT_STYLE = "TokenField_selectionLayout";
     public static final String SELECTED_SINGLE_TOKEN_LAYOUT_STYLE = "TokenField_selectedSingleTokenLayout";
-
+    /**
+     * Formats tokens : "" + selectedToken
+     */
+    public static final SelectedTokenToTextFormatter DEFAULT_TOKEN_FORMATTER = new SelectedTokenToTextFormatter() {
+        @Override
+        public String formatToken(Object selectedToken) {
+            return "" + selectedToken;
+        }
+    };
+    /**
+     * Makes sure that component is only initialized once.
+     */
     private boolean _isAttached = false;
-
+    /*
+     * Layout that contains selection layout (if not given from outside)
+     */
     private Layout _fieldLayout;
+
+    /*
+     * List of selected tokens rendered here.
+     */
     private Layout _selectionLayout;
-    private AbstractSelect _selectionComponent;
+
+    /*
+     * Selection component.
+     */
+    private Field _selectionComponent;
+
+    /*
+     * Default formatting for selected tokens.
+     */
+    private SelectedTokenToTextFormatter _formatter = DEFAULT_TOKEN_FORMATTER;
 
     public OphTokenField() {
+        super();
         setCompositionRoot(new Label("TOKEN FIELD NOT INITIALIZED"));
+    }
+
+    /**
+     * Defines how the list of selected tokens is formatted.
+     *
+     * @param formatter
+     */
+    public void setFormatter(SelectedTokenToTextFormatter formatter) {
+        LOG.debug("setFormatter()");
+        this._formatter = formatter;
     }
 
     /**
      * @return the selection component
      */
-    public AbstractSelect getSelectionComponent() {
+    public Field getSelectionComponent() {
         return _selectionComponent;
     }
 
     /**
      * Set component to use for selection
+     *
      * @param selectionComponent
      */
-    public void setSelectionComponent(AbstractSelect selectionComponent) {
+    public void setSelectionComponent(Field selectionComponent) {
+        LOG.debug("setSelectionComponent()");
         _selectionComponent = selectionComponent;
     }
 
@@ -106,11 +145,12 @@ public class OphTokenField extends CustomField {
     }
 
     /**
-     * Custom layout.
+     * Custom layout for component.
      *
      * @param fieldLayout
      */
     public void setFieldLayout(Layout fieldLayout) {
+        LOG.debug("setFieldLayout()");
         _fieldLayout = fieldLayout;
     }
 
@@ -129,6 +169,7 @@ public class OphTokenField extends CustomField {
      * @param selectionLayout
      */
     public void setSelectionLayout(Layout selectionLayout) {
+        LOG.debug("setSelectionLayout()");
         _selectionLayout = selectionLayout;
     }
 
@@ -138,7 +179,7 @@ public class OphTokenField extends CustomField {
      * @param selectedToken
      */
     public final void removeToken(Object selectedToken) {
-        LOG.info("removeToken({})", selectedToken);
+        LOG.debug("removeToken({})", selectedToken);
 
         Collection values = (Collection) getValue();
         if (values != null) {
@@ -158,74 +199,84 @@ public class OphTokenField extends CustomField {
         }
         _isAttached = true;
 
-        LOG.debug("  initializing...");
+        try {
+            LOG.debug("  initializing...");
 
-        // Not yet initialized, do it now
+            // Not yet initialized, do it now
 
-        // If selection and selection layout has been "given"/attached from outside - we will not do any layout/component adding.
-        boolean addSelectionLayout = _selectionLayout == null || _selectionLayout.getParent() == null;
-        boolean addSelectionComponent = _selectionComponent == null || _selectionComponent.getParent() == null;
+            // If selection and selection layout has been "given"/attached from outside - we will not do any layout/component adding.
+            boolean addSelectionLayout = _selectionLayout == null || _selectionLayout.getApplication() == null;
+            boolean addSelectionComponent = _selectionComponent == null || _selectionComponent.getApplication() == null;
 
-        _fieldLayout = _fieldLayout != null ? _fieldLayout : onCreateLayout();
-        _selectionLayout = _selectionLayout != null ? _selectionLayout : onCreateSelectionLayout();
-        _selectionComponent = _selectionComponent != null ? _selectionComponent : onCreateSelectionComponent();
+            _fieldLayout = _fieldLayout != null ? _fieldLayout : onCreateLayout();
+            _selectionLayout = _selectionLayout != null ? _selectionLayout : onCreateSelectionLayout();
+            _selectionComponent = _selectionComponent != null ? _selectionComponent : onCreateSelectionComponent();
 
-        if (_fieldLayout == null || _selectionLayout == null || _selectionComponent == null) {
-            setCompositionRoot(new Label("Field layout, selection layout or selectiomn component is null - cannot proceed."));
-            return;
-        }
-
-        if (addSelectionComponent) {
-            _fieldLayout.addComponent(_selectionComponent);
-        }
-        if (addSelectionLayout) {
-            _fieldLayout.addComponent(_selectionLayout);
-        }
-
-        setCompositionRoot(_fieldLayout);
-
-        //
-        // Wire up the selection from the select component
-        //
-        Property.ValueChangeListener selectionValueChangeListener = new Property.ValueChangeListener() {
-
-            @Override
-            public void valueChange(Property.ValueChangeEvent event) {
-                Collection values = (Collection) getValue();
-                if (values == null) {
-                    values = new ArrayList();
-                    setValue(values);
-                }
-
-                if (values.contains(event.getProperty().getValue())) {
-                    // Already in token list, nothing to do
-                    return;
-                }
-
-                if (onNewTokenSeleted(event.getProperty().getValue())) {
-                    // OK, addition confirmed
-                    values.add(event.getProperty().getValue());
-                    fireValueChange(true);
-                }
+            if (_fieldLayout == null || _selectionLayout == null || _selectionComponent == null) {
+                setCompositionRoot(new Label("Field layout, selection layout or selectiomn component is null - cannot proceed."));
+                return;
             }
-        };
-        _selectionComponent.addListener(selectionValueChangeListener);
 
-
-        // Wire up the selection change notification for redrawing.
-        Property.ValueChangeListener valueChangeListener = new Property.ValueChangeListener() {
-
-            @Override
-            public void valueChange(Property.ValueChangeEvent event) {
-                updateSelections();
+            LOG.debug("  add selection component to field layout: {}", addSelectionComponent);
+            if (addSelectionComponent) {
+                _fieldLayout.addComponent(_selectionComponent);
             }
-        };
-        this.addListener(valueChangeListener);
 
-        // Initial drawing - component may contain data already
-        updateSelections();
+            LOG.debug("  add selection layout to field layout: {}", addSelectionLayout);
+            if (addSelectionLayout) {
+                _fieldLayout.addComponent(_selectionLayout);
+            }
+
+            setCompositionRoot(_fieldLayout);
+
+            //
+            // Wire up the selection from the select component
+            //
+            Property.ValueChangeListener selectionValueChangeListener = new Property.ValueChangeListener() {
+                @Override
+                public void valueChange(Property.ValueChangeEvent event) {
+                    LOG.debug("  valueChange: event={}", event);
+
+                    Collection values = (Collection) getValue();
+                    if (values == null) {
+                        LOG.debug("  token field old value was null, creating empty list.");
+                        values = new ArrayList();
+                        setValue(values);
+                    }
+
+                    if (values.contains(event.getProperty().getValue())) {
+                        // Already in token list, nothing to do
+                        LOG.debug("  already selected, wont add again.");
+                        return;
+                    }
+
+                    if (onNewTokenSeleted(event.getProperty().getValue())) {
+                        // OK, addition confirmed since not already in the selection list
+                        values.add(event.getProperty().getValue());
+                        fireValueChange(true);
+                    }
+                }
+            };
+            _selectionComponent.addListener(selectionValueChangeListener);
+
+
+            // Wire up the selection change notification for redrawing.
+            Property.ValueChangeListener valueChangeListener = new Property.ValueChangeListener() {
+                @Override
+                public void valueChange(Property.ValueChangeEvent event) {
+                    LOG.debug("valueChange(event={})", event);
+                    updateSelections();
+                }
+            };
+            this.addListener(valueChangeListener);
+
+            // Initial drawing - component may contain data already
+            updateSelections();
+        } catch (Throwable ex) {
+            LOG.error("Failed to initialize OphTokenField component, exception:", ex);
+            setCompositionRoot(new Label("FAILED TO INITIALIZED OphTokenField, see log for stacktrace!"));
+        }
     }
-
 
     @Override
     public Class<?> getType() {
@@ -237,6 +288,11 @@ public class OphTokenField extends CustomField {
      */
     private void updateSelections() {
         LOG.debug("updateSelections()");
+
+        if (_selectionLayout == null) {
+            LOG.debug("  not yet initialized... cannot draw selections. Will be done in attach.");
+            return;
+        }
 
         _selectionLayout.removeAllComponents();
 
@@ -327,10 +383,10 @@ public class OphTokenField extends CustomField {
         HorizontalLayout singleTokenLayout = new HorizontalLayout();
         singleTokenLayout.addStyleName(SELECTED_SINGLE_TOKEN_LAYOUT_STYLE);
 
+        // Create remove selection link
         Button removeTokenButton = new Button("(x)");
         removeTokenButton.addStyleName(BaseTheme.BUTTON_LINK);
         removeTokenButton.addListener(new Button.ClickListener() {
-
             @Override
             public void buttonClick(ClickEvent event) {
                 if (onTokenDelete(selectedToken)) {
@@ -339,11 +395,10 @@ public class OphTokenField extends CustomField {
             }
         });
 
-        // Maximum simplicity for the token text creation
-        Button selectTokenButton = new Button("" + selectedToken);
+        // Create selected token as clickable link and hook the click to call onTokenSelect.
+        Button selectTokenButton = new Button(_formatter.formatToken(selectedToken));
         selectTokenButton.addStyleName(BaseTheme.BUTTON_LINK);
         selectTokenButton.addListener(new Button.ClickListener() {
-
             @Override
             public void buttonClick(ClickEvent event) {
                 onTokenSelect(selectedToken);
@@ -366,7 +421,6 @@ public class OphTokenField extends CustomField {
     protected void onTokenSelect(Object selectedToken) {
         LOG.debug("onTokenSelect({})", selectedToken);
     }
-
 
     /**
      * This method is called when deletion of a token is desired.
@@ -392,4 +446,11 @@ public class OphTokenField extends CustomField {
         return tokenSelected != null;
     }
 
+    /**
+     * Interface to format tokens.
+     */
+    public interface SelectedTokenToTextFormatter {
+
+        public String formatToken(Object selectedToken);
+    }
 }
