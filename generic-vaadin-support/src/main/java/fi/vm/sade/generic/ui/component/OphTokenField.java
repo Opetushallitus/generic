@@ -208,7 +208,7 @@ public class OphTokenField extends CustomField {
             boolean addSelectionLayout = _selectionLayout == null || _selectionLayout.getApplication() == null;
             boolean addSelectionComponent = _selectionComponent == null || _selectionComponent.getApplication() == null;
 
-            _fieldLayout = _fieldLayout != null ? _fieldLayout : onCreateLayout();
+            _fieldLayout = _fieldLayout != null ? _fieldLayout : onCreateComponentLayout();
             _selectionLayout = _selectionLayout != null ? _selectionLayout : onCreateSelectionLayout();
             _selectionComponent = _selectionComponent != null ? _selectionComponent : onCreateSelectionComponent();
 
@@ -336,7 +336,7 @@ public class OphTokenField extends CustomField {
      *
      * @return
      */
-    protected Layout onCreateLayout() {
+    protected Layout onCreateComponentLayout() {
         LOG.debug("onCreateLayout()");
 
         // Create default layout
@@ -369,7 +369,7 @@ public class OphTokenField extends CustomField {
      * Buttons created are "link" styles and hooked up to:
      * <pre>
      * - onTokenDelete() method
-     * - onTokenSelect() method
+     * - onSelectFromSelectedTokens() method
      * </pre>
      *
      * Component created by this method is plaved to "selectionLayout" created in in "onCreateSelectionLayout".
@@ -395,13 +395,13 @@ public class OphTokenField extends CustomField {
             }
         });
 
-        // Create selected token as clickable link and hook the click to call onTokenSelect.
+        // Create selected token as clickable link and hook the click to call onSelectFromSelectedTokens.
         Button selectTokenButton = new Button(_formatter.formatToken(selectedToken));
         selectTokenButton.addStyleName(BaseTheme.BUTTON_LINK);
         selectTokenButton.addListener(new Button.ClickListener() {
             @Override
             public void buttonClick(ClickEvent event) {
-                onTokenSelect(selectedToken);
+                onSelectFromSelectedTokens(selectedToken);
             }
         });
 
@@ -418,8 +418,8 @@ public class OphTokenField extends CustomField {
      *
      * @param selectedToken
      */
-    protected void onTokenSelect(Object selectedToken) {
-        LOG.debug("onTokenSelect({})", selectedToken);
+    protected void onSelectFromSelectedTokens(Object selectedToken) {
+        LOG.debug("onSelectFromSelectedTokens({})", selectedToken);
     }
 
     /**
@@ -439,7 +439,7 @@ public class OphTokenField extends CustomField {
      * Returns true if selected token should be added to the selection list.
      *
      * @param tokenSelected
-     * @return by default true for any non-null token.
+     * @return by default true for any non-null token. Return false to revoke addition.
      */
     protected boolean onNewTokenSeleted(Object tokenSelected) {
         LOG.debug("onNewTokenSelected({})", tokenSelected);
@@ -448,6 +448,7 @@ public class OphTokenField extends CustomField {
 
     /**
      * Interface to format tokens.
+     * Only used if you don't override "onSelectFromSelectedTokens"-method.
      */
     public interface SelectedTokenToTextFormatter {
 
