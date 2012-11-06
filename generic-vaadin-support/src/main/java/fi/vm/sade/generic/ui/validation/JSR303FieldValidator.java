@@ -1,3 +1,19 @@
+/*
+ *
+ * Copyright (c) 2012 The Finnish Board of Education - Opetushallitus
+ *
+ * This program is free software:  Licensed under the EUPL, Version 1.1 or - as
+ * soon as they will be approved by the European Commission - subsequent versions
+ * of the EUPL (the "Licence");
+ *
+ * You may not use this work except in compliance with the Licence.
+ * You may obtain a copy of the Licence at: http://www.osor.eu/eupl/
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * European Union Public Licence for more details.
+ */
 package fi.vm.sade.generic.ui.validation;
 
 import java.lang.annotation.Annotation;
@@ -41,13 +57,13 @@ import fi.vm.sade.generic.common.I18N;
  * HINT: - You can use same annotations in corresponding JPA model class for
  * service side validation
  * <p/>
- * When initialized in Spring context, can also find I18N keys from message sources 
+ * When initialized in Spring context, can also find I18N keys from message sources
  * present in application context.
  * <p/>
  * Example:
  * <p/>
  * class SampleForm {
- * 
+ *
  * @NotNull
  * @Size(min = 3, max = 100) private TextField nameField = ...;
  *           <p/>
@@ -57,18 +73,18 @@ import fi.vm.sade.generic.common.I18N;
  *           class SampleJPA {
  * @NotNull
  * @Size(min = 3, max = 100) private String name; }
- * 
+ *
  *           NOTE!
- * 
+ *
  *           - If you can/want to annotate model instead of vaadin fields, use
  *           fi.vm.sade.generic.ui.ValidationUtils
- * 
+ *
  * @author Antti Salonen
  */
 public class JSR303FieldValidator implements Validator, ApplicationContextAware {
 
     /**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -4965493581301870157L;
 	private static final Logger log = LoggerFactory.getLogger(JSR303FieldValidator.class);
@@ -90,9 +106,9 @@ public class JSR303FieldValidator implements Validator, ApplicationContextAware 
      * Default constructor should only be called from Spring context.
      */
     public JSR303FieldValidator() {
-		
+
 	}
-    
+
     public JSR303FieldValidator(Object form, String property) {
         this(form, property, null);
     }
@@ -143,7 +159,7 @@ public class JSR303FieldValidator implements Validator, ApplicationContextAware 
      * validators in that list, so if the first fails, second attempt should
      * pass. But if anyone knows easy way to resolve correct validator based on
      * type this should be replaced.
-     * 
+     *
      * @param constraintDescriptor
      *            describing constraint
      * @return initialized constraint validator for constraintDescriptor's
@@ -220,7 +236,7 @@ public class JSR303FieldValidator implements Validator, ApplicationContextAware 
                     if (propertyDescriptor != null) {
                         ((Field) javaValue).addValidator(new JSR303FieldValidator(form, javaField.getName(),
                                 propertyDescriptor));
-                        
+
                         // set field required
                         if (javaField.isAnnotationPresent(NotNull.class)) {
                         	Set<ConstraintDescriptor<?>> constraintDescriptors2 = propertyDescriptor.getConstraintDescriptors();
@@ -231,7 +247,7 @@ public class JSR303FieldValidator implements Validator, ApplicationContextAware 
                             		break;
                             	}
                             }
-                        	
+
                             ((Field) javaValue).setRequired(true);
                             ((Field) javaValue).setRequiredError(getValidationMessage(javaField.getAnnotation(NotNull.class), null, notNullDescriptor));
                             if(javaValue instanceof AbstractField) {

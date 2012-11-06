@@ -1,3 +1,19 @@
+/*
+ *
+ * Copyright (c) 2012 The Finnish Board of Education - Opetushallitus
+ *
+ * This program is free software:  Licensed under the EUPL, Version 1.1 or - as
+ * soon as they will be approved by the European Commission - subsequent versions
+ * of the EUPL (the "Licence");
+ *
+ * You may not use this work except in compliance with the Licence.
+ * You may obtain a copy of the Licence at: http://www.osor.eu/eupl/
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * European Union Public Licence for more details.
+ */
 package fi.vm.sade.generic.ui.app;
 
 import com.github.wolfie.blackboard.Blackboard;
@@ -11,7 +27,7 @@ import fi.vm.sade.generic.ui.blackboard.BlackboardContext;
  * this superclass Blackboard can be accessed always via
  * BlackboardContext.getBlackboard(). This class handles blackboard binding and
  * releasing.
- * 
+ *
  * @see BlackboardContext
  * @see fi.vm.sade.generic.ui.blackboard.BlackboardProvider
  * @author Antti Salonen
@@ -41,7 +57,7 @@ public abstract class AbstractBlackboardSadeApplication extends AbstractSadeAppl
     /**
      * Invoked at init to register event listeners and events with given event
      * bus.
-     * 
+     *
      * @param blackboard
      */
     protected abstract void registerListeners(Blackboard blackboard);

@@ -1,3 +1,19 @@
+/*
+ *
+ * Copyright (c) 2012 The Finnish Board of Education - Opetushallitus
+ *
+ * This program is free software:  Licensed under the EUPL, Version 1.1 or - as
+ * soon as they will be approved by the European Commission - subsequent versions
+ * of the EUPL (the "Licence");
+ *
+ * You may not use this work except in compliance with the Licence.
+ * You may obtain a copy of the Licence at: http://www.osor.eu/eupl/
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * European Union Public Licence for more details.
+ */
 package fi.vm.sade.generic.auth;
 
 import com.liferay.portal.kernel.exception.PortalException;
@@ -25,7 +41,7 @@ public class LiferayCustomAttributes {
     public static final String STRONGLY_AUTHENTICATED = "strongly_authenticated";
 
     public static final String ORGANISAATIO_OID = "organisaatio_oid";
-    
+
     public static final String DEFAULT_USER_ROLE_NAME="User";
 
 //    public static final String DEFAULT_SITE_NAME="Guest"; //this is the "Liferay" group
@@ -33,7 +49,7 @@ public class LiferayCustomAttributes {
 
     /**
      * Set custom attribute to liferay user
-     * 
+     *
      * @param userId
      * @param companyId
      * @param attribute
@@ -54,7 +70,7 @@ public class LiferayCustomAttributes {
 
     /**
      * Set custom attribute to liferay user
-     * 
+     *
      * @param userId
      * @param companyId
      * @param attribute
@@ -88,7 +104,7 @@ public class LiferayCustomAttributes {
 
     /**
      * Add custom attribute to liferay.
-     * 
+     *
      * @param companyId
      * @param className
      * @param columnName

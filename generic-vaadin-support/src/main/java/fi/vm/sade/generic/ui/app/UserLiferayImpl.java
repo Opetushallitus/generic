@@ -1,3 +1,19 @@
+/*
+ *
+ * Copyright (c) 2012 The Finnish Board of Education - Opetushallitus
+ *
+ * This program is free software:  Licensed under the EUPL, Version 1.1 or - as
+ * soon as they will be approved by the European Commission - subsequent versions
+ * of the EUPL (the "Licence");
+ *
+ * You may not use this work except in compliance with the Licence.
+ * You may obtain a copy of the Licence at: http://www.osor.eu/eupl/
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * European Union Public Licence for more details.
+ */
 package fi.vm.sade.generic.ui.app;
 
 import com.liferay.portal.kernel.exception.PortalException;
@@ -18,9 +34,9 @@ import java.util.*;
 /**
  * Consider writing this impl in different way that does not stash
  * {@link PortletRequest}
- * 
+ *
  * @author kkammone
- * 
+ *
  */
 public class UserLiferayImpl implements User {
 
@@ -92,7 +108,7 @@ public class UserLiferayImpl implements User {
                 ticket = (String) o;
             }
         }
-        
+
         log.info("getTicket: [" + ticket + "]");
         return ticket;
     }
