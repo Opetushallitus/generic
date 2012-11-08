@@ -29,8 +29,11 @@ public final class ValidationConstants {
     public static final int DESCRIPTION_MAX = 1000;
     public static final String EMAIL_PATTERN = "^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
     // http://stackoverflow.com/questions/163360/regular-expresion-to-match-urls-java
-    public static final String WWW_PATTERN = "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
-    public static final String ZIPCODE_PATTERN = "[0-9]{5}"; // TODO: onko ulkomaillakin näin
+
+    // See: OVT-2178
+    public static final String WWW_PATTERN = "^(|(https?|ftp|file)://)[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
+
+    public static final String ZIPCODE_PATTERN = "[0-9]{5}";
     public static final String PHONE_PATTERN = "[+|-| |\\(|\\)|[0-9]]{3,100}+";
 
     private ValidationConstants() {
