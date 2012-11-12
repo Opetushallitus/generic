@@ -102,7 +102,7 @@ public class SearchableTree<T> extends VerticalLayout {
         this.addComponent(tabSheet);
         basicSearch = new VerticalLayout();
         basicSearch.addStyleName(StyleNames.GRID_16);
-        tabSheet.addTab(basicSearch, "Perushaku");
+        tabSheet.addTab(basicSearch, I18N.getMessage("Hakupuu.lblTab"));
 
         // add search box
         searchBox.setWidth("23em"); // TODO: 100% ei toimi tässä, customlayout?
