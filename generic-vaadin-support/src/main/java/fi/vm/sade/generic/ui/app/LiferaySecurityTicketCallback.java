@@ -17,6 +17,7 @@
 package fi.vm.sade.generic.ui.app;
 
 import fi.vm.sade.generic.common.auth.xml.TicketHeader;
+import fi.vm.sade.generic.ui.feature.UserFeature;
 import fi.vm.sade.generic.ui.portlet.security.SecurityTicketCallback;
 import fi.vm.sade.generic.ui.portlet.security.User;
 
@@ -28,7 +29,7 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
     @Override
     public TicketHeader getTicketHeader() {
         TicketHeader ticketHeader = new TicketHeader();
-        User u = AbstractSadePortletApplication.userThreadLocal.get();
+        User u = UserFeature.getUser();
         if (u != null) {
             ticketHeader.username = u.getOid();
             ticketHeader.ticket = u.getTicket();

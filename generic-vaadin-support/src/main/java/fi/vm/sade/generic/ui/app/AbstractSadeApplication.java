@@ -20,6 +20,7 @@ import java.util.Locale;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import fi.vm.sade.generic.ui.feature.UserFeature;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +59,7 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     }
 
     public User getUser() {
-        return userThreadLocal.get();
+        return UserFeature.getUser();//userThreadLocal.get();
     }
     
     
@@ -120,14 +121,15 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     public void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
         // NO SUPER
         User user = new UserLiferayImpl(request);
-        userThreadLocal.set(user);
+        UserFeature.setUser(user);
         setLocale(user.getLang());
     }
 
     @Override
     public void onRequestEnd(HttpServletRequest request, HttpServletResponse response) {
         // NO SUPER
-        userThreadLocal.remove();
+        //userThreadLocal.remove();
+        UserFeature.setUser(null);
     }
 
     /**

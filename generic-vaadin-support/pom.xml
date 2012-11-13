@@ -74,6 +74,11 @@
 			<scope>provided</scope>
 			<version>${liferay.version}</version>
 		</dependency>
+        <dependency>
+            <groupId>org.dellroad</groupId>
+            <artifactId>dellroad-stuff-vaadin</artifactId>
+            <version>1.0.550</version>
+        </dependency>
     </dependencies>
 
 </project>
