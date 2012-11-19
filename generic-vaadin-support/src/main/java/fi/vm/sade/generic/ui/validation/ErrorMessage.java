@@ -17,14 +17,14 @@
 package fi.vm.sade.generic.ui.validation;
 
 import com.vaadin.data.Validator.InvalidValueException;
-import com.vaadin.ui.CssLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.VerticalLayout;
 
 /**
  * @author tommiha
  * 
  */
-public class ErrorMessage extends CssLayout {
+public class ErrorMessage extends VerticalLayout {
 
     private static final long serialVersionUID = -6495162299981290991L;
 
