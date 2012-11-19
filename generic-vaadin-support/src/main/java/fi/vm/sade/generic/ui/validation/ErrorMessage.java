@@ -17,25 +17,20 @@
 package fi.vm.sade.generic.ui.validation;
 
 import com.vaadin.data.Validator.InvalidValueException;
-import com.vaadin.ui.CustomComponent;
+import com.vaadin.ui.CssLayout;
 import com.vaadin.ui.Label;
-import com.vaadin.ui.VerticalLayout;
 
 /**
  * @author tommiha
- *
+ * 
  */
-public class ErrorMessage extends CustomComponent {
+public class ErrorMessage extends CssLayout {
 
     private static final long serialVersionUID = -6495162299981290991L;
 
     private boolean hasErrors = false;
 
-    // Tapsa sanoi, että pitää laittaa näin.
-    private VerticalLayout mainLayout = new VerticalLayout();
-
     public ErrorMessage() {
-        setCompositionRoot(mainLayout);
         addStyleName("error-container");
         setVisible(false);
     }
@@ -57,7 +52,8 @@ public class ErrorMessage extends CustomComponent {
     public void addError(String error) {
         Label errorLabel = new Label(error);
         errorLabel.addStyleName("error");
-        mainLayout.addComponent(errorLabel);
+        errorLabel.setWidth("100%");
+        addComponent(errorLabel);
         hasErrors = true;
         setVisible(true);
     }
@@ -65,7 +61,7 @@ public class ErrorMessage extends CustomComponent {
     public void resetErrors() {
         hasErrors = false;
         setVisible(false);
-        mainLayout.removeAllComponents();
+        removeAllComponents();
     }
 
     public boolean hasErrors() {
