@@ -31,6 +31,7 @@ public class ErrorMessage extends VerticalLayout {
     private boolean hasErrors = false;
 
     public ErrorMessage() {
+        setWidth("100%");
         addStyleName("error-container");
         setVisible(false);
     }
