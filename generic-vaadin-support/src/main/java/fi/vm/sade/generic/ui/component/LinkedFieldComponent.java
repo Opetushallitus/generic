@@ -1,0 +1,140 @@
+/**
+ *
+ */
+package fi.vm.sade.generic.ui.component;
+
+import java.util.Map;
+import java.util.Map.Entry;
+
+import com.vaadin.data.Property.ValueChangeEvent;
+import com.vaadin.data.Property.ValueChangeListener;
+import com.vaadin.event.FieldEvents.TextChangeEvent;
+import com.vaadin.event.FieldEvents.TextChangeListener;
+import com.vaadin.ui.AbstractField;
+import com.vaadin.ui.AbstractTextField;
+import com.vaadin.ui.AbstractTextField.TextChangeEventMode;
+import com.vaadin.ui.Alignment;
+import com.vaadin.ui.CheckBox;
+import com.vaadin.ui.GridLayout;
+import com.vaadin.ui.Label;
+import com.vaadin.ui.VerticalLayout;
+
+/**
+ * @author tommiha
+ */
+@SuppressWarnings("serial")
+public class LinkedFieldComponent extends VerticalLayout {
+    private AbstractField primaryField;
+    private Map<AbstractField, Label> otherFields;
+
+    private CheckBox linked;
+
+    private boolean readOnly = false;
+
+    private void addField(GridLayout fieldLayout, Label label, AbstractField field) {
+        int row = fieldLayout.getRows();
+        fieldLayout.insertRow(row);
+
+        fieldLayout.addComponent(field, 0, row);
+        fieldLayout.setComponentAlignment(field, Alignment.TOP_LEFT);
+
+        fieldLayout.addComponent(label, 1, row);
+        fieldLayout.setComponentAlignment(label, Alignment.MIDDLE_LEFT);
+        label.setSizeUndefined();
+
+        field.setWidth("100%");
+    }
+
+    public LinkedFieldComponent(String linkedText, AbstractField primaryField, Label primaryFieldLabel,
+            Map<AbstractField, Label> otherFields) {
+        setMargin(false, false, true, false);
+        setWidth("100%");
+
+        linked = new CheckBox(linkedText);
+        linked.addListener(new LinkedCheckBoxValueChangeListener());
+        linked.setImmediate(true);
+        addComponent(linked);
+
+        setComponentAlignment(linked, Alignment.BOTTOM_RIGHT);
+
+        GridLayout fieldLayout = new GridLayout(2, 1);
+        fieldLayout.setWidth("100%");
+        fieldLayout.setColumnExpandRatio(0, 1.0f);
+        fieldLayout.setSpacing(true);
+
+        addField(fieldLayout, primaryFieldLabel, primaryField);
+
+        primaryField.setImmediate(true);
+
+        if (primaryField instanceof AbstractTextField) {
+            ((AbstractTextField) primaryField).setTextChangeEventMode(TextChangeEventMode.EAGER);
+            ((AbstractTextField) primaryField).addListener((TextChangeListener) new PrimaryFieldValueChangeListener());
+        } else {
+            primaryField.addListener(new PrimaryFieldValueChangeListener());
+        }
+
+        if (primaryField instanceof AbstractField) {
+            ((AbstractField) primaryField).setImmediate(true);
+        }
+
+        for (Entry<AbstractField, Label> e : otherFields.entrySet()) {
+            addField(fieldLayout, e.getValue(), e.getKey());
+        }
+
+        this.primaryField = primaryField;
+        this.otherFields = otherFields;
+        addComponent(fieldLayout);
+    }
+
+    private class LinkedCheckBoxValueChangeListener implements ValueChangeListener {
+
+        @Override
+        public void valueChange(ValueChangeEvent event) {
+            for (Entry<AbstractField, Label> e : otherFields.entrySet()) {
+                if (linked.booleanValue()) {
+                    e.getKey().setValue(primaryField.getValue());
+                }
+                e.getKey().setEnabled(!linked.booleanValue());
+                e.getValue().setEnabled(!linked.booleanValue());
+            }
+        }
+    }
+
+    private class PrimaryFieldValueChangeListener implements ValueChangeListener, TextChangeListener {
+
+        private void setValues(Object newValue) {
+            if (linked.booleanValue()) {
+                for (Entry<AbstractField, Label> e : otherFields.entrySet()) {
+                    e.getKey().setValue(newValue);
+                }
+            }
+        }
+
+        @Override
+        public void valueChange(ValueChangeEvent event) {
+            setValues(primaryField.getValue());
+        }
+
+        @Override
+        public void textChange(TextChangeEvent event) {
+            setValues(event.getText());
+        }
+    }
+
+    @Override
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
+
+        primaryField.setReadOnly(readOnly);
+        for (Entry<AbstractField, Label> e : otherFields.entrySet()) {
+            e.getKey().setReadOnly(readOnly);
+        }
+
+        linked.setVisible(!readOnly);
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+}
