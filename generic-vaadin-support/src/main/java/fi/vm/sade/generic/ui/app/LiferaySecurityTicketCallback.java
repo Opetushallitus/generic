@@ -29,7 +29,7 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
     @Override
     public TicketHeader getTicketHeader() {
         TicketHeader ticketHeader = new TicketHeader();
-        User u = UserFeature.getUser();
+        User u = UserFeature.get();
         if (u != null) {
             ticketHeader.username = u.getOid();
             ticketHeader.ticket = u.getTicket();

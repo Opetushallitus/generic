@@ -20,13 +20,13 @@ package fi.vm.sade.generic.ui.app;
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
 
-import fi.vm.sade.generic.ui.feature.UserFeature;
 import org.springframework.beans.factory.annotation.Configurable;
 
 import com.github.wolfie.blackboard.Blackboard;
 import com.vaadin.service.ApplicationContext;
 import com.vaadin.terminal.gwt.server.PortletRequestListener;
 
+import fi.vm.sade.generic.ui.feature.UserFeature;
 import fi.vm.sade.generic.ui.portlet.security.User;
 
 /**
@@ -44,12 +44,12 @@ public abstract class AbstractSadePortletApplication extends AbstractBlackboardS
         User user = new UserLiferayImpl(portletRequest);
         // User user = new UserMock();
         setLocale(user.getLang());
-        UserFeature.setUser(user);
+        UserFeature.set(user);
     }
 
     @Override
     public void onRequestEnd(PortletRequest portletRequest, PortletResponse portletResponse) {
-        UserFeature.setUser(null);
+        UserFeature.remove();
     }
 
     @Override

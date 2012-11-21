@@ -20,7 +20,6 @@ import java.util.Locale;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import fi.vm.sade.generic.ui.feature.UserFeature;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +31,7 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.Window;
 
 import fi.vm.sade.generic.common.I18N;
+import fi.vm.sade.generic.ui.feature.UserFeature;
 import fi.vm.sade.generic.ui.portlet.security.User;
 
 /**
@@ -59,10 +59,8 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     }
 
     public User getUser() {
-        return UserFeature.getUser();//userThreadLocal.get();
+        return UserFeature.get();
     }
-    
-    
 
     @Override
     public void setUser(Object user) {
@@ -75,10 +73,10 @@ public abstract class AbstractSadeApplication extends Application implements Htt
      */
     @Override
     public void setLocale(Locale locale) {
-        //DEBUGSAWAY:log.debug("setLocale({})", locale);
+        // DEBUGSAWAY:log.debug("setLocale({})", locale);
         if (locale == null) {
             locale = new Locale(DEFAULT_LOCALE);
-            //DEBUGSAWAY:log.debug("locale was null, defaulting({})", locale);
+            // DEBUGSAWAY:log.debug("locale was null, defaulting({})", locale);
         }
         I18N.setLocale(locale);
         LocaleContextHolder.setLocale(locale);
@@ -121,15 +119,14 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     public void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
         // NO SUPER
         User user = new UserLiferayImpl(request);
-        UserFeature.setUser(user);
+        UserFeature.set(user);
         setLocale(user.getLang());
     }
 
     @Override
     public void onRequestEnd(HttpServletRequest request, HttpServletResponse response) {
         // NO SUPER
-        //userThreadLocal.remove();
-        UserFeature.setUser(null);
+        UserFeature.remove();
     }
 
     /**
