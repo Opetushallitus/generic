@@ -3,6 +3,7 @@
  */
 package fi.vm.sade.generic.ui.component;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -30,6 +31,8 @@ public class LinkedFieldComponent extends VerticalLayout {
     private CheckBox linked;
 
     private boolean readOnly = false;
+    private String linkedText;
+    private Label primaryLabel;
 
     private void addField(GridLayout fieldLayout, Label label, AbstractField field) {
         int row = fieldLayout.getRows();
@@ -45,8 +48,40 @@ public class LinkedFieldComponent extends VerticalLayout {
         field.setWidth("100%");
     }
 
+    public LinkedFieldComponent(String linkedText, AbstractField... fields) {
+        this.linkedText = linkedText;
+        if(fields == null || fields.length == 0) {
+            throw new RuntimeException("Linked fields are not given.");
+        }
+        this.primaryField = fields[0];
+        this.primaryLabel = extractCaptions(fields[0]);
+        this.otherFields = new HashMap<AbstractField, Label>();
+        for(int i = 0; i < fields.length; i++) {
+            if(i == 0) {
+                continue;
+            }
+            AbstractField field = fields[i];
+            otherFields.put(field, extractCaptions(field));
+        }
+        this.initializeComponent();
+    }
+
+    private Label extractCaptions(AbstractField field) {
+        String caption = field.getCaption();
+        field.setCaption("");
+        return new Label(caption);
+    }
+
     public LinkedFieldComponent(String linkedText, AbstractField primaryField, Label primaryFieldLabel,
             Map<AbstractField, Label> otherFields) {
+        this.linkedText = linkedText;
+        this.primaryField = primaryField;
+        this.primaryLabel = primaryFieldLabel;
+        this.otherFields = otherFields;
+        initializeComponent();
+    }
+
+    private void initializeComponent() {
         setMargin(false, false, true, false);
         setWidth("100%");
 
@@ -62,7 +97,7 @@ public class LinkedFieldComponent extends VerticalLayout {
         fieldLayout.setColumnExpandRatio(0, 1.0f);
         fieldLayout.setSpacing(true);
 
-        addField(fieldLayout, primaryFieldLabel, primaryField);
+        addField(fieldLayout, this.primaryLabel, primaryField);
 
         primaryField.setImmediate(true);
 
@@ -81,8 +116,6 @@ public class LinkedFieldComponent extends VerticalLayout {
             addField(fieldLayout, e.getValue(), e.getKey());
         }
 
-        this.primaryField = primaryField;
-        this.otherFields = otherFields;
         addComponent(fieldLayout);
     }
 
