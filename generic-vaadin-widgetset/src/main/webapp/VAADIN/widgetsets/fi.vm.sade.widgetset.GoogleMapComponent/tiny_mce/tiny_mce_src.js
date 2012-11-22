@@ -14359,7 +14359,7 @@ tinymce.create('tinymce.ui.Toolbar:tinymce.ui.Container', {
 			try {
 				ra.setEndAfter(ec);
 			} catch(ex) {
-				//DEBUGSAWAY://console.debug(s.focusNode, s.focusOffset);
+				//console.debug(s.focusNode, s.focusOffset);
 			}
 
 			ra.setStart(en, eo);
@@ -14457,7 +14457,7 @@ tinymce.create('tinymce.ui.Toolbar:tinymce.ui.Container', {
 			if (y < vp.y || y + 25 > vp.y + vp.h) {
 				ed.getWin().scrollTo(0, y < vp.y ? y : y - vp.h + 25); // Needs to be hardcoded to roughly one line of text if a huge text block is broken into two blocks
 
-				//DEBUGSAWAY:/*console.debug(
+				/*console.debug(
 					'Element: y=' + y + ', h=' + ch + ', ' +
 					'Viewport: y=' + vp.y + ", h=" + vp.h + ', bottom=' + (vp.y + vp.h)
 				);*/
