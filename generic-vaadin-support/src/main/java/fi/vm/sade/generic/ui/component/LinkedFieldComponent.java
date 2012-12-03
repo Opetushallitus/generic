@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
+import com.vaadin.data.util.ObjectProperty;
 import com.vaadin.event.FieldEvents.TextChangeEvent;
 import com.vaadin.event.FieldEvents.TextChangeListener;
 import com.vaadin.ui.AbstractField;
@@ -33,6 +34,7 @@ public class LinkedFieldComponent extends VerticalLayout {
     private boolean readOnly = false;
     private String linkedText;
     private Label primaryLabel;
+    private Label titleLabel;
 
     private void addField(GridLayout fieldLayout, Label label, AbstractField field) {
         int row = fieldLayout.getRows();
@@ -68,7 +70,7 @@ public class LinkedFieldComponent extends VerticalLayout {
 
     private Label extractCaptions(AbstractField field) {
         String caption = field.getCaption();
-        field.setCaption("");
+        field.setCaption(null);
         return new Label(caption);
     }
 
@@ -85,17 +87,19 @@ public class LinkedFieldComponent extends VerticalLayout {
         setMargin(false, false, true, false);
         setWidth("100%");
 
-        linked = new CheckBox(linkedText);
-        linked.addListener(new LinkedCheckBoxValueChangeListener());
-        linked.setImmediate(true);
-        addComponent(linked);
-
-        setComponentAlignment(linked, Alignment.BOTTOM_RIGHT);
-
         GridLayout fieldLayout = new GridLayout(2, 1);
         fieldLayout.setWidth("100%");
         fieldLayout.setColumnExpandRatio(0, 1.0f);
         fieldLayout.setSpacing(true);
+
+        titleLabel = new Label();
+        fieldLayout.addComponent(titleLabel, 0, 0);
+
+        linked = new CheckBox(linkedText);
+        linked.addListener(new LinkedCheckBoxValueChangeListener());
+        linked.setImmediate(true);
+        fieldLayout.addComponent(linked, 1, 0);
+        fieldLayout.setComponentAlignment(linked, Alignment.BOTTOM_RIGHT);
 
         addField(fieldLayout, this.primaryLabel, primaryField);
 
@@ -169,5 +173,10 @@ public class LinkedFieldComponent extends VerticalLayout {
     @Override
     public boolean isReadOnly() {
         return readOnly;
+    }
+
+    public void setTitle(String title) {
+        this.titleLabel.setContentMode(Label.CONTENT_DEFAULT);
+        this.titleLabel.setPropertyDataSource(new ObjectProperty<String>(title, String.class));
     }
 }
