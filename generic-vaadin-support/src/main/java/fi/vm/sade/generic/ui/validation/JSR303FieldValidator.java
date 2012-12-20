@@ -87,7 +87,7 @@ public class JSR303FieldValidator implements Validator, ApplicationContextAware 
 	 *
 	 */
 	private static final long serialVersionUID = -4965493581301870157L;
-	private static final Logger log = LoggerFactory.getLogger(JSR303FieldValidator.class);
+	private static final Logger LOG = LoggerFactory.getLogger(JSR303FieldValidator.class);
     private static ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     private static javax.validation.Validator javaxValidator = factory.getValidator();
     private static MessageInterpolator messageInterpolator = factory.getMessageInterpolator();
@@ -126,7 +126,7 @@ public class JSR303FieldValidator implements Validator, ApplicationContextAware 
     @Override
     public void validate(Object o) throws InvalidValueException {
         Object value = getValue();
-        log.info("validation start, field: " + property + ", value: " + value);
+        LOG.debug("validation start: field '{}' - value '{}'", property, value);
         boolean result = true;
         String message = null;
         InvalidValueException invalidValueException = null;
@@ -146,8 +146,8 @@ public class JSR303FieldValidator implements Validator, ApplicationContextAware 
             }
 
         }
-        log.info("validation done, field: " + property + ", value: " + value + ", result: " + result + ", message: "
-                + message + ", invalidValueException: " + invalidValueException);
+        LOG.debug("validation done: field: {}, value: {}, result: {}, message: {}, invalidValueException: {}",
+                new Object[] {property, value, result, message, invalidValueException});
         if (invalidValueException != null) {
             throw invalidValueException;
         }
