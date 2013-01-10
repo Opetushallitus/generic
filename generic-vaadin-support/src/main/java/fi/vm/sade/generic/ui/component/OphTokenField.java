@@ -21,6 +21,7 @@ import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Component;
+import com.vaadin.ui.CssLayout;
 import com.vaadin.ui.Field;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
@@ -69,6 +70,7 @@ import org.vaadin.addon.customfield.CustomField;
 public class OphTokenField extends CustomField {
 
     private static final Logger LOG = LoggerFactory.getLogger(OphTokenField.class);
+
     public static final String LAYOUT_STYLE = "TokenField_layout";
     public static final String SELECTION_LAYOUT_STYLE = "TokenField_selectionLayout";
     public static final String SELECTED_SINGLE_TOKEN_LAYOUT_STYLE = "TokenField_selectedSingleTokenLayout";
@@ -105,9 +107,31 @@ public class OphTokenField extends CustomField {
      */
     private SelectedTokenToTextFormatter _formatter = DEFAULT_TOKEN_FORMATTER;
 
+    /*
+     * If this is true two "links" will be generated "(x)" for deletion and "name" for selection.
+     */
+    private boolean _isSelectionEnabled = false;
+
     public OphTokenField() {
         super();
         setCompositionRoot(new Label("TOKEN FIELD NOT INITIALIZED"));
+    }
+
+    /**
+     * If true the selection is possible and "onSelect" will be called.
+     * @return
+     */
+    public boolean is_isSelectionEnabled() {
+        return _isSelectionEnabled;
+    }
+
+    /**
+     * If true selection is possible and "onSelect" will be called on click.
+     *
+     * @param _isSelectionEnabled
+     */
+    public void set_isSelectionEnabled(boolean _isSelectionEnabled) {
+        this._isSelectionEnabled = _isSelectionEnabled;
     }
 
     /**
@@ -213,7 +237,7 @@ public class OphTokenField extends CustomField {
             _selectionComponent = _selectionComponent != null ? _selectionComponent : onCreateSelectionComponent();
 
             if (_fieldLayout == null || _selectionLayout == null || _selectionComponent == null) {
-                setCompositionRoot(new Label("Field layout, selection layout or selectiomn component is null - cannot proceed."));
+                setCompositionRoot(new Label("Field layout, selection layout or selection component is null - cannot proceed."));
                 return;
             }
 
@@ -225,6 +249,11 @@ public class OphTokenField extends CustomField {
             LOG.debug("  add selection layout to field layout: {}", addSelectionLayout);
             if (addSelectionLayout) {
                 _fieldLayout.addComponent(_selectionLayout);
+
+                // If field layout is HorizontalLayout make sure selection layout scales
+                if (_fieldLayout instanceof HorizontalLayout) {
+                   ((HorizontalLayout) _fieldLayout).setExpandRatio(_selectionLayout, 1.0f);
+                }
             }
 
             setCompositionRoot(_fieldLayout);
@@ -294,6 +323,7 @@ public class OphTokenField extends CustomField {
             return;
         }
 
+        // Remove all selections
         _selectionLayout.removeAllComponents();
 
         Collection values = (Collection) getValue();
@@ -302,22 +332,20 @@ public class OphTokenField extends CustomField {
             return;
         }
 
-        //
-        // Loop over selected values, create selected component and add it to selection layout
-        //
+        // Loop over selected values
         for (final Object object : values) {
-            Component selectedItem = onCreateSelectedTokenComponent(object);
-            _selectionLayout.addComponent(selectedItem);
+            // Create and add to selection layout
+            onCreateSelectedTokenComponent(object);
         }
     }
 
     /**
-     * Called to create the selection component. This components will be hooked by this claass with value change listener to notify the method
-     * onNewTokenSelected().
+     * Called to create the selection component. This components will be hooked by this class with
+     * value change listener to notify the method onNewTokenSelected().
      *
      * By default creates new ComboBox component in immediate model with new items allowed, filtering mode contains.
      *
-     * @return
+     * @return AbstractSelect created
      */
     protected AbstractSelect onCreateSelectionComponent() {
         LOG.debug("onCreateSelectionComponent()");
@@ -332,7 +360,8 @@ public class OphTokenField extends CustomField {
     /**
      * Called when component layout is created.
      *
-     * By default returns new HorizontalLayout.
+     * By default returns new HorizontalLayout with added style name
+     * LAYOUT_STYLE (TokenField_layout).
      *
      * @return
      */
@@ -341,6 +370,7 @@ public class OphTokenField extends CustomField {
 
         // Create default layout
         HorizontalLayout l = new HorizontalLayout();
+        l.setWidth("100%");
         l.setSpacing(true);
         l.addStyleName(LAYOUT_STYLE);
         return l;
@@ -348,15 +378,16 @@ public class OphTokenField extends CustomField {
 
     /**
      * Called when new selection layout is created.
+     * By default it creates a CssLayout.
+     * Created layout has a style name added to it: SELECTION_LAYOUT_STYLE (TokenField_selectionLayout).
      *
-     * @return
+     * @return created layout
      */
     protected Layout onCreateSelectionLayout() {
         LOG.debug("onCreateSelectionLayout()");
 
         // Create default layout
-        HorizontalLayout l = new HorizontalLayout();
-        l.setSpacing(true);
+        CssLayout l = new CssLayout();
         l.addStyleName(SELECTION_LAYOUT_STYLE);
         return l;
     }
@@ -364,51 +395,69 @@ public class OphTokenField extends CustomField {
     /**
      * Creates a selected item component.
      *
-     * By default this methods creates Horizontal layout and two buttons.
+     * By default this methods creates single button (link style) for removing selection.
+     * (calls "onTokenDelete"-method)
      *
-     * Buttons created are "link" styles and hooked up to:
-     * <pre>
-     * - onTokenDelete() method
-     * - onSelectFromSelectedTokens() method
-     * </pre>
+     * If token selection is enabled then two buttons (as links) are generated.
+     * "(x)" hooked to "onTokenDelete" and formatted text value link for selection
+     * hooked to "onSelectFromSelectedTokens"-method.
      *
-     * Component created by this method is plaved to "selectionLayout" created in in "onCreateSelectionLayout".
+     * Component(s) created by this method are/is placed to "selectionLayout" created in in "onCreateSelectionLayout".
      *
      * @param selectedToken
-     * @return
      */
-    protected Component onCreateSelectedTokenComponent(final Object selectedToken) {
+    protected void onCreateSelectedTokenComponent(final Object selectedToken) {
         LOG.debug("onCreateSelectedTokenComponent({})", selectedToken);
 
-        HorizontalLayout singleTokenLayout = new HorizontalLayout();
-        singleTokenLayout.addStyleName(SELECTED_SINGLE_TOKEN_LAYOUT_STYLE);
-
-        // Create remove selection link
-        Button removeTokenButton = new Button("(x)");
-        removeTokenButton.addStyleName(BaseTheme.BUTTON_LINK);
-        removeTokenButton.addListener(new Button.ClickListener() {
+        // Is the selection possible?
+        if (_isSelectionEnabled) {
+            // Create remove selected token link
+            Button removeTokenButton = new Button("(x)");
+            removeTokenButton.addStyleName(BaseTheme.BUTTON_LINK);
+            removeTokenButton.addListener(new Button.ClickListener() {
             @Override
             public void buttonClick(ClickEvent event) {
                 if (onTokenDelete(selectedToken)) {
                     removeToken(selectedToken);
                 }
             }
-        });
+            });
 
-        // Create selected token as clickable link and hook the click to call onSelectFromSelectedTokens.
-        Button selectTokenButton = new Button(_formatter.formatToken(selectedToken));
-        selectTokenButton.addStyleName(BaseTheme.BUTTON_LINK);
-        selectTokenButton.addListener(new Button.ClickListener() {
+            // Create selected token as a link and hook the click to call onSelectFromSelectedTokens.
+            Button selectTokenButton = new Button(_formatter.formatToken(selectedToken));
+            selectTokenButton.addStyleName(BaseTheme.BUTTON_LINK);
+            selectTokenButton.addListener(new Button.ClickListener() {
             @Override
             public void buttonClick(ClickEvent event) {
                 onSelectFromSelectedTokens(selectedToken);
             }
-        });
+            });
 
-        singleTokenLayout.addComponent(removeTokenButton);
-        singleTokenLayout.addComponent(selectTokenButton);
+            // Add to layout
+            if (_selectionLayout != null) {
+                _selectionLayout.addComponent(removeTokenButton);
+                _selectionLayout.addComponent(selectTokenButton);
+            }
+        } else {
+            // Selection is not possible, so create single remove selected token link
+            String name = "(x) " + _formatter.formatToken(selectedToken);
 
-        return singleTokenLayout;
+            Button removeTokenButton = new Button(name);
+            removeTokenButton.addStyleName(BaseTheme.BUTTON_LINK);
+            removeTokenButton.addListener(new Button.ClickListener() {
+                @Override
+                public void buttonClick(ClickEvent event) {
+                    if (onTokenDelete(selectedToken)) {
+                        removeToken(selectedToken);
+                    }
+                }
+            });
+
+            // Add to layout
+            if (_selectionLayout != null) {
+                _selectionLayout.addComponent(removeTokenButton);
+            }
+        }
     }
 
     /**
