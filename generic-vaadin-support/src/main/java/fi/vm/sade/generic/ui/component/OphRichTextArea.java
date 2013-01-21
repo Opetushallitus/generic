@@ -15,10 +15,21 @@
  */
 package fi.vm.sade.generic.ui.component;
 
+import com.vaadin.data.validator.AbstractStringValidator;
+import com.vaadin.data.validator.StringLengthValidator;
 import org.vaadin.tinymceeditor.TinyMCETextField;
 
 /**
- * Siple TinyMCETextField wrapper with default config and size.
+ * Simple TinyMCETextField wrapper with default config and size.
+ * <p/>
+ * Default size:
+ * <ul>
+ * <li>Width: 600px</li>
+ * <li>Height: 250px</li>
+ * </ul>
+ * <p/>
+ * You can also limit the length of the text allowed in the component - if maxLength
+ * is given a default "StringLengthValidator" is added to the component.
  *
  * @author mlyly
  */
@@ -32,6 +43,10 @@ public class OphRichTextArea extends TinyMCETextField {
             + "theme_advanced_buttons2 : '', "
             + "theme_advanced_buttons3 : '', "
             + "theme_advanced_statusbar_location : ''}";
+    /*
+     * Max length for the data.
+     */
+    private int _maxLength = -1;
 
     public OphRichTextArea() {
         super();
@@ -40,5 +55,38 @@ public class OphRichTextArea extends TinyMCETextField {
         super.setWidth("600px");
         super.setHeight("250px");
     }
+
+    /**
+     * Create RTA that has a limited value length.
+     *
+     * @param maxLength set the maximum allowed length for text in the component
+     * @param maxLengthExceededErrorMessage the error message to display when length is exceeded, can contain two
+     *                                      parameters 0=current length, 1=max length
+     */
+    public OphRichTextArea(final int maxLength, String maxLengthExceededErrorMessage) {
+        this();
+        setMaxLength(maxLength);
+
+        if (maxLength > 0) {
+            // Add validator if max length is limited
+            addValidator(new StringLengthValidator(maxLengthExceededErrorMessage, 0, maxLength, true));
+        }
+    }
+
+    /**
+     * Note - overridden form the "TextField" - it does not work well with the TinyMCE.
+     *
+     * @param maxLength
+     */
+    @Override
+    public void setMaxLength(int maxLength) {
+        _maxLength = maxLength;
+    }
+
+    @Override
+    public int getMaxLength() {
+        return _maxLength;
+    }
+
 
 }
