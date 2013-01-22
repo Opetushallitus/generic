@@ -4,6 +4,7 @@ import fi.vm.sade.dbunit.annotation.DataSetLocation;
 import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.IDataSet;
+import org.dbunit.dataset.ReplacementDataSet;
 import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
 import org.dbunit.operation.DatabaseOperation;
 import org.hibernate.internal.SessionImpl;
@@ -35,6 +36,8 @@ public class JTACleanInsertTestExecutionListener extends TransactionalTestExecut
 
             Resource dataSetResource = testContext.getApplicationContext().getResource(dataSetResourcePath);
             IDataSet dataSet = new FlatXmlDataSetBuilder().build(dataSetResource.getInputStream());
+            ReplacementDataSet replacementDataSet = new ReplacementDataSet(dataSet);
+            replacementDataSet.addReplacementObject("[NULL]", null);
 
             LocalContainerEntityManagerFactoryBean emf = testContext.getApplicationContext().getBean(
                     org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean.class);
@@ -45,8 +48,8 @@ public class JTACleanInsertTestExecutionListener extends TransactionalTestExecut
             SessionImpl session = (SessionImpl) entityManager.getDelegate();
             Connection jdbcConn = session.connection();
             IDatabaseConnection con = new DatabaseConnection(jdbcConn);
-            // DatabaseOperation.DELETE_ALL.execute(con, dataSet);
-            DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
+            // DatabaseOperation.DELETE_ALL.execute(con, dataSet);    “
+            DatabaseOperation.CLEAN_INSERT.execute(con, replacementDataSet);
             // entityManager.getTransaction().commit();
             con.close();
         }
