@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+             http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--
+      OUTSIDE CONFIGURATION NEEDED:
+      - "activemq.brokerurl", mandatory
+      - "activemq.topic.name.events", non mandatory - default value is: "fi.vm.sade.events.eventsTopic"
+    -->
+    <context:property-placeholder
+            location="classpath:generic-events.properties, file:///${user.home:''}/oph-configuration/common.properties, file:///${user.home:''}/oph-configuration/generic-events.properties"
+            ignore-resource-not-found="true"/>
+
+    <!--
+      Broker connection, broker URL from properties
+    -->
+    <bean id="eventsJmsConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="brokerURL">
+            <value>${activemq.brokerurl}</value>
+        </property>
+    </bean>
+
+    <bean id="eventsJmsFactory" class="org.apache.activemq.pool.PooledConnectionFactory" destroy-method="stop">
+        <property name="connectionFactory" ref="eventsJmsConnectionFactory"/>
+    </bean>
+
+    <!--
+      Define the target topic where events will be sent
+      - NOTE default Topic name = "fi.vm.sade.events.eventsTopic"
+    -->
+    <bean id="eventsDestination" class="org.apache.activemq.command.ActiveMQTopic">
+        <constructor-arg value="${activemq.topic.name.events:fi.vm.sade.events.eventsTopic}"/>
+    </bean>
+
+    <bean id="eventsJmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory">
+            <ref local="eventsJmsFactory"/>
+        </property>
+        <property name="defaultDestination" ref="eventsDestination"/>
+    </bean>
+
+    <!--
+      @Autowire / get this to send events
+    -->
+    <bean id="eventsSender" class="fi.vm.sade.events.impl.EventSenderJms">
+        <property name="jmsTemplate" ref="eventsJmsTemplate"/>
+    </bean>
+
+
+    <!--
+      Listening to messages, an example
+      - registers durable subscription with clientId and subscription name.
+    -->
+<!--
+    <bean id="eventsMessageContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+        <property name="connectionFactory" ref="eventsJmsFactory">
+        <property name="destination" ref="eventsDestination">
+        <property name="messageListener" ref="eventsMessageListener">
+
+        <property name="concurrentConsumers" value="1">
+        <property name="sessionTransacted" value="true">
+        <property name="pubSubDomain" value="true">
+        <property name="subscriptionDurable" value="true">
+
+        <property name="clientId" value="Oppija">
+        <property name="durableSubscriptionName" value="tarjonta-and-organisaatio-events">
+        <property name="messageSelector" value="category = 'Tarjonta' OR category = 'Organisaatio'"/>
+    </bean>
+-->
+
+    <!--
+       Default JMS Message listener, receives messages, extracts Event's and calls event handlers
+       Create own container as above and use this as "messageListener".
+       @Autowire / get this AND add your own event handlers.
+    -->
+    <bean id="eventsMessageListener" class="fi.vm.sade.events.impl.EventListener" />
+
+</beans>
