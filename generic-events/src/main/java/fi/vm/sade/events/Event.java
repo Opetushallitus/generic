@@ -37,7 +37,7 @@ public class Event implements Serializable {
      * Create event with "default" category.
      */
     public Event() {
-        addValue("category", "default");
+        setValue("category", "default");
     }
 
     /**
@@ -47,10 +47,18 @@ public class Event implements Serializable {
      *                 This value is set to header "JMSType" and used for event listener selectors.
      */
     public Event(String category) {
-        addValue("category", category);
+        setValue("category", category);
     }
 
-    public Event addValue(String key, Serializable value) {
+    /**
+     * Set a value for a key. Note: a special key "category" is set to the jms Message headers,
+     * can be used for selectors with persistent subscriptions.
+     *
+     * @param key
+     * @param value if null key is removed
+     * @return the event
+     */
+    public Event setValue(String key, Serializable value) {
         if (value == null) {
             payload.remove(key);
         } else {

@@ -58,9 +58,9 @@ public class EventSenderJmsTest {
         // Send events
         for (int i = 0; i < 10; i++) {
             Event e = new Event("test");
-            e.addValue("foo", "bar")
-                    .addValue("myId", i)
-                    .addValue("date", new Date());
+            e.setValue("foo", "bar")
+                    .setValue("myId", i)
+                    .setValue("date", new Date());
 
             eventSender.sendEvent(e);
             messageSentCounter++;
@@ -109,8 +109,8 @@ public class EventSenderJmsTest {
         // Send events
         for (int i = 0; i < 10; i++) {
             Event e = new Event("junit");
-            e.addValue("foo", "bar")
-                    .addValue("myId", i);
+            e.setValue("foo", "bar")
+                    .setValue("myId", i);
 
             eventSender.sendEvent(e);
             messageSentCounter++;
