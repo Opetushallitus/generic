@@ -35,7 +35,9 @@ public class JTACleanInsertTestExecutionListener extends TransactionalTestExecut
         if (dataSetResourcePath != null) {
 
             Resource dataSetResource = testContext.getApplicationContext().getResource(dataSetResourcePath);
-            IDataSet dataSet = new FlatXmlDataSetBuilder().build(dataSetResource.getInputStream());
+            FlatXmlDataSetBuilder flatXmlDataSetBuilder = new FlatXmlDataSetBuilder();
+            flatXmlDataSetBuilder.setColumnSensing(true);
+            IDataSet dataSet = flatXmlDataSetBuilder.build(dataSetResource.getInputStream());
             ReplacementDataSet replacementDataSet = new ReplacementDataSet(dataSet);
             replacementDataSet.addReplacementObject("[NULL]", null);
 
