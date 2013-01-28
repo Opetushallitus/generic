@@ -65,7 +65,7 @@ public class OphRichTextArea extends TinyMCETextField {
      */
     public OphRichTextArea(final int maxLength, String maxLengthExceededErrorMessage) {
         this();
-        setMaxLength(maxLength);
+        setMaxLength(maxLength + 1);
 
         if (maxLength > 0) {
             // Add validator if max length is limited
