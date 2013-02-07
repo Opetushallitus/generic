@@ -1,8 +1,8 @@
 package fi.vm.sade.generic.dao;
 
-import java.util.List;
-
 import fi.vm.sade.generic.model.BaseEntity;
+
+import java.util.List;
 
 public interface GenericDAO {
     /**
@@ -55,4 +55,10 @@ public interface GenericDAO {
      * @param entity 
      */
     <E extends BaseEntity> void validate(E entity);
+
+    /**
+     * Removes existing record from the database.
+     * @param entity
+     */
+    <E extends BaseEntity> void remove(E entity);
 }
