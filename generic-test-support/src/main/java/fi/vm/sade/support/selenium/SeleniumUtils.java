@@ -22,7 +22,7 @@ import static org.junit.Assert.fail;
  */
 public class SeleniumUtils {
 
-    public static final int TIME_OUT_IN_SECONDS = 10;
+    public static final int TIME_OUT_IN_SECONDS = 20;
 
     public static final int SLEEP_IN_MILLIS = 3000;
 
