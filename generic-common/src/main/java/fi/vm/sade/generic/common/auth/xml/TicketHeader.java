@@ -17,4 +17,7 @@ public class TicketHeader {
 
     @XmlAttribute(required = true)
     public String ticket;
+
+    @XmlAttribute(required = false)
+    public String casTicket;
 }

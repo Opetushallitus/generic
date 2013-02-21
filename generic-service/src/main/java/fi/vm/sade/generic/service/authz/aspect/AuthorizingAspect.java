@@ -39,6 +39,12 @@ public class AuthorizingAspect {
 
     @Around("serviceMethod()")
     public Object authorize(ProceedingJoinPoint pjp) throws Throwable {
+
+        // TODO: cas refac, deprecated old code, remove whole aspect
+        if (true) {
+            return pjp.proceed();
+        }
+
         try {
             LOGGER.info("Intercepting serviceMethod() call to " + pjp.getSignature().getName());
 

@@ -20,6 +20,11 @@ import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.util.WSSecurityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.cas.authentication.CasAssertionAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.w3c.dom.Element;
 
 import fi.vm.sade.generic.common.JAXBUtils;
@@ -85,6 +90,13 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
                 ad.setUser(user);
 
                 AuthzDataThreadLocal.set(ad);
+
+                // TODO: oldDeprecatedSecurity_REMOVE - tehdään yhteensopivaksi spring securityn kanssa jollei olla jo casilla sisällä
+                if (!SecurityContextHolder.getContext().getAuthentication().getClass().getSimpleName().startsWith("Cas")) {
+                    Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
+                    SecurityContextHolder.getContext().setAuthentication(new PreAuthenticatedAuthenticationToken(user, user, authorities));
+                }
+
                 return;
             }
         }
@@ -115,6 +127,18 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
             LOGGER.info("User: " + user);
             ad.setUser(user);
             AuthzDataThreadLocal.set(ad);
+
+            // TODO: oldDeprecatedSecurity_REMOVE - tehdään yhteensopivaksi spring securityn kanssa jollei olla jo casilla sisällä
+            if (!SecurityContextHolder.getContext().getAuthentication().getClass().getSimpleName().startsWith("Cas")) {
+                Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
+                for (String orgOid : map.keySet()) {
+                    AuthzData.Organisation authz = map.get(orgOid);
+                    for (String role : authz.roles) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_APP_"+role));
+                    }
+                }
+                SecurityContextHolder.getContext().setAuthentication(new PreAuthenticatedAuthenticationToken(user, user, authorities));
+            }
 
             LOGGER.info(" -- Security data transformed for thread. -- ");
 
