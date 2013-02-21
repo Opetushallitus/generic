@@ -27,12 +27,15 @@ public class UrlRewriteFilter implements Filter {
 
             if (!"true".equals(request.getAttribute(ALREADY_PROCESSED))) {
                 String casTicketHeader = request.getHeader("CasSecurityTicket");
+                System.out.println("\nUrlRewriteFilter.doFilter, casTicketHeader: "+casTicketHeader);
                 if ("oldDeprecatedSecurity_REMOVE".equals(casTicketHeader)) { // todo: tukee vanhaa autentikaatioa spring securityn kanssa
                     forward(request, servletResponse, "oldDeprecatedSecurity_REMOVE", "true");
                     return;
                 } else if (casTicketHeader != null) {
+                    /* todo: tämän jälkeen ei ajeta casfiltteriä?!?!??!
                     forward(request, servletResponse, "ticket", casTicketHeader);
                     return;
+                    */
                 }
 
             }
