@@ -21,6 +21,7 @@ import org.apache.ws.security.util.WSSecurityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.cas.authentication.CasAssertionAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -75,6 +76,7 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
 
         Header header = findHeader(ElementNames.AUTHZ_DATA, headers);
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (header == null) {
             if (!ignoreMissing) {
                 throw new Fault(new org.apache.cxf.common.i18n.Message("SOAP header for authorization data is null",
@@ -92,7 +94,7 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
                 AuthzDataThreadLocal.set(ad);
 
                 // TODO: oldDeprecatedSecurity_REMOVE - tehdään yhteensopivaksi spring securityn kanssa jollei olla jo casilla sisällä
-                if (!SecurityContextHolder.getContext().getAuthentication().getClass().getSimpleName().startsWith("Cas")) {
+                if (authentication != null && !authentication.getClass().getSimpleName().startsWith("Cas")) {
                     Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
                     SecurityContextHolder.getContext().setAuthentication(new PreAuthenticatedAuthenticationToken(user, user, authorities));
                 }
@@ -129,7 +131,7 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
             AuthzDataThreadLocal.set(ad);
 
             // TODO: oldDeprecatedSecurity_REMOVE - tehdään yhteensopivaksi spring securityn kanssa jollei olla jo casilla sisällä
-            if (!SecurityContextHolder.getContext().getAuthentication().getClass().getSimpleName().startsWith("Cas")) {
+            if (authentication != null && !authentication.getClass().getSimpleName().startsWith("Cas")) {
                 Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
                 for (String orgOid : map.keySet()) {
                     AuthzData.Organisation authz = map.get(orgOid);
