@@ -18,6 +18,8 @@ package fi.vm.sade.generic.ui.app;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.model.Group;
+import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.util.PortalUtil;
 import fi.vm.sade.generic.auth.LiferayCustomAttributes;
 import fi.vm.sade.generic.ui.portlet.security.AccessRight;
@@ -125,19 +127,47 @@ public class UserLiferayImpl implements User {
             s = this.servletRequest;
         }
         if (s != null) {
-            Object o = s.getSession().getAttribute(SecuritySessionAttributes.AUTHENTICATION_DATA);
 
-            if (o != null && o instanceof List) {
+            // cas refac, ldap roles -> liferay groups -> oph accessrights
+            if ("true".equals(s.getSession().getAttribute("USER_authenticatedByCAS"))) {
                 try {
-                    list = (List<AccessRight>) o;
-                    return list;
-                } catch (ClassCastException e) {
-                    log.warn("Failed to get "
-                            + SecuritySessionAttributes.AUTHENTICATION_DATA
-                            + " Attribute from session. Session contained something else than expected. Expected List<AccessRight> got: ["
-                            + o + "]");
+                    for (UserGroup group : getLiferayUser().getUserGroups()) {
+                        String name = group.getName();
+                        if (name.matches(".*_.*_.*_.*_.*")) { // app_koodisto_crud_1.2.3 TAI app_koodisto_read_update_1.2.3
+                            String[] parts = name.split("_");
+                            AccessRight right;
+                            if (parts.length == 4) {
+                                right = new AccessRight(parts[3], parts[2].toUpperCase(), parts[1].toUpperCase());
+                            } else if (parts.length == 5) {
+                                 right = new AccessRight(parts[4], (parts[2]+"_"+parts[3]).toUpperCase(), parts[1].toUpperCase());
+                            } else {
+                                throw new RuntimeException("cannot parse usergroup to accessright: "+name);
+                            }
+                            list.add(right);
+                        }
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e); // todo: errors
                 }
+
+            } else {
+
+                Object o = s.getSession().getAttribute(SecuritySessionAttributes.AUTHENTICATION_DATA);
+
+                if (o != null && o instanceof List) {
+                    try {
+                        list = (List<AccessRight>) o;
+                        return list;
+                    } catch (ClassCastException e) {
+                        log.warn("Failed to get "
+                                + SecuritySessionAttributes.AUTHENTICATION_DATA
+                                + " Attribute from session. Session contained something else than expected. Expected List<AccessRight> got: ["
+                                + o + "]");
+                    }
+                }
+
             }
+
         }
         return list;
     }
@@ -165,15 +195,32 @@ public class UserLiferayImpl implements User {
     }
 
     @Override
-    public Set<String> getOrganisations() {
+    public Set<String> getOrganisations() { // todo: cachetus
         Set<String> organisaatioOids = new HashSet<String>();
 
         if (portletRequest != null) {
+
             try {
-                for (com.liferay.portal.model.Organization o : getLiferayUser().getOrganizations()) {
-                    String organizationOid = (String) o.getExpandoBridge().getAttribute(LiferayCustomAttributes.ORGANISAATIO_OID, false);
-                    log.info("Adding organization oid to user: " + organizationOid);
-                    organisaatioOids.add(organizationOid);
+
+                // cas refac, ldap organizations -> liferay groups -> oph organisaatios
+                if ("true".equals(portletRequest.getPortletSession().getAttribute("USER_authenticatedByCAS", PortletSession.APPLICATION_SCOPE))) {
+                    for (UserGroup group : getLiferayUser().getUserGroups()) {
+                        String name = group.getName();
+                        if (name.matches(".*_.*_.*_.*_.*")) {
+                            String organizationOid = name.substring(name.lastIndexOf("_")+1);
+                            if (!organisaatioOids.contains(organizationOid)) {
+                                log.info("Adding organization oid to user: " + organizationOid + " (name: "+name+")");
+                                organisaatioOids.add(organizationOid);
+                            }
+                        }
+                    }
+
+                } else {
+                    for (com.liferay.portal.model.Organization o : getLiferayUser().getOrganizations()) {
+                        String organizationOid = (String) o.getExpandoBridge().getAttribute(LiferayCustomAttributes.ORGANISAATIO_OID, false);
+                        log.info("Adding organization oid to user: " + organizationOid);
+                        organisaatioOids.add(organizationOid);
+                    }
                 }
             } catch (PortalException e) {
                 log.error("Failed to get organizations for Liferay User, PortalException", e);
@@ -198,4 +245,11 @@ public class UserLiferayImpl implements User {
         return getOrganisations();
     }
 
+    public HttpServletRequest getServletRequest() {
+        return servletRequest;
+    }
+
+    public PortletRequest getPortletRequest() {
+        return portletRequest;
+    }
 }
