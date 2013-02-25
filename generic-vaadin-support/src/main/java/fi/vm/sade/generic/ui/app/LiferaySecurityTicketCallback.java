@@ -66,10 +66,19 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
                             */
                             // TODO: ihan vitun ruma, mäppäys järkevämmin, esim esb urlit vois olla aina esim ../cxf/koodisto-service/... jos ohjautuu koodisto-servicelle... vai pitäiskö esbin toimia myös auth proxynä? vai pitäiskö kaikki tiketit laittaa menemään?
                             System.out.println("    endpointSrv: "+endpointService+", ticketSrv: "+ticketService);
+                            String ticket = (String) session.getAttribute(name, PortletSession.APPLICATION_SCOPE);
                             if (false);
-                            else if (endpointService.toLowerCase().contains("koodi") && ticketService.contains("koodisto-service")) proxyTicket = (String) session.getAttribute(name, PortletSession.APPLICATION_SCOPE);
-                            else if (endpointService.toLowerCase().contains("organisaatio") && ticketService.contains("organisaatio-service")) proxyTicket = (String) session.getAttribute(name, PortletSession.APPLICATION_SCOPE);
-                            else if (endpointService.toLowerCase().contains("learningopportunity") && ticketService.contains("organisaatio-service")) proxyTicket = (String) session.getAttribute(name, PortletSession.APPLICATION_SCOPE);
+                            else if (ticketService.contains("koodisto-service") && endpointService.toLowerCase().contains("koodi")) proxyTicket = ticket;
+                            else if (ticketService.contains("organisaatio-service") && endpointService.toLowerCase().contains("organisaatio")) proxyTicket = ticket;
+                            else if (ticketService.contains("organisaatio-service") && endpointService.toLowerCase().contains("learningopportunity")) proxyTicket = ticket;
+                            else if (ticketService.contains("tarjonta-service") && endpointService.toLowerCase().contains("tarjonta")) proxyTicket = ticket;
+                            else if (ticketService.contains("authentication-service") && endpointService.toLowerCase().contains("authentication")) proxyTicket = ticket;
+                            else if (ticketService.contains("authentication-service") && endpointService.toLowerCase().contains("access")) proxyTicket = ticket;
+                            else if (ticketService.contains("authentication-service") && endpointService.toLowerCase().contains("requisition")) proxyTicket = ticket;
+                            else if (ticketService.contains("authentication-service") && endpointService.toLowerCase().contains("user")) proxyTicket = ticket;
+                            else if (ticketService.contains("authentication-service") && endpointService.toLowerCase().contains("personal")) proxyTicket = ticket;
+                            else if (ticketService.contains("oid-service") && endpointService.toLowerCase().contains("oid")) proxyTicket = ticket;
+                            else if (ticketService.contains("log-service") && endpointService.toLowerCase().contains("log")) proxyTicket = ticket;
                         }
                     }
                     System.out.println("LiferaySecurityTicketCallback.getTicketHeader, endpoint: "+endpoint+", endpointSrv: "+endpointService+", proxyTicket: "+proxyTicket);

@@ -1,15 +1,12 @@
 package fi.vm.sade.generic.service.authz.interceptor;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
-import java.util.Set;
-
-import javax.xml.bind.JAXBException;
-import javax.xml.namespace.QName;
-
+import fi.vm.sade.generic.common.JAXBUtils;
+import fi.vm.sade.generic.common.auth.xml.AuthzDataHolder;
+import fi.vm.sade.generic.common.auth.xml.ElementNames;
+import fi.vm.sade.generic.common.auth.xml.Organisation;
+import fi.vm.sade.generic.common.auth.xml.TicketHeader;
+import fi.vm.sade.generic.service.authz.aspect.AuthzData;
+import fi.vm.sade.generic.service.authz.aspect.AuthzDataThreadLocal;
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
 import org.apache.cxf.binding.soap.interceptor.SoapActionInInterceptor;
@@ -20,21 +17,13 @@ import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.util.WSSecurityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.cas.authentication.CasAssertionAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.w3c.dom.Element;
 
-import fi.vm.sade.generic.common.JAXBUtils;
-import fi.vm.sade.generic.common.auth.xml.AuthzDataHolder;
-import fi.vm.sade.generic.common.auth.xml.ElementNames;
-import fi.vm.sade.generic.common.auth.xml.Organisation;
-import fi.vm.sade.generic.common.auth.xml.TicketHeader;
-import fi.vm.sade.generic.service.authz.aspect.AuthzData;
-import fi.vm.sade.generic.service.authz.aspect.AuthzDataThreadLocal;
+import javax.xml.bind.JAXBException;
+import javax.xml.namespace.QName;
+import java.util.*;
 
 /**
  * @author Eetu Blomqvist
@@ -80,7 +69,12 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
 
         // if we have spring security authentication -object, build AuthzData - todo: cas refac, annetaan nyt kaikki oikeudet, mutta temp org.oidilla, korvaa authzdata spring securityllä
         if (authentication != null) {
-            AuthzData ad = new AuthzData(authentication.getName());
+//            String userOid = "0.0.0"; // TODO: temp
+//            if (authentication.getPrincipal() instanceof CustomUserDetails) {
+//                CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+//                userOid = userDetails.getOid();
+//            }
+            AuthzData ad = new AuthzData(authentication.getName(), authentication.getName());
             /*
             for (GrantedAuthority authority : authentication.getAuthorities()) {
                 String name = authority.getAuthority();

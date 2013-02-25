@@ -12,15 +12,17 @@ import java.util.Set;
  */
 public class AuthzData {
 
-    private String user;
+    private String userOid;
+    private String username;
     private Map<String, Organisation> dataMap = new HashMap<String, Organisation>();
 
     public AuthzData(Map<String, Organisation> dataMap) {
         this.dataMap = dataMap;
     }
 
-    public AuthzData(String user) {
-        this.user = user;
+    public AuthzData(String userOid, String username) {
+        this.userOid = userOid;
+        this.username = username;
     }
 
     public void putAuthz(String organisaatioOid, String role) {
@@ -41,17 +43,17 @@ public class AuthzData {
     }
 
     public String getUser() {
-        return user;
+        return userOid;
     }
 
-    public void setUser(String user) {
-        this.user = user;
+    public void setUser(String userOid) {
+        this.userOid = userOid;
     }
 
     @Override
     public String toString() {
         return "AuthzData{" +
-                "user='" + user + '\'' +
+                "user='" + userOid + "/" + username + '\'' +
                 ", dataMap=" + dataMap +
                 '}';
     }
