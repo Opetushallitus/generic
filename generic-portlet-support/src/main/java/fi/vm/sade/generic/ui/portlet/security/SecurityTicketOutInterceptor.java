@@ -38,10 +38,14 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
         TicketHeader ticketHeader = callback.getTicketHeader(message);
 
         try {
-            SoapHeader header = new SoapHeader(ElementNames.SECURITY_TICKET_QNAME, ticketHeader,
-                    new JAXBDataBinding(TicketHeader.class));
+            SoapHeader header = new SoapHeader(ElementNames.SECURITY_TICKET_QNAME, ticketHeader, new JAXBDataBinding(TicketHeader.class));
             message.getHeaders().add(header);
 
+            // cas refac, before this has been done in esb auth - todo: tämä ei ole enää turvallinen, siivoa vanhat
+            SoapHeader header2 = new SoapHeader(new QName(ElementNames.SADE_URI, ElementNames.AUTHZ_DATA), ticketHeader, new JAXBDataBinding(TicketHeader.class));
+            message.getHeaders().add(header2);
+
+            /* ei toimi
             ((HttpURLConnection)message.get("http.connection")).setRequestProperty("CasSecurityTicket", ticketHeader.casTicket); // todo: cas ticket
             if ("oldDeprecatedSecurity_REMOVE".equals(ticketHeader.casTicket)) {
                 if (message.get(SoapMessage.QUERY_STRING) != null) {
@@ -50,6 +54,7 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
                     message.put(SoapMessage.QUERY_STRING, "oldDeprecatedSecurity_REMOVE=true");
                 }
             }
+            */
 
         } catch (JAXBException e) {
             throw new Fault(e, new QName(ElementNames.SADE_URI, ElementNames.AUTHENTICATION_FAILED));

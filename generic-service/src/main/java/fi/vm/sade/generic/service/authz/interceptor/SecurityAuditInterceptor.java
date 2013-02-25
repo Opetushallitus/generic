@@ -94,9 +94,10 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
                 AuthzDataThreadLocal.set(ad);
 
                 // TODO: oldDeprecatedSecurity_REMOVE - tehdään yhteensopivaksi spring securityn kanssa jollei olla jo casilla sisällä
-                if (authentication != null && !authentication.getClass().getSimpleName().startsWith("Cas")) {
+                if (authentication == null || !authentication.getClass().getSimpleName().startsWith("Cas")) {
                     Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
                     SecurityContextHolder.getContext().setAuthentication(new PreAuthenticatedAuthenticationToken(user, user, authorities));
+                    LOGGER.info(" -- authentication: "+SecurityContextHolder.getContext().getAuthentication());
                 }
 
                 return;
@@ -131,7 +132,7 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
             AuthzDataThreadLocal.set(ad);
 
             // TODO: oldDeprecatedSecurity_REMOVE - tehdään yhteensopivaksi spring securityn kanssa jollei olla jo casilla sisällä
-            if (authentication != null && !authentication.getClass().getSimpleName().startsWith("Cas")) {
+            if (authentication == null || !authentication.getClass().getSimpleName().startsWith("Cas")) {
                 Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
                 for (String orgOid : map.keySet()) {
                     AuthzData.Organisation authz = map.get(orgOid);
@@ -140,6 +141,7 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
                     }
                 }
                 SecurityContextHolder.getContext().setAuthentication(new PreAuthenticatedAuthenticationToken(user, user, authorities));
+                LOGGER.info(" -- authentication: "+SecurityContextHolder.getContext().getAuthentication());
             }
 
             LOGGER.info(" -- Security data transformed for thread. -- ");
