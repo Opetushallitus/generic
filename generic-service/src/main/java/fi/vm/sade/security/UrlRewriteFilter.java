@@ -1,5 +1,8 @@
 package fi.vm.sade.security;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
+
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -27,9 +30,11 @@ public class UrlRewriteFilter implements Filter {
 
             if (!"true".equals(request.getAttribute(ALREADY_PROCESSED))) {
                 String casTicketHeader = request.getHeader("CasSecurityTicket");
-                System.out.println("\nUrlRewriteFilter.doFilter, casTicketHeader: "+casTicketHeader);
-                if ("oldDeprecatedSecurity_REMOVE".equals(casTicketHeader)) { // todo: tukee vanhaa autentikaatioa spring securityn kanssa
-                    forward(request, servletResponse, "oldDeprecatedSecurity_REMOVE", "true");
+                String oldDeprecatedSecurity_REMOVE_username = request.getHeader("oldDeprecatedSecurity_REMOVE_username");
+                System.out.println("\nUrlRewriteFilter.doFilter, casTicketHeader: "+casTicketHeader+", oldDeprecatedSecurity_REMOVE_username: "+oldDeprecatedSecurity_REMOVE_username);
+                if ("oldDeprecatedSecurity_REMOVE".equals(casTicketHeader)) { // todo: tukee vanhaa autentikaatioa spring securityn kanssa, huom tässä ei haeta rooleja!
+                    SecurityContextHolder.getContext().setAuthentication(new PreAuthenticatedAuthenticationToken(oldDeprecatedSecurity_REMOVE_username, oldDeprecatedSecurity_REMOVE_username));
+                    forward(request, servletResponse, "oldDeprecatedSecurity_REMOVE", "true"); // huom! forwardin jälkeen ei ajeta enää springin securityputkea
                     return;
                 } else if (casTicketHeader != null) {
                     /* todo: tämän jälkeen ei ajeta casfiltteriä?!?!??!

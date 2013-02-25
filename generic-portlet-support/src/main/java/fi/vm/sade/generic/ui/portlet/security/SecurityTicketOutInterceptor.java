@@ -45,8 +45,9 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
             SoapHeader header2 = new SoapHeader(new QName(ElementNames.SADE_URI, ElementNames.AUTHZ_DATA), ticketHeader, new JAXBDataBinding(TicketHeader.class));
             message.getHeaders().add(header2);
 
-            /* ei toimi
             ((HttpURLConnection)message.get("http.connection")).setRequestProperty("CasSecurityTicket", ticketHeader.casTicket); // todo: cas ticket
+            ((HttpURLConnection)message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", ticketHeader.username);
+            /* ei toimi
             if ("oldDeprecatedSecurity_REMOVE".equals(ticketHeader.casTicket)) {
                 if (message.get(SoapMessage.QUERY_STRING) != null) {
                     throw new RuntimeException("soapmessage already has querystring");

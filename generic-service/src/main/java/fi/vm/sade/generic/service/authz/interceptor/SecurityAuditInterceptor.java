@@ -77,6 +77,35 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
         Header header = findHeader(ElementNames.AUTHZ_DATA, headers);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // if we have spring security authentication -object, build AuthzData - todo: cas refac, annetaan nyt kaikki oikeudet, mutta temp org.oidilla, korvaa authzdata spring securityllä
+        if (authentication != null) {
+            AuthzData ad = new AuthzData(authentication.getName());
+            /*
+            for (GrantedAuthority authority : authentication.getAuthorities()) {
+                String name = authority.getAuthority();
+                if (name.matches(".*_.*_.*_.*_.*")) { // role_app_koodisto_crud_1.2.3 TAI role_app_koodisto_read_update_1.2.3
+                    String[] parts = name.split("_");
+                    if (parts.length == 4) {
+                        ad.putAuthz(parts[3], parts[2].toUpperCase());// app: parts[1].toUpperCase()
+                    } else if (parts.length == 5) {
+                        ad.putAuthz(parts[4], (parts[2]+"_"+parts[3]).toUpperCase());// app: parts[1].toUpperCase()
+                    } else {
+                        throw new RuntimeException("cannot parse usergroup to accessright: "+name);
+                    }
+                }
+            }
+            */
+            //String oid = "1.2.3";
+            String oid = "1.2.246.562.24.00000000001"; // todo: temp root organisaatioon oikeudet nyt kaikilla vanhassa autentikointimallissa
+            ad.putAuthz(oid, "READ");
+            ad.putAuthz(oid, "READ_UPDATE");
+            ad.putAuthz(oid, "CRUD");
+            AuthzDataThreadLocal.set(ad);
+            LOGGER.info(" -- Authorization data handler, authzData: "+ad+" -- ");
+            return;
+        }
+
         if (header == null) {
             if (!ignoreMissing) {
                 throw new Fault(new org.apache.cxf.common.i18n.Message("SOAP header for authorization data is null",
@@ -94,11 +123,13 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
                 AuthzDataThreadLocal.set(ad);
 
                 // TODO: oldDeprecatedSecurity_REMOVE - tehdään yhteensopivaksi spring securityn kanssa jollei olla jo casilla sisällä
+                /* tehty urlrewritessa
                 if (authentication == null || !authentication.getClass().getSimpleName().startsWith("Cas")) {
                     Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
                     SecurityContextHolder.getContext().setAuthentication(new PreAuthenticatedAuthenticationToken(user, user, authorities));
                     LOGGER.info(" -- authentication: "+SecurityContextHolder.getContext().getAuthentication());
                 }
+                */
 
                 return;
             }
@@ -132,6 +163,7 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
             AuthzDataThreadLocal.set(ad);
 
             // TODO: oldDeprecatedSecurity_REMOVE - tehdään yhteensopivaksi spring securityn kanssa jollei olla jo casilla sisällä
+            /* tehty urlrewritessa
             if (authentication == null || !authentication.getClass().getSimpleName().startsWith("Cas")) {
                 Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
                 for (String orgOid : map.keySet()) {
@@ -143,6 +175,7 @@ public class SecurityAuditInterceptor extends AbstractSoapInterceptor {
                 SecurityContextHolder.getContext().setAuthentication(new PreAuthenticatedAuthenticationToken(user, user, authorities));
                 LOGGER.info(" -- authentication: "+SecurityContextHolder.getContext().getAuthentication());
             }
+            */
 
             LOGGER.info(" -- Security data transformed for thread. -- ");
 

@@ -1,5 +1,7 @@
 package fi.vm.sade.generic.service.authz.aspect;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,10 +13,23 @@ import java.util.Set;
 public class AuthzData {
 
     private String user;
-    private Map<String, Organisation> dataMap;
+    private Map<String, Organisation> dataMap = new HashMap<String, Organisation>();
 
     public AuthzData(Map<String, Organisation> dataMap) {
         this.dataMap = dataMap;
+    }
+
+    public AuthzData(String user) {
+        this.user = user;
+    }
+
+    public void putAuthz(String organisaatioOid, String role) {
+        Organisation org = dataMap.get(organisaatioOid);
+        if (org == null) {
+            org = new Organisation(new HashSet<String>(), new HashSet<String>());
+            dataMap.put(organisaatioOid, org);
+        }
+        org.roles.add(role);
     }
 
     public Map<String, Organisation> getDataMap() {

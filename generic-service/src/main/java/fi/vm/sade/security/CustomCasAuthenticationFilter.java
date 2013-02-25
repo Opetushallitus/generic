@@ -235,17 +235,20 @@ public class CustomCasAuthenticationFilter extends AbstractAuthenticationProcess
 
         // oph start
         String casTicketHeader = request.getHeader(CAS_SECURITY_TICKET);
+        System.out.println("CustomCasAuthenticationFilter.attemptAuthentication, casTicketHeader: "+casTicketHeader);
 
         if (casTicketHeader != null) {
             // - filtterit menee ihan sotkuun jos tää on - this.setContinueChainBeforeSuccessfulAuthentication(true); // autentikointipyyntö on tässä tapauksessa myös servicekutsu - eikä casfilterin oma proxyticket? tsekkaus toimi?
 
             // TODO: oldDeprecatedSecurity_REMOVE - deprecated: jos ei ole käytetty cassia, luotetaan että on autentikoitu väylässä - poista myöhemmin kun cas kokonaan käytössä!
+            /* tehty urlrewritessa
             if ("oldDeprecatedSecurity_REMOVE".equals(casTicketHeader)) {
                 //return new PreAuthenticatedAuthenticationToken("oldDeprecatedSecurity_REMOVE", "oldDeprecatedSecurity_REMOVE");
                 CasAssertionAuthenticationToken authentication = new CasAssertionAuthenticationToken(new AssertionImpl("oldDeprecatedSecurity_REMOVE"), "oldDeprecatedSecurity_REMOVE");
                 authentication.setAuthenticated(true);
                 return authentication;
             }
+            */
 
         } else {
             //this.setContinueChainBeforeSuccessfulAuthentication(false); // oletuskeissi, suora kutsu eikä backend servicekutsu
@@ -300,14 +303,17 @@ public class CustomCasAuthenticationFilter extends AbstractAuthenticationProcess
 
         // oph start
         String casTicketHeader = request.getHeader(CAS_SECURITY_TICKET);
+        System.out.println("CustomCasAuthenticationFilter.requiresAuthentication, casTicketHeader: "+casTicketHeader);
         if (casTicketHeader != null) {
 
             // TODO: oldDeprecatedSecurity_REMOVE - deprecated: jos ei ole käytetty cassia, luotetaan että on autentikoitu väylässä - poista myöhemmin kun cas kokonaan käytössä!
+            /* tehty urlrewritessa
             if ("oldDeprecatedSecurity_REMOVE".equals(casTicketHeader)) {
                 SecurityContextHolder.getContext().setAuthentication(new CasAssertionAuthenticationToken(new AssertionImpl("oldDeprecatedSecurity_REMOVE"), "oldDeprecatedSecurity_REMOVE"));
                 return false; // true jos attemptauth customoitu
                 //return true;
             }
+            */
 
             return true; // todo: vois ottaa tästä pois koska huomioitu jo proxyticketrequest():ssa
         }
