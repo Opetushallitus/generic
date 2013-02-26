@@ -6,30 +6,13 @@
 
     <groupId>fi.vm.sade.generic</groupId>
     <artifactId>generic-esb</artifactId>
-    <packaging>bundle</packaging>
+    <packaging>jar</packaging>
     <name>Generic :: ESB</name>
     <parent>
         <groupId>fi.vm.sade.generic</groupId>
         <artifactId>generic</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-
-    <properties>
-        <felix.Import-Package>
-            org.apache.cxf.binding.soap,
-            org.apache.cxf.endpoint,
-            org.apache.cxf.frontend,
-            org.apache.cxf.headers,
-            org.apache.cxf.message,
-            org.apache.camel,
-            org.apache.camel.component.cxf,
-            org.springframework.beans.factory,
-            org.springframework.util,
-            org.slf4j,
-            com_*;resolution:=optional<!-- com_*... is for clover -->
-        </felix.Import-Package>
-        <spring.version>3.0.6.RELEASE</spring.version>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -77,30 +60,4 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Description>${project.description}</Bundle-Description>
-                        <Import-Package>
-                            ${felix.Import-Package}
-                        </Import-Package>
-                        <Private-Package>
-                            fi.vm.sade.generic.esb.processor
-                        </Private-Package>
-                        <Export-Package>
-                            fi.vm.sade.generic.esb.processor
-                        </Export-Package>
-                        <Include-Resource>META-INF=target/classes/META-INF</Include-Resource>
-                        <_failok>true</_failok>
-                    </instructions>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>

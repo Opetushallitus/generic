@@ -20,7 +20,6 @@
 		<module>generic-service</module>
 		<module>dbunit-support</module>
 		<module>generic-test-support</module>
-		<module>transaction-osgi</module>
 		<module>generic-features</module>
 		<module>generic-test-aspects</module>
 		<module>generic-portlet-support</module>
@@ -39,36 +38,6 @@
 				<groupId>org.dbunit</groupId>
 				<artifactId>dbunit</artifactId>
 				<version>${dbunit.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-test</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-core</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-context</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-jdbc</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-tx</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-orm</artifactId>
-				<version>${spring.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.slf4j</groupId>
@@ -99,11 +68,6 @@
 				<groupId>org.seleniumhq.selenium</groupId>
 				<artifactId>selenium-firefox-driver</artifactId>
 				<version>${selenium.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework.osgi</groupId>
-				<artifactId>spring-osgi-core</artifactId>
-				<version>${spring.osgi.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>javax.transaction</groupId>
