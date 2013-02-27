@@ -27,18 +27,18 @@ public class UrlRewriteFilter implements Filter {
         if (servletRequest instanceof HttpServletRequest) {
             HttpServletRequest request = (HttpServletRequest) servletRequest;
 
-            System.out.println("\nUrlRewriteFilter.doFilter: "+request.getRequestURL().append("?").append(request.getQueryString())); // TODO: soutit yms, parempi string käsittely
+            //System.out.println("\nUrlRewriteFilter.doFilter: "+request.getRequestURL().append("?").append(request.getQueryString()));
 
             if (!"true".equals(request.getAttribute(ALREADY_PROCESSED))) {
                 String casTicketHeader = request.getHeader("CasSecurityTicket");
                 String oldDeprecatedSecurity_REMOVE_username = request.getHeader("oldDeprecatedSecurity_REMOVE_username");
-                System.out.println("\nUrlRewriteFilter.doFilter, casTicketHeader: "+casTicketHeader+", oldDeprecatedSecurity_REMOVE_username: "+oldDeprecatedSecurity_REMOVE_username);
+                //System.out.println("UrlRewriteFilter.doFilter, casTicketHeader: "+casTicketHeader+", oldDeprecatedSecurity_REMOVE_username: "+oldDeprecatedSecurity_REMOVE_username);
                 if ("oldDeprecatedSecurity_REMOVE".equals(casTicketHeader)) { // todo: tukee vanhaa autentikaatioa spring securityn kanssa, huom tässä ei haeta rooleja!
                     SecurityContextHolder.getContext().setAuthentication(new PreAuthenticatedAuthenticationToken(oldDeprecatedSecurity_REMOVE_username, oldDeprecatedSecurity_REMOVE_username));
                     forward(request, servletResponse, "oldDeprecatedSecurity_REMOVE", "true"); // huom! forwardin jälkeen ei ajeta enää springin securityputkea
                     return;
                 } else if (casTicketHeader != null) {
-                    /* todo: tämän jälkeen ei ajeta casfiltteriä?!?!??!
+                    /* tämän jälkeen ei ajeta casfiltteriä?!?!??!
                     forward(request, servletResponse, "ticket", casTicketHeader);
                     return;
                     */
@@ -63,10 +63,9 @@ public class UrlRewriteFilter implements Filter {
             path += "?";
         }
         path += paramName + "=" + paramValue;
-        System.out.println("    UrlRewriteFilter.doFilter forward to: " + path);
+        System.out.println("WARNING - UrlRewriteFilter forward to: " + path);
         request.setAttribute(ALREADY_PROCESSED, "true");
         request.getRequestDispatcher(path).forward(request, servletResponse);
-        return;
     }
 
     @Override
