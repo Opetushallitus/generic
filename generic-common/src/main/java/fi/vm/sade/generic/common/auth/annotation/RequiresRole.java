@@ -12,6 +12,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
+@Deprecated // TODO:cas todo poista?
 public @interface RequiresRole {
 
     Role[] roles();

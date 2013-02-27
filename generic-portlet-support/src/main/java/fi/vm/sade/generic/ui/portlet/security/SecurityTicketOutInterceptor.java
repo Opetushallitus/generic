@@ -1,20 +1,12 @@
 package fi.vm.sade.generic.ui.portlet.security;
 
-import fi.vm.sade.generic.common.auth.xml.ElementNames;
 import fi.vm.sade.generic.common.auth.xml.TicketHeader;
-import org.apache.cxf.attachment.AttachmentImpl;
-import org.apache.cxf.binding.soap.SoapHeader;
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
 import org.apache.cxf.binding.soap.interceptor.SoapPreProtocolOutInterceptor;
 import org.apache.cxf.interceptor.Fault;
-import org.apache.cxf.jaxb.JAXBDataBinding;
 import org.apache.cxf.phase.Phase;
-import org.jasig.cas.client.util.AssertionHolder;
-import org.jasig.cas.client.validation.Assertion;
 
-import javax.xml.bind.JAXBException;
-import javax.xml.namespace.QName;
 import java.net.HttpURLConnection;
 
 /**
@@ -23,6 +15,7 @@ import java.net.HttpURLConnection;
  *
  * @author Eetu Blomqvist
  */
+// todo: cas todo rethink
 public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
 
     SecurityTicketCallback callback;
@@ -34,32 +27,9 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
 
     @Override
     public void handleMessage(SoapMessage message) throws Fault {
-
         TicketHeader ticketHeader = callback.getTicketHeader(message);
-
-        try {
-            SoapHeader header = new SoapHeader(ElementNames.SECURITY_TICKET_QNAME, ticketHeader, new JAXBDataBinding(TicketHeader.class));
-            message.getHeaders().add(header);
-
-            // cas refac, before this has been done in esb auth - todo: tämä ei ole enää turvallinen, siivoa vanhat
-            SoapHeader header2 = new SoapHeader(new QName(ElementNames.SADE_URI, ElementNames.AUTHZ_DATA), ticketHeader, new JAXBDataBinding(TicketHeader.class));
-            message.getHeaders().add(header2);
-
-            ((HttpURLConnection)message.get("http.connection")).setRequestProperty("CasSecurityTicket", ticketHeader.casTicket); // todo: cas ticket
-            ((HttpURLConnection)message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", ticketHeader.username);
-            /* ei toimi
-            if ("oldDeprecatedSecurity_REMOVE".equals(ticketHeader.casTicket)) {
-                if (message.get(SoapMessage.QUERY_STRING) != null) {
-                    throw new RuntimeException("soapmessage already has querystring");
-                } else {
-                    message.put(SoapMessage.QUERY_STRING, "oldDeprecatedSecurity_REMOVE=true");
-                }
-            }
-            */
-
-        } catch (JAXBException e) {
-            throw new Fault(e, new QName(ElementNames.SADE_URI, ElementNames.AUTHENTICATION_FAILED));
-        }
+        ((HttpURLConnection)message.get("http.connection")).setRequestProperty("CasSecurityTicket", ticketHeader.casTicket); // todo: cas ticket
+        ((HttpURLConnection)message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", ticketHeader.username);
     }
 
     public void setCallback(SecurityTicketCallback callback) {

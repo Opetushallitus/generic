@@ -128,7 +128,7 @@ public class UserLiferayImpl implements User {
         }
         if (s != null) {
 
-            // cas refac, ldap roles -> liferay groups -> oph accessrights
+            // cas todo, ldap roles -> liferay groups -> oph accessrights, poista vanha?
             if ("true".equals(s.getSession().getAttribute("USER_authenticatedByCAS"))) {
                 try {
                     for (UserGroup group : getLiferayUser().getUserGroups()) {
@@ -202,7 +202,7 @@ public class UserLiferayImpl implements User {
 
             try {
 
-                // cas refac, ldap organizations -> liferay groups -> oph organisaatios
+                // cas todo, ldap organizations -> liferay groups -> oph organisaatios, poista vanha
                 if ("true".equals(portletRequest.getPortletSession().getAttribute("USER_authenticatedByCAS", PortletSession.APPLICATION_SCOPE))) {
                     for (UserGroup group : getLiferayUser().getUserGroups()) {
                         String name = group.getName();
@@ -230,7 +230,7 @@ public class UserLiferayImpl implements User {
                 throw new RuntimeException("Failed to get organizations for Liferay User, SystemException", e);
             }
         } else if (servletRequest != null) {
-            organisaatioOids.add("1.2.2004.3");
+            organisaatioOids.add("1.2.2004.3"); // todo: pois?
             organisaatioOids.add("1.2.2004.4");
             organisaatioOids.add("1.2.2004.9");
         }

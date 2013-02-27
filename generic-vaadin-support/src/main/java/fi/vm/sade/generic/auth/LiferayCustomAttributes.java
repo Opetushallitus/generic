@@ -30,6 +30,7 @@ import com.liferay.portlet.expando.service.ExpandoColumnLocalServiceUtil;
 import com.liferay.portlet.expando.service.ExpandoTableLocalServiceUtil;
 import com.liferay.portlet.expando.service.ExpandoValueLocalServiceUtil;
 
+@Deprecated // TODO:cas todo poista?
 public class LiferayCustomAttributes {
     private static final Log log = LogFactoryUtil.getLog(LiferayCustomAttributes.class);
 

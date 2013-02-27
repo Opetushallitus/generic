@@ -10,6 +10,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement(name = ElementNames.SECURITY_TICKET)
 @XmlAccessorType(XmlAccessType.FIELD)
+@Deprecated // TODO:cas todo poista? enää can casTicketillä merkitystä, ja tätä käytetään vain sisäisesti, ei soapissa
 public class TicketHeader {
 
     @XmlAttribute(required = true)

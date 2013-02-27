@@ -13,6 +13,7 @@ import java.io.IOException;
  *
  * @author Antti Salonen
  */
+// todo: cas todo rethink
 public class UrlRewriteFilter implements Filter {
 
     public static final String ALREADY_PROCESSED = UrlRewriteFilter.class.getName()+"_alreadyProcessed";
