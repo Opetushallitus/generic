@@ -15,7 +15,8 @@
 
 	<modules>
         <module>dependencies-esb</module>
-		<module>generic-common</module>
+        <module>generic-common</module>
+        <module>generic-security</module>
 		<module>generic-dao</module>
 		<module>generic-service</module>
 		<module>dbunit-support</module>
