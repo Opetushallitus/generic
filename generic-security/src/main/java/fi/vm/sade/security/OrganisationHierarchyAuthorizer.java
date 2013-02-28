@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -16,12 +17,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Antti Salonen
  */
-// TODO: cas todo cas/author luokat oikeisiin moduuleihin..
 @Component
-public class OrganisationHierarchyAuthorizer {
+public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrganisationHierarchyAuthorizer.class);
     private static final int MAX_CACHE_SIZE = 10000;
+    public static final String ANY_ROLE = "*";
 
     @Autowired
     private OidProvider oidProvider;
@@ -91,14 +92,34 @@ public class OrganisationHierarchyAuthorizer {
     }
 
     private static boolean roleMatchesToAuthority(String role, GrantedAuthority authority) {
-        if (role.equals("*")) {
+        if (ANY_ROLE.equals(role)) {
             return true;
         }
+        role = stripRolePrefix(role);
         return authority.getAuthority().contains(role);
+    }
+
+    private static String stripRolePrefix(String role) {
+        return role.replace("APP_", "").replace("ROLE_", "");
     }
 
     private static boolean authorityIsTargetedToOrganisation(GrantedAuthority authority, String oid) {
         return authority.getAuthority().endsWith(oid);
+    }
+
+    public static OrganisationHierarchyAuthorizer createMockAuthorizer(final String parentOrg, final String[] childOrgs) {
+        return new OrganisationHierarchyAuthorizer(new OidProvider(){
+            @Override
+            public List<String> getSelfAndParentOids(String organisaatioOid) {
+                if (parentOrg.equals(organisaatioOid)) {
+                    return Arrays.asList(organisaatioOid);
+                }
+                if (Arrays.asList(childOrgs).contains(organisaatioOid)) {
+                    return Arrays.asList(organisaatioOid, parentOrg);
+                }
+                return new ArrayList<String>();
+            }
+        });
     }
 
 }

@@ -1,5 +1,7 @@
 package fi.vm.sade.generic.ui.portlet.security;
 
+import org.springframework.security.core.Authentication;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Locale;
@@ -29,6 +31,8 @@ public interface User extends Serializable {
      * 
      * @return
      */
+    @Deprecated // TODO: cas todo, tää ei voi toimia enää kun koko organisaatiohierarkiaa ei lasketa userin alle!
     public Set<String> getOrganisationsHierarchy();
 
+    Authentication getAuthentication();
 }

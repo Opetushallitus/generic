@@ -1,5 +1,10 @@
 package fi.vm.sade.generic.ui.portlet.security;
 
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,8 +26,9 @@ public class UserMock implements User {
 	private String ticket = "ticket";
 	private final Set<String> organisations = new HashSet<String>();
 	private final Set<String> organizationHierarchy = new HashSet<String>();
-	
-	public UserMock() {
+    private Authentication authentication;
+
+    public UserMock() {
 		organisations.add("1.2.2004.3");
 		organisations.add("1.2.2004.4");
 		organisations.add("1.2.2004.9");
@@ -109,5 +115,18 @@ public class UserMock implements User {
 
     public void removeOrganisationsHierarchy(String organizationOid) {
     	organizationHierarchy.remove(organizationOid);
+    }
+
+    @Override
+    public Authentication getAuthentication() {
+        // todo: cas todo, eroon tästä, käytä spring securityä
+        if (authentication == null) {
+            List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+            for (AccessRight ar : getRawAccessRights()) {
+                authorities.add(new SimpleGrantedAuthority(ar.getApplication() + "_" + ar.getRole() + "_" + ar.getOrganizatioOid()));
+            }
+            authentication = new TestingAuthenticationToken("USEROID", "USEROID", authorities);
+        }
+        return authentication;
     }
 }

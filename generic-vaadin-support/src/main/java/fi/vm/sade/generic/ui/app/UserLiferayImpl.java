@@ -26,6 +26,10 @@ import fi.vm.sade.generic.ui.portlet.security.SecuritySessionAttributes;
 import fi.vm.sade.generic.ui.portlet.security.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletSession;
@@ -50,6 +54,7 @@ public class UserLiferayImpl implements User {
     private HttpServletRequest servletRequest;
 
     private List<AccessRight> rawAccessRights;
+    private Authentication authentication;
 
     public UserLiferayImpl(PortletRequest request) {
         this.portletRequest = request;
@@ -248,6 +253,19 @@ public class UserLiferayImpl implements User {
         // FIXME: Figure out how to get the organisation hierarchy from
         // organisaatio service
         return getOrganisations();
+    }
+
+    @Override
+    public Authentication getAuthentication() {
+        // todo: cas todo, eroon tästä, käytä spring securityä
+        if (authentication == null) {
+            List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+            for (AccessRight ar : getRawAccessRights()) {
+                authorities.add(new SimpleGrantedAuthority(ar.getApplication() + "_" + ar.getRole() + "_" + ar.getOrganizatioOid()));
+            }
+            authentication = new TestingAuthenticationToken("USEROID", "USEROID", authorities);
+        }
+        return authentication;
     }
 
     public HttpServletRequest getServletRequest() {

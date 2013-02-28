@@ -5,6 +5,7 @@ package fi.vm.sade.generic.common.auth;
  *
  * @author Eetu Blomqvist
  */
+@Deprecated // todo: cas todo, rethink, pitäisi saada se applikaatio tuohon mukaan
 public enum Role {
 
     READ, READ_UPDATE, CRUD, NOT_REQUIRED;
