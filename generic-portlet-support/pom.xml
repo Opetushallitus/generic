@@ -35,6 +35,13 @@
 
     </build>
 	<dependencies>
+
+        <dependency>
+            <groupId>fi.vm.sade.auth</groupId>
+            <artifactId>generic-security</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
 		   <dependency>
 		       <groupId>javax.servlet</groupId>
 		       <artifactId>javax.servlet-api</artifactId>
@@ -81,12 +88,6 @@
 	            <groupId>org.apache.cxf</groupId>
 	            <artifactId>cxf-rt-transports-http</artifactId>
 	        </dependency>
-
-        <dependency>
-            <groupId>org.jasig.cas</groupId>
-            <artifactId>cas-client-core</artifactId>
-            <version>3.1.10</version>
-        </dependency>
 
 	</dependencies>
 

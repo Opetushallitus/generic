@@ -18,7 +18,6 @@ package fi.vm.sade.generic.ui.app;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.Group;
 import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.util.PortalUtil;
 import fi.vm.sade.generic.auth.LiferayCustomAttributes;
@@ -49,6 +48,8 @@ public class UserLiferayImpl implements User {
     private PortletRequest portletRequest;
 
     private HttpServletRequest servletRequest;
+
+    private List<AccessRight> rawAccessRights;
 
     public UserLiferayImpl(PortletRequest request) {
         this.portletRequest = request;
@@ -118,7 +119,11 @@ public class UserLiferayImpl implements User {
     @Override
     public List<AccessRight> getRawAccessRights() {
 
-        List<AccessRight> list = new ArrayList<AccessRight>();
+        if (rawAccessRights != null) {
+            return rawAccessRights;
+        }
+
+        rawAccessRights = new ArrayList<AccessRight>();
         HttpServletRequest s = null;
 
         if (portletRequest != null) {
@@ -143,7 +148,7 @@ public class UserLiferayImpl implements User {
                             } else {
                                 throw new RuntimeException("cannot parse usergroup to accessright: "+name);
                             }
-                            list.add(right);
+                            rawAccessRights.add(right);
                         }
                     }
                 } catch (Exception e) {
@@ -156,8 +161,8 @@ public class UserLiferayImpl implements User {
 
                 if (o != null && o instanceof List) {
                     try {
-                        list = (List<AccessRight>) o;
-                        return list;
+                        rawAccessRights = (List<AccessRight>) o;
+                        return rawAccessRights;
                     } catch (ClassCastException e) {
                         log.warn("Failed to get "
                                 + SecuritySessionAttributes.AUTHENTICATION_DATA
@@ -169,7 +174,7 @@ public class UserLiferayImpl implements User {
             }
 
         }
-        return list;
+        return rawAccessRights;
     }
 
     @Override
