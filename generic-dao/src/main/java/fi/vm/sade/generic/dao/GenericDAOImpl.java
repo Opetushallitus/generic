@@ -1,12 +1,11 @@
 package fi.vm.sade.generic.dao;
 
-import java.util.List;
+import fi.vm.sade.generic.model.BaseEntity;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-
-import fi.vm.sade.generic.model.BaseEntity;
+import java.util.List;
 
 public class GenericDAOImpl implements GenericDAO {
 
@@ -62,5 +61,10 @@ public class GenericDAOImpl implements GenericDAO {
     @Override
     public <E extends BaseEntity> void validate(E entity) {
         // empty, implemenet custom validation logic where needed
+    }
+
+    @Override
+    public <E extends BaseEntity> void detach(E entity) {
+        entityManager.detach(entity);
     }
 }

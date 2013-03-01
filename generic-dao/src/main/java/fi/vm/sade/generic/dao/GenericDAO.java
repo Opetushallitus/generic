@@ -61,4 +61,10 @@ public interface GenericDAO {
      * @param entity
      */
     <E extends BaseEntity> void remove(E entity);
+
+    /**
+     * Detaches the given managed entity from session
+     * @param entity
+     */
+    <E extends BaseEntity> void detach(E entity);
 }

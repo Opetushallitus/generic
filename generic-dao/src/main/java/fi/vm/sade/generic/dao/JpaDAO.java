@@ -70,4 +70,10 @@ public interface JpaDAO<E, ID> {
      * @param entity 
      */
     void validate(E entity);
+
+    /**
+     * Deataches the given managed entity from session
+     * @param entity
+     */
+    void detach(E entity);
 }

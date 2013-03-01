@@ -3,12 +3,11 @@
  */
 package fi.vm.sade.generic.dao;
 
-import java.lang.reflect.ParameterizedType;
-import java.util.List;
-
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import java.lang.reflect.ParameterizedType;
+import java.util.List;
 
 /**
  * Abstract implementation of JpaDAO.
@@ -99,6 +98,11 @@ public abstract class AbstractJpaDAOImpl<E, ID> implements JpaDAO<E, ID> {
     @Override
     public void validate(E entity) {
         // empty, override to implement custom validation logic
+    }
+
+    @Override
+    public void detach(E entity) {
+        getEntityManager().detach(entity);
     }
     
 }
