@@ -2,11 +2,14 @@ package fi.vm.sade.dbunit.listener;
 
 import fi.vm.sade.dbunit.annotation.DataSetLocation;
 import org.dbunit.database.DatabaseConnection;
+import org.dbunit.database.DatabaseSequenceFilter;
 import org.dbunit.database.IDatabaseConnection;
+import org.dbunit.dataset.FilteredDataSet;
 import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.ReplacementDataSet;
 import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
 import org.dbunit.operation.DatabaseOperation;
+import org.dbunit.operation.TransactionOperation;
 import org.hibernate.internal.SessionImpl;
 import org.springframework.core.io.Resource;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -50,7 +53,9 @@ public class JTACleanInsertTestExecutionListener extends TransactionalTestExecut
             SessionImpl session = (SessionImpl) entityManager.getDelegate();
             Connection jdbcConn = session.connection();
             IDatabaseConnection con = new DatabaseConnection(jdbcConn);
-            // DatabaseOperation.DELETE_ALL.execute(con, dataSet);    “
+            dataSet = new FilteredDataSet(new DatabaseSequenceFilter(con), dataSet);
+            new TransactionOperation(DatabaseOperation.DELETE_ALL).execute(con, dataSet);
+
             DatabaseOperation.CLEAN_INSERT.execute(con, replacementDataSet);
             // entityManager.getTransaction().commit();
             con.close();
