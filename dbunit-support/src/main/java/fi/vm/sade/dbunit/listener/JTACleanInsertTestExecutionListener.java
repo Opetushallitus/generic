@@ -36,7 +36,6 @@ public class JTACleanInsertTestExecutionListener extends TransactionalTestExecut
         }
 
         if (dataSetResourcePath != null) {
-
             Resource dataSetResource = testContext.getApplicationContext().getResource(dataSetResourcePath);
             FlatXmlDataSetBuilder flatXmlDataSetBuilder = new FlatXmlDataSetBuilder();
             flatXmlDataSetBuilder.setColumnSensing(true);
@@ -53,10 +52,10 @@ public class JTACleanInsertTestExecutionListener extends TransactionalTestExecut
             SessionImpl session = (SessionImpl) entityManager.getDelegate();
             Connection jdbcConn = session.connection();
             IDatabaseConnection con = new DatabaseConnection(jdbcConn);
-            dataSet = new FilteredDataSet(new DatabaseSequenceFilter(con), dataSet);
-            new TransactionOperation(DatabaseOperation.DELETE_ALL).execute(con, dataSet);
-
-            DatabaseOperation.CLEAN_INSERT.execute(con, replacementDataSet);
+//            dataSet = new FilteredDataSet(new DatabaseSequenceFilter(con), dataSet);
+//            new TransactionOperation(DatabaseOperation.DELETE_ALL).execute(con, dataSet);
+            new TransactionOperation(DatabaseOperation.CLEAN_INSERT).execute(con,
+                    new FilteredDataSet(new DatabaseSequenceFilter(con),replacementDataSet));
             // entityManager.getTransaction().commit();
             con.close();
         }
