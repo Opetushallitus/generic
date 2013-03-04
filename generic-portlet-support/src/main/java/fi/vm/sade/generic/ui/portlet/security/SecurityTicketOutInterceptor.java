@@ -30,6 +30,7 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
         TicketHeader ticketHeader = callback.getTicketHeader(message);
         ((HttpURLConnection)message.get("http.connection")).setRequestProperty("CasSecurityTicket", ticketHeader.casTicket); // todo: cas ticket
         ((HttpURLConnection)message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", ticketHeader.username);
+        ((HttpURLConnection)message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_authorities", ticketHeader.ticket);
     }
 
     public void setCallback(SecurityTicketCallback callback) {

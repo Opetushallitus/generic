@@ -21,6 +21,7 @@ import fi.vm.sade.generic.ui.feature.UserFeature;
 import fi.vm.sade.generic.ui.portlet.security.SecurityTicketCallback;
 import fi.vm.sade.generic.ui.portlet.security.User;
 import org.apache.cxf.binding.soap.SoapMessage;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.util.CollectionUtils;
 
 import javax.portlet.PortletRequest;
@@ -41,7 +42,7 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
             ticketHeader.username = u.getOid();
 //            ticketHeader.ticket = u.getTicket(); cas todo deprecated
 
-            // todo: temp deprekoi vanhan sydeemin
+            // todo: cas todo temp deprekoi vanhan sydeemin
             try {
                 UserLiferayImpl userLiferay = (UserLiferayImpl) u;
 //                PortletRequest request = userLiferay.getPortletRequest();
@@ -61,8 +62,14 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
                     ticketHeader.casTicket = proxyTicket;
                     //}
                 } else {
+                    // TODO: cas todo very temp dev ympäristön asetus!
                     ticketHeader.casTicket = "oldDeprecatedSecurity_REMOVE";
-                    ticketHeader.username = "admin@oph.fi"; // TODO: cas todo very temp dev ympäristön asetus!
+                    ticketHeader.username = "admin@oph.fi";
+                    String allRoles = "";
+                    for (GrantedAuthority authority : UserLiferayImpl.buildMockAuthorities()) {
+                        allRoles += authority.getAuthority()+",";
+                    }
+                    ticketHeader.ticket = allRoles;
                 }
 
             } catch (Exception e) {

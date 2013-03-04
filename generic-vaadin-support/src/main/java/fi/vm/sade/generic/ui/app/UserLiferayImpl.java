@@ -90,6 +90,12 @@ public class UserLiferayImpl implements User {
     public UserLiferayImpl(HttpServletRequest request) {
         this.servletRequest = request;
         // build mock user - TODO: cas todo, aina admin@oph.fi, jos tulee järjestelmään uusia rooleja, pitää tännekin lisätä, ei hyvä
+        Set<GrantedAuthority> authorities = buildMockAuthorities();
+        authentication = new TestingAuthenticationToken("admin@oph.fi", "admin@oph.fi", new ArrayList<GrantedAuthority>(authorities));
+        initSupportForOldAuthzFromSpringAuthentication();
+    }
+
+    public static Set<GrantedAuthority> buildMockAuthorities() {
         Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
         String org = "1.2.246.562.10.10108401950"; // espoon kaupunki
         //String org = "1.2.246.562.24.00000000001"; // root
@@ -103,8 +109,7 @@ public class UserLiferayImpl implements User {
                 authorities.add(authorityOid);
             }
         }
-        authentication = new TestingAuthenticationToken("admin@oph.fi", "admin@oph.fi", new ArrayList<GrantedAuthority>(authorities));
-        initSupportForOldAuthzFromSpringAuthentication();
+        return authorities;
     }
 
     private void initSupportForOldAuthzFromSpringAuthentication() {
