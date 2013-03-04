@@ -82,10 +82,10 @@ public class UserMock implements User {
 		this.lang = lang;
 	}
 
-    @Override
-    public String getTicket() {
-        return ticket;
-    }
+//    @Override
+//    public String getTicket() {
+//        return ticket;
+//    }
 
     public void setTicket(String ticket) {
 		this.ticket = ticket;

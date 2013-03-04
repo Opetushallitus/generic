@@ -17,7 +17,7 @@ public interface User extends Serializable {
 
     public Locale getLang();
 
-    public String getTicket();
+//    public String getTicket();
 
     /**
      * Returns OIDs for organisations the user is member of

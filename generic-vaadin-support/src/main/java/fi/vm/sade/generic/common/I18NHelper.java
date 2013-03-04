@@ -15,13 +15,15 @@
  */
 package fi.vm.sade.generic.common;
 
+import java.io.Serializable;
+
 /**
  * Simple helper to append prefixes to the translated keys.
  *
  * @author Jukka Raanamo
  * @author mlyly
  */
-public class I18NHelper {
+public class I18NHelper implements Serializable {
 
     private StringBuilder keyBuilder = new StringBuilder();
 

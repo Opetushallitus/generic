@@ -39,22 +39,22 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
         User u = UserFeature.get();
         if (u != null) {
             ticketHeader.username = u.getOid();
-            ticketHeader.ticket = u.getTicket();
+//            ticketHeader.ticket = u.getTicket(); cas todo deprecated
 
             // todo: temp deprekoi vanhan sydeemin
             try {
                 UserLiferayImpl userLiferay = (UserLiferayImpl) u;
-                PortletRequest request = userLiferay.getPortletRequest();
-                PortletSession session = request.getPortletSession();
+//                PortletRequest request = userLiferay.getPortletRequest();
+//                PortletSession session = request.getPortletSession();
 
                 // TODO: deprecated: jos ei ole käytetty cassia, luotetaan että on autentikoitu väylässä - poista myöhemmin kun cas kokonaan käytössä!
-                if ("true".equals(session.getAttribute("USER_authenticatedByCAS", PortletSession.APPLICATION_SCOPE))) {
+                if ("true".equals(userLiferay.getGlobalSessionAttribute("USER_authenticatedByCAS"))) {
                     //String proxyTicket = (String) session.getAttribute("USER_proxyTicket_http://localhost:8080/organisaatio-service"/*/j_spring_cas_security_check"*/, PortletSession.APPLICATION_SCOPE);
                     String endpoint = (String) message.get(org.apache.cxf.message.Message.ENDPOINT_ADDRESS);
                     String endpointService = endpoint.substring(endpoint.lastIndexOf("/")+1);
-                    Enumeration<String> attributeNames = session.getAttributeNames(PortletSession.APPLICATION_SCOPE);
+                    Enumeration<String> attributeNames = userLiferay.getGlobalSessionAttributeNames();
 
-                    String proxyTicket = getProxyTicket(session, endpoint, endpointService, attributeNames);
+                    String proxyTicket = getProxyTicket(userLiferay, endpoint, endpointService, attributeNames);
 
                     System.out.println("LiferaySecurityTicketCallback.getTicketHeader, proxyTicket: "+proxyTicket); // TODO: sit jos tää toimii niin sessioon kaikkien serviceiden proxytiketit
 
@@ -62,6 +62,7 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
                     //}
                 } else {
                     ticketHeader.casTicket = "oldDeprecatedSecurity_REMOVE";
+                    ticketHeader.username = "admin@oph.fi"; // TODO: cas todo very temp dev ympäristön asetus!
                 }
 
             } catch (Exception e) {
@@ -71,7 +72,7 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
         return ticketHeader;
     }
 
-    private String getProxyTicket(PortletSession session, String endpoint, String endpointService, Enumeration<String> attributeNames) {
+    private String getProxyTicket(UserLiferayImpl session, String endpoint, String endpointService, Enumeration<String> attributeNames) {
         // get correct proxyticket
         String proxyTicket = null;
         while (attributeNames.hasMoreElements()) {
@@ -86,7 +87,7 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
                 */
                 // TODO: ihan vitun ruma, mäppäys järkevämmin, esim esb urlit vois olla aina esim ../cxf/koodisto-service/... jos ohjautuu koodisto-servicelle... vai pitäiskö esbin toimia myös auth proxynä? vai pitäiskö kaikki tiketit laittaa menemään?
                 System.out.println("    endpointSrv: "+endpointService+", ticketSrv: "+ticketService);
-                String ticket = (String) session.getAttribute(name, PortletSession.APPLICATION_SCOPE);
+                String ticket = (String) session.getGlobalSessionAttribute(name);
                 if (false);
                 else if (ticketService.contains("koodisto-service") && endpointService.toLowerCase().contains("koodi")) proxyTicket = ticket;
                 else if (ticketService.contains("organisaatio-service") && endpointService.toLowerCase().contains("organisaatio")) proxyTicket = ticket;
@@ -103,7 +104,7 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
         }
         System.out.println("LiferaySecurityTicketCallback.getTicketHeader, endpoint: "+endpoint+", endpointSrv: "+endpointService+", proxyTicket: "+proxyTicket);
         if (proxyTicket == null) {
-            new RuntimeException("WARNING! could not get cas proxyticket, casService: "+endpoint+", session attributes: "+session.getAttributeMap(PortletSession.APPLICATION_SCOPE)).printStackTrace();
+            new RuntimeException("WARNING! could not get cas proxyticket, casService: "+endpoint);
         }
         return proxyTicket;
     }

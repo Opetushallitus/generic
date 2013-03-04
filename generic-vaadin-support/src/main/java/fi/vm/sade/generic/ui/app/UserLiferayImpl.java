@@ -53,15 +53,77 @@ public class UserLiferayImpl implements User {
 
     private HttpServletRequest servletRequest;
 
-    private List<AccessRight> rawAccessRights;
+    private List<AccessRight> rawAccessRights = new ArrayList<AccessRight>();
+    private Set<String> organisations = new HashSet<String>();
     private Authentication authentication;
 
     public UserLiferayImpl(PortletRequest request) {
         this.portletRequest = request;
+        // build spring authentication-object out of liferay user + roles // todo: cas todo, eroon authentication-objektin käsin tekemisestä, käytä spring securityä / hae ldapista
+        Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
+        try {
+            for (UserGroup group : getLiferayUser().getUserGroups()) {
+                String name = group.getName();
+                if (name.matches(".*_.*_.*_.*_.*")) { // app_koodisto_crud_1.2.3 TAI app_koodisto_read_update_1.2.3
+                    String[] parts = name.split("_");
+                    AccessRight right;
+                    if (parts.length == 4) {
+                        right = new AccessRight(parts[3], parts[2].toUpperCase(), parts[1].toUpperCase());
+                    } else if (parts.length == 5) {
+                        right = new AccessRight(parts[4], (parts[2]+"_"+parts[3]).toUpperCase(), parts[1].toUpperCase());
+                    } else {
+                        throw new RuntimeException("cannot parse usergroup to accessright: "+name);
+                    }
+                    GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_APP_"+right.getApplication()+"_"+right.getRole()); // sama rooli ilman oidia
+                    GrantedAuthority authorityOid = new SimpleGrantedAuthority("ROLE_APP_"+right.getApplication()+"_"+right.getRole()+"_"+right.getOrganizatioOid());
+                    authorities.add(authority);
+                    authorities.add(authorityOid);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e); // todo: errors
+        }
+        authentication = new TestingAuthenticationToken(getLiferayUser().getEmailAddress(), getLiferayUser().getEmailAddress(), new ArrayList<GrantedAuthority>(authorities));
+        initSupportForOldAuthzFromSpringAuthentication();
     }
 
     public UserLiferayImpl(HttpServletRequest request) {
         this.servletRequest = request;
+        // build mock user - TODO: cas todo, aina admin@oph.fi, jos tulee järjestelmään uusia rooleja, pitää tännekin lisätä, ei hyvä
+        Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
+        String org = "1.2.246.562.10.10108401950"; // espoon kaupunki
+        //String org = "1.2.246.562.24.00000000001"; // root
+        String apps[] = new String[]{"ANOMUSTENHALLINTA", "ORGANISAATIOHALLINTA", "HENKILONHALLINTA", "KOODISTO", "KOOSTEROOLIENHALLINTA", "OID", "OMATTIEDOT", "ORGANISAATIOHALLINTA", "TARJONTA"};
+        String roles[] = new String[]{"READ", "READ_UPDATE", "CRUD"};
+        for (String app : apps) {
+            for (String role : roles) {
+                GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_APP_"+app+"_"+role); // sama rooli ilman oidia
+                GrantedAuthority authorityOid = new SimpleGrantedAuthority("ROLE_APP_"+app+"_"+role+"_"+org);
+                authorities.add(authority);
+                authorities.add(authorityOid);
+            }
+        }
+        authentication = new TestingAuthenticationToken("admin@oph.fi", "admin@oph.fi", new ArrayList<GrantedAuthority>(authorities));
+        initSupportForOldAuthzFromSpringAuthentication();
+    }
+
+    private void initSupportForOldAuthzFromSpringAuthentication() {
+        for (GrantedAuthority authority : authentication.getAuthorities()) {
+            String name = authority.getAuthority(); // ROLE_APP_KOODISTO_[READ|READ_UPDATE_|CRUD]_1.2.3.4.5
+            String[] parts = name.split("_");
+            if (parts.length == 5 || parts.length == 6) {
+                AccessRight right;
+                if (parts.length == 5) {
+                    right = new AccessRight(parts[4], parts[3].toUpperCase(), parts[2].toUpperCase());
+                } else if (parts.length == 6) {
+                    right = new AccessRight(parts[5], (parts[3]+"_"+parts[4]).toUpperCase(), parts[2].toUpperCase());
+                } else {
+                    throw new RuntimeException("cannot parse usergroup to accessright: "+name);
+                }
+                rawAccessRights.add(right);
+                organisations.add(right.getOrganizatioOid());
+            }
+        }
     }
 
     @Override
@@ -81,12 +143,13 @@ public class UserLiferayImpl implements User {
             oid =  (String) getLiferayUser().getExpandoBridge()
                     .getAttribute(LiferayCustomAttributes.OID_HENKILO, false);
         } else if (servletRequest != null) {
-            oid =  "oidhenkilo8";
+            oid =  "oidhenkilo8"; // TODO: cas todo pois
         }
         //DEBUGSAWAY:log.debug("getOid::" + oid);
         return oid;
     }
 
+    /* cas todo deprecated
     @SuppressWarnings("unchecked")
     @Override
     public String getTicket() {
@@ -120,10 +183,12 @@ public class UserLiferayImpl implements User {
         log.info("getTicket: [" + ticket + "]");
         return ticket;
     }
+    */
 
     @Override
     public List<AccessRight> getRawAccessRights() {
 
+        /* cas todo deprecated
         if (rawAccessRights != null) {
             return rawAccessRights;
         }
@@ -180,6 +245,9 @@ public class UserLiferayImpl implements User {
 
         }
         return rawAccessRights;
+        */
+
+        return rawAccessRights;
     }
 
     @Override
@@ -206,6 +274,7 @@ public class UserLiferayImpl implements User {
 
     @Override
     public Set<String> getOrganisations() { // todo: cachetus
+        /* cas todo vanhat pois
         Set<String> organisaatioOids = new HashSet<String>();
 
         if (portletRequest != null) {
@@ -246,6 +315,9 @@ public class UserLiferayImpl implements User {
         }
 
         return organisaatioOids;
+        */
+
+        return organisations;
     }
 
     @Override
@@ -257,6 +329,7 @@ public class UserLiferayImpl implements User {
 
     @Override
     public Authentication getAuthentication() {
+        /* cas todo deprecated
         // todo: cas todo, eroon tästä, käytä spring securityä
         if (authentication == null) {
             List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
@@ -265,6 +338,8 @@ public class UserLiferayImpl implements User {
             }
             authentication = new TestingAuthenticationToken("USEROID", "USEROID", authorities);
         }
+        return authentication;
+        */
         return authentication;
     }
 
@@ -275,4 +350,21 @@ public class UserLiferayImpl implements User {
     public PortletRequest getPortletRequest() {
         return portletRequest;
     }
+
+    public Object getGlobalSessionAttribute(String name) {
+        if (portletRequest != null) {
+            return portletRequest.getPortletSession().getAttribute(name, PortletSession.APPLICATION_SCOPE);
+        } else {
+            return servletRequest.getSession().getAttribute(name);
+        }
+    }
+
+    public Enumeration<String> getGlobalSessionAttributeNames() {
+        if (portletRequest != null) {
+            return portletRequest.getPortletSession().getAttributeNames(PortletSession.APPLICATION_SCOPE);
+        } else {
+            return servletRequest.getSession().getAttributeNames();
+        }
+    }
+
 }

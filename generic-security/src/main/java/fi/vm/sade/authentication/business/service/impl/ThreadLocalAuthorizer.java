@@ -12,7 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ThreadLocalAuthorizer implements Authorizer { // TODO: organisaatio/koodistopuolella ihan samanlaiset nämä
+public class ThreadLocalAuthorizer implements Authorizer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ThreadLocalAuthorizer.class);
 

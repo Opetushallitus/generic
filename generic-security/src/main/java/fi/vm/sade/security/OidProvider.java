@@ -12,7 +12,7 @@ import java.util.List;
  * @author Antti Salonen
  */
 @Component
-public class OidProvider { // TODO: cas todo tämäkin luokka copypastettu testiksi
+public class OidProvider {
 
     @Value("${cas.service.organisaatio-service}")
     private String organisaatioServiceUrl;

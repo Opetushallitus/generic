@@ -81,7 +81,7 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
         String cacheKey = currentUser.hashCode()+"_"+targetOrganisationOid; // user hash mukana keyssä jotta resultit eläisi vain autentikoidun session
         List<String> cacheResult = cache.get(cacheKey);
         if (cacheResult == null) {
-            cacheResult = oidProvider.getSelfAndParentOids(targetOrganisationOid); // todo: cas todo virheen käsittely?
+            cacheResult = oidProvider.getSelfAndParentOids(targetOrganisationOid);
             if (cache.size() > MAX_CACHE_SIZE) {
                 LOGGER.info("cleaning getSelfAndParentOids -cache");
                 cache.clear();
