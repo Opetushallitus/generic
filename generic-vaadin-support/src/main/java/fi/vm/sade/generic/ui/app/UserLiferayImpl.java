@@ -129,7 +129,7 @@ public class UserLiferayImpl implements User {
                     rawAccessRights.add(right);
                     organisations.add(right.getOrganizatioOid());
                 }
-                System.out.println(name + "->" + right.getOrganizatioOid());
+                //System.out.println(name + "->" + right.getOrganizatioOid());
             }
         }
     }
