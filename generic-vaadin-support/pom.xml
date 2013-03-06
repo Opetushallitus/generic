@@ -79,6 +79,23 @@
             <artifactId>dellroad-stuff-vaadin</artifactId>
             <version>1.0.550</version>
         </dependency>
-    </dependencies>
+        <dependency>
+        	<groupId>easymock</groupId>
+        	<artifactId>easymock</artifactId>
+        	<version>2.0</version>
+        	<scope>test</scope>
+        </dependency>
+        <dependency>
+        	<groupId>junit</groupId>
+        	<artifactId>junit</artifactId>
+        	<scope>test</scope>
+        </dependency>
+        <dependency>
+        	<groupId>javax.servlet</groupId>
+        	<artifactId>jsp-api</artifactId>
+        	<version>2.0</version>
+<scope>test</scope>
+        </dependency>
+  </dependencies>
 
 </project>

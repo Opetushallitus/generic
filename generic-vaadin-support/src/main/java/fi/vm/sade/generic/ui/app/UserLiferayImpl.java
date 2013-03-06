@@ -125,8 +125,11 @@ public class UserLiferayImpl implements User {
                 } else {
                     throw new RuntimeException("cannot parse usergroup to accessright: "+name);
                 }
-                rawAccessRights.add(right);
-                organisations.add(right.getOrganizatioOid());
+                if (!"UPDATE".equalsIgnoreCase(right.getOrganizatioOid())) {
+                    rawAccessRights.add(right);
+                    organisations.add(right.getOrganizatioOid());
+                }
+                System.out.println(name + "->" + right.getOrganizatioOid());
             }
         }
     }
