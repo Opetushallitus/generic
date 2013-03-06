@@ -64,7 +64,7 @@ public class UserLiferayImpl implements User {
         try {
             for (UserGroup group : getLiferayUser().getUserGroups()) {
                 String name = group.getName();
-                if (name.matches(".*_.*_.*_.*_.*")) { // app_koodisto_crud_1.2.3 TAI app_koodisto_read_update_1.2.3
+                if (name.matches(".*_.*_.*_.*")) { // app_koodisto_crud_1.2.3 TAI app_koodisto_read_update_1.2.3
                     String[] parts = name.split("_");
                     AccessRight right;
                     if (parts.length == 4) {
@@ -213,7 +213,7 @@ public class UserLiferayImpl implements User {
                 try {
                     for (UserGroup group : getLiferayUser().getUserGroups()) {
                         String name = group.getName();
-                        if (name.matches(".*_.*_.*_.*_.*")) { // app_koodisto_crud_1.2.3 TAI app_koodisto_read_update_1.2.3
+                        if (name.matches(".*_.*_.*_.*")) { // app_koodisto_crud_1.2.3 TAI app_koodisto_read_update_1.2.3
                             String[] parts = name.split("_");
                             AccessRight right;
                             if (parts.length == 4) {
@@ -290,7 +290,7 @@ public class UserLiferayImpl implements User {
                 if ("true".equals(portletRequest.getPortletSession().getAttribute("USER_authenticatedByCAS", PortletSession.APPLICATION_SCOPE))) {
                     for (UserGroup group : getLiferayUser().getUserGroups()) {
                         String name = group.getName();
-                        if (name.matches(".*_.*_.*_.*_.*")) {
+                        if (name.matches(".*_.*_.*_.*")) {
                             String organizationOid = name.substring(name.lastIndexOf("_")+1);
                             if (!organisaatioOids.contains(organizationOid)) {
                                 log.info("Adding organization oid to user: " + organizationOid + " (name: "+name+")");
