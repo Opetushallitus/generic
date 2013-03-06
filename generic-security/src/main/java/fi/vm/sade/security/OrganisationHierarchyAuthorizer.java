@@ -73,8 +73,8 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
             }
         }
         // todo: cas todo logitus täältä pois
-        LOGGER.error("Not authorized! currentUser: "+currentUser+", targetOrganisationAndParentsOids: "+targetOrganisationAndParentsOids+", roles: "+ Arrays.asList(roles));
-        throw new NotAuthorizedException("User is not authorized for Koodisto");
+        LOGGER.info("Not authorized! currentUser: "+currentUser+", targetOrganisationAndParentsOids: "+targetOrganisationAndParentsOids+", roles: "+ Arrays.asList(roles));
+        throw new NotAuthorizedException("Not authorized! currentUser: "+currentUser+", targetOrganisationAndParentsOids: "+targetOrganisationAndParentsOids+", roles: "+ Arrays.asList(roles));
     }
 
     private List<String> getSelfAndParentOidsCached(Authentication currentUser, String targetOrganisationOid) {
