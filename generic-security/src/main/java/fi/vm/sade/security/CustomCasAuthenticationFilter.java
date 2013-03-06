@@ -235,7 +235,7 @@ public class CustomCasAuthenticationFilter extends AbstractAuthenticationProcess
 
         // oph start
         String casTicketHeader = request.getHeader(CAS_SECURITY_TICKET);
-        System.out.println("CustomCasAuthenticationFilter.attemptAuthentication, casTicketHeader: "+casTicketHeader);
+//        System.out.println("CustomCasAuthenticationFilter.attemptAuthentication, casTicketHeader: "+casTicketHeader);
 
         if (casTicketHeader != null) {
             // - filtterit menee ihan sotkuun jos tää on - this.setContinueChainBeforeSuccessfulAuthentication(true); // autentikointipyyntö on tässä tapauksessa myös servicekutsu - eikä casfilterin oma proxyticket? tsekkaus toimi?
@@ -303,7 +303,7 @@ public class CustomCasAuthenticationFilter extends AbstractAuthenticationProcess
 
         // oph start
         String casTicketHeader = request.getHeader(CAS_SECURITY_TICKET);
-        System.out.println("CustomCasAuthenticationFilter.requiresAuthentication, casTicketHeader: "+casTicketHeader);
+//        System.out.println("CustomCasAuthenticationFilter.requiresAuthentication, casTicketHeader: "+casTicketHeader);
         if (casTicketHeader != null) {
 
             // TODO: oldDeprecatedSecurity_REMOVE - deprecated: jos ei ole käytetty cassia, luotetaan että on autentikoitu väylässä - poista myöhemmin kun cas kokonaan käytössä!

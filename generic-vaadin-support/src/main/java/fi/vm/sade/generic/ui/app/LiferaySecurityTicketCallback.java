@@ -57,7 +57,7 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
 
                     String proxyTicket = getProxyTicket(userLiferay, endpoint, endpointService, attributeNames);
 
-                    System.out.println("LiferaySecurityTicketCallback.getTicketHeader, proxyTicket: "+proxyTicket); // TODO: sit jos tää toimii niin sessioon kaikkien serviceiden proxytiketit
+//                    System.out.println("LiferaySecurityTicketCallback.getTicketHeader, proxyTicket: "+proxyTicket); // TODO: sit jos tää toimii niin sessioon kaikkien serviceiden proxytiketit
 
                     ticketHeader.casTicket = proxyTicket;
                     //}
@@ -93,7 +93,7 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
                 }
                 */
                 // TODO: ihan vitun ruma, mäppäys järkevämmin, esim esb urlit vois olla aina esim ../cxf/koodisto-service/... jos ohjautuu koodisto-servicelle... vai pitäiskö esbin toimia myös auth proxynä? vai pitäiskö kaikki tiketit laittaa menemään?
-                System.out.println("    endpointSrv: "+endpointService+", ticketSrv: "+ticketService);
+//                System.out.println("    endpointSrv: "+endpointService+", ticketSrv: "+ticketService);
                 String ticket = (String) session.getGlobalSessionAttribute(name);
                 if (false);
                 else if (ticketService.contains("koodisto-service") && endpointService.toLowerCase().contains("koodi")) proxyTicket = ticket;
@@ -109,7 +109,7 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
                 else if (ticketService.contains("log-service") && endpointService.toLowerCase().contains("log")) proxyTicket = ticket;
             }
         }
-        System.out.println("LiferaySecurityTicketCallback.getTicketHeader, endpoint: "+endpoint+", endpointSrv: "+endpointService+", proxyTicket: "+proxyTicket);
+//        System.out.println("LiferaySecurityTicketCallback.getTicketHeader, endpoint: "+endpoint+", endpointSrv: "+endpointService+", proxyTicket: "+proxyTicket);
         if (proxyTicket == null) {
             new RuntimeException("WARNING! could not get cas proxyticket, casService: "+endpoint);
         }
