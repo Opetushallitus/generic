@@ -17,6 +17,9 @@ public class CustomUserDetailsMapper extends LdapUserDetailsMapper {
     @Override
     public UserDetails mapUserFromContext(DirContextOperations ctx, String username, Collection<? extends GrantedAuthority> authorities) {
         String oid = ctx.getStringAttribute("employeeNumber");
+        if (oid == null) {
+            oid = ctx.getStringAttribute("uid");
+        }
         UserDetails userDetails = super.mapUserFromContext(ctx, oid, authorities);
         return userDetails;
     }
