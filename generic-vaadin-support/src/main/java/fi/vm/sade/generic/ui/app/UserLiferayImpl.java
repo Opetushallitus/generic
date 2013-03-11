@@ -97,8 +97,8 @@ public class UserLiferayImpl implements User {
 
     public static Set<GrantedAuthority> buildMockAuthorities() {
         Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
-        String org = "1.2.246.562.10.10108401950"; // espoon kaupunki
-        //String org = "1.2.246.562.24.00000000001"; // root
+        //String org = "1.2.246.562.10.10108401950"; // espoon kaupunki
+        String org = "1.2.246.562.10.00000000001"; // root
         String apps[] = new String[]{"ANOMUSTENHALLINTA", "ORGANISAATIOHALLINTA", "HENKILONHALLINTA", "KOODISTO", "KOOSTEROOLIENHALLINTA", "OID", "OMATTIEDOT", "ORGANISAATIOHALLINTA", "TARJONTA"};
         String roles[] = new String[]{"READ", "READ_UPDATE", "CRUD"};
         for (String app : apps) {
