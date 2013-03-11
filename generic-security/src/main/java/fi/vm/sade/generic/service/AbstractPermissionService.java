@@ -31,9 +31,9 @@ import org.springframework.beans.factory.annotation.Value;
 public abstract class AbstractPermissionService implements PermissionService {
 
     public static final String ANY_ROLE = OrganisationHierarchyAuthorizer.ANY_ROLE;
-    protected String ROLE_CRUD;
-    protected String ROLE_RU;
-    protected String ROLE_R;
+    public final String ROLE_CRUD;
+    public final String ROLE_RU;
+    public final String ROLE_R;
 
     @Value("${root.organisaatio.oid}")
     private String rootOrgOid;
