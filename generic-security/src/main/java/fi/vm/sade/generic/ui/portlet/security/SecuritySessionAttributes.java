@@ -1,5 +1,6 @@
 package fi.vm.sade.generic.ui.portlet.security;
 
+@Deprecated // cas todo poista?
 public class SecuritySessionAttributes {
     
     /**
