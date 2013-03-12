@@ -27,6 +27,12 @@
 
         <dependency>
             <groupId>fi.vm.sade.generic</groupId>
+            <artifactId>generic-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>fi.vm.sade.generic</groupId>
             <artifactId>generic-dao</artifactId>
             <version>${project.version}</version>
         </dependency>
