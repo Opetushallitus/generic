@@ -23,7 +23,7 @@
 		<module>generic-test-support</module>
 		<module>generic-test-aspects</module>
 		<module>generic-portlet-support</module>
-		<module>generic-vaadin-widgetset</module>
+		<!--<module>generic-vaadin-widgetset</module>-->
 		<module>generic-vaadin-support</module>
 		<module>generic-configuration</module>
 		<module>generic-events</module>
