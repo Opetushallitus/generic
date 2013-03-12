@@ -17,55 +17,24 @@
     </properties>
 
     <dependencies>
+
         <dependency>
             <groupId>fi.vm.sade.generic</groupId>
-            <artifactId>generic-common</artifactId>
+            <artifactId>dependencies-service</artifactId>
             <version>${project.version}</version>
+            <type>pom</type>
         </dependency>
-        <dependency>
-            <groupId>fi.vm.sade.auth</groupId>
-            <artifactId>generic-security</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-tx</artifactId>
-        </dependency>
+
         <dependency>
             <groupId>fi.vm.sade.generic</groupId>
             <artifactId>generic-dao</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.transaction</groupId>
-            <artifactId>jta</artifactId>
-        </dependency>
 
         <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-bundle</artifactId>
-        </dependency>
-
-        <!-- Aspekteille -->
-        <dependency>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjrt</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjtools</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjweaver</artifactId>
+            <groupId>fi.vm.sade.auth</groupId>
+            <artifactId>generic-security</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
     </dependencies>
