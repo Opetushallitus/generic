@@ -31,12 +31,12 @@ public abstract class AbstractPortalSmokeTst extends SeleniumTestCaseSupport {
 //                openRelative(":8180/c/portal/login");
 //                SeleniumUtils.input("_58_login", username);
 //                SeleniumUtils.input("_58_password", password);
-                
+
                 openRelative(":8180/cas/logout"); // first logout
                 openRelative(":8180/group/virkailijan-tyopoyta/cas");
 
-                SeleniumUtils.setValue(driver.findElement(By.xpath("//input[@id='username']")), username);
-                SeleniumUtils.setValue(driver.findElement(By.xpath("//input[@id='password']")), password);
+                SeleniumUtils.input("username", username);
+                SeleniumUtils.input("password", password);
 
                 driver.findElement(By.xpath("//input[@type='submit']")).click();
                 break;
