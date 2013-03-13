@@ -16,7 +16,7 @@
 	<modules>
         <module>dependencies-esb</module>
         <module>dependencies-service</module>
-        <module>generic-vaadin-support</module>
+        <module>dependencies-vaadin</module>
         <module>generic-common</module>
         <!--<module>generic-security</module>-->
 		<!--<module>generic-dao</module>-->

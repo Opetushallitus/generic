@@ -224,6 +224,13 @@
             <version>3.1.10</version>
         </dependency>
 
+        <!-- TODO: depsukat miks tämän joutui lisäämään? poistuiko siivouksessa joku xalan/xerces tms jonka takana tää aiemmin oli? -->
+        <dependency>
+            <groupId>xml-apis</groupId>
+            <artifactId>xml-apis</artifactId>
+            <version>1.4.01</version>
+        </dependency>
+
     </dependencies>
 
 </project>
