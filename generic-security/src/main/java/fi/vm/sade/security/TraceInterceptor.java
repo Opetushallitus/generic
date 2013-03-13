@@ -27,7 +27,7 @@ public class TraceInterceptor implements MethodInterceptor {
             long invocationTime = System.currentTimeMillis() - t0;
             String methodKey = methodInvocation.getMethod().getDeclaringClass().getSimpleName()+"."+methodInvocation.getMethod().getName();
             Long cumulativeTime = addCumulativeTime(invocationTime, methodKey);
-            System.out.println("PERFORMANCE TRACE, method: "+methodKey+", cumulative time (ms): "+cumulativeTime);
+            System.out.println("PERFORMANCE TRACE, method: "+cumulativeTime+"ms - method: "+methodKey);
         }
     }
 
