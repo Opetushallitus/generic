@@ -27,14 +27,21 @@ public abstract class AbstractPortalSmokeTst extends SeleniumTestCaseSupport {
         for (int i = 1; i <= attempts; i++) {
             try {
                 log.info("loginToPortal...");
-                openRelative(":8180/c/portal/logout"); // first logout
-                openRelative(":8180/c/portal/login");
-                SeleniumUtils.input("_58_login", username);
-                SeleniumUtils.input("_58_password", password);
+//                openRelative(":8180/c/portal/logout"); // first logout
+//                openRelative(":8180/c/portal/login");
+//                SeleniumUtils.input("_58_login", username);
+//                SeleniumUtils.input("_58_password", password);
+                
+                openRelative(":8180/cas/logout"); // first logout
+                openRelative(":8180/group/virkailijan-tyopoyta/cas");
+
+                SeleniumUtils.setValue(driver.findElement(By.xpath("//input[@id='username']")), username);
+                SeleniumUtils.setValue(driver.findElement(By.xpath("//input[@id='password']")), password);
+
                 driver.findElement(By.xpath("//input[@type='submit']")).click();
                 break;
             } catch (NullPointerException e) {
-                System.err.println("WARNING! failed to login to portal because of random(?) htmlunit NullPointerException, attempt "+i+"/"+attempts);
+                System.err.println("WARNING! failed to login to portal because of random(?) htmlunit NullPointerException, attempt " + i + "/" + attempts);
             }
         }
     }
@@ -44,5 +51,4 @@ public abstract class AbstractPortalSmokeTst extends SeleniumTestCaseSupport {
         getDriver().get(url);
         return url;
     }
-
 }
