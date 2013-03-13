@@ -18,11 +18,11 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <artifactId>generic-vaadin-support</artifactId>
+    <artifactId>dependencies-vaadin</artifactId>
     <groupId>fi.vm.sade.generic</groupId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Generic :: Vaadin Support</name>
+    <name>${project.version}</name>
 
     <description>JAR library containing useful classes when building Vaadin based applications</description>
 

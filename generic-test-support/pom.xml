@@ -80,7 +80,7 @@
 
         <dependency>
             <groupId>fi.vm.sade.generic</groupId>
-            <artifactId>generic-vaadin-support</artifactId>
+            <artifactId>dependencies-vaadin</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
 

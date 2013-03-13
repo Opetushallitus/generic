@@ -34,7 +34,7 @@
 
         <dependency>
             <groupId>fi.vm.sade.generic</groupId>
-            <artifactId>generic-vaadin-support</artifactId>
+            <artifactId>dependencies-vaadin</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
