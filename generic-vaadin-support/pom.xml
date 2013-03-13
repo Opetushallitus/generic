@@ -3,11 +3,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <!--
     <parent>
 		<artifactId>parent-vaadin-app</artifactId>
         <groupId>fi.vm.sade.generic</groupId>
         <version>1.0-SNAPSHOT</version>
 		<relativePath>../../build-parent/trunk/parent-vaadin-app/pom.xml</relativePath>
+    </parent>
+    -->
+    <parent>
+        <artifactId>generic</artifactId>
+        <groupId>fi.vm.sade.generic</groupId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>..</relativePath>
     </parent>
 
     <artifactId>generic-vaadin-support</artifactId>
@@ -39,9 +47,60 @@
     <dependencies>
 
         <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.vaadin.addons</groupId>
+            <artifactId>formbinder</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.vaadin.addons</groupId>
+            <artifactId>customfield</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.vaadin.addons.lazyquerycontainer</groupId>
+            <artifactId>vaadin-lazyquerycontainer</artifactId>
+            <version>1.2.11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.vaadin.addons</groupId>
+            <artifactId>pagedtable</artifactId>
+            <version>0.6.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.bsb.common.vaadin</groupId>
+            <artifactId>com.bsb.common.vaadin.embed</artifactId>
+            <version>0.3</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>org.vaadin.addons</groupId>
             <artifactId>vaadin-wrapper-for-tinymce</artifactId>
             <version>1.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.vaadin.addons</groupId>
+            <artifactId>blackboard</artifactId>
+            <version>${blackboard.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vaadin.addon</groupId>
+            <artifactId>beanvalidation-addon</artifactId>
+            <version>0.6.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>${hibernate.version}</version>
         </dependency>
 
         <dependency>
@@ -49,11 +108,13 @@
             <artifactId>commons-beanutils</artifactId>
             <version>1.8.3</version>
         </dependency>
+        <!--
        	<dependency>
 			<groupId>fi.vm.sade.generic</groupId>
 			<artifactId>generic-portlet-support</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		-->
 	  <dependency>
             <groupId>javax.portlet</groupId>
             <artifactId>portlet-api</artifactId>
@@ -88,14 +149,57 @@
         <dependency>
         	<groupId>junit</groupId>
         	<artifactId>junit</artifactId>
-        	<scope>test</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
-        	<groupId>javax.servlet</groupId>
-        	<artifactId>jsp-api</artifactId>
-        	<version>2.0</version>
-<scope>test</scope>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jsp-api</artifactId>
+            <version>2.0</version>
+            <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-user</artifactId>
+            <version>${gwt.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- security -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-cas</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-ldap</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.ehcache</groupId>
+            <artifactId>ehcache-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-httpclient</groupId>
+            <artifactId>commons-httpclient</artifactId>
+            <version>3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jasig.cas</groupId>
+            <artifactId>cas-client-core</artifactId>
+            <version>3.1.10</version>
+        </dependency>
+
   </dependencies>
 
 </project>

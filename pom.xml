@@ -16,16 +16,17 @@
 	<modules>
         <module>dependencies-esb</module>
         <module>dependencies-service</module>
+        <module>generic-vaadin-support</module>
         <module>generic-common</module>
-        <module>generic-security</module>
-		<module>generic-dao</module>
-		<module>generic-service</module>
+        <!--<module>generic-security</module>-->
+		<!--<module>generic-dao</module>-->
+		<!--<module>generic-service</module>-->
 		<module>dbunit-support</module>
 		<module>generic-test-support</module>
 		<module>generic-test-aspects</module>
-		<module>generic-portlet-support</module>
+		<!--<module>generic-portlet-support</module>-->
 		<!--<module>generic-vaadin-widgetset</module>-->
-		<module>generic-vaadin-support</module>
+        <!-- todo: migratoi nämä vielä -->
 		<module>generic-configuration</module>
 		<module>generic-events</module>
   </modules>

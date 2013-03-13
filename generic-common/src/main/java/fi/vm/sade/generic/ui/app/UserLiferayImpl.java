@@ -135,6 +135,7 @@ public class UserLiferayImpl implements User {
     }
 
     @Override
+    @Deprecated // TODO: cas todo ei pitäisi käyttää, vaan spring security, tai esim PermissionService/OrganisaatioHierarchyAuthorization.checkAccess
     public boolean isUserInRole(String role) {
         if (portletRequest != null) {
             return portletRequest.isUserInRole(role);
