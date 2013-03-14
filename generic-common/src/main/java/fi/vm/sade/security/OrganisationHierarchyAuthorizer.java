@@ -44,7 +44,7 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
      * @param roles
      * @throws NotAuthorizedException
      */
-    public void checkAccess(Authentication currentUser, String targetOrganisationOid, String... roles) throws NotAuthorizedException {
+    public void checkAccess(Authentication currentUser, String targetOrganisationOid, String[] roles) throws NotAuthorizedException {
 
         // do assertions
         if (currentUser == null) {
@@ -75,6 +75,36 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
         // todo: cas todo logitus täältä pois
         LOGGER.info("Not authorized! currentUser: "+currentUser+", targetOrganisationAndParentsOids: "+targetOrganisationAndParentsOids+", roles: "+ Arrays.asList(roles));
         throw new NotAuthorizedException("Not authorized! currentUser: "+currentUser+", targetOrganisationAndParentsOids: "+targetOrganisationAndParentsOids+", roles: "+ Arrays.asList(roles));
+    }
+
+    /**
+     * Checks if the current user has at least one of given roles
+     *
+     * @param currentUser
+     * @param roles
+     * @throws NotAuthorizedException
+     */
+    public void checkAccess(Authentication currentUser, String[] roles) throws NotAuthorizedException {
+        // do assertions
+        if (currentUser == null) {
+            throw new NotAuthorizedException("checkAccess failed, currentUser is null");
+        }
+
+        if (roles == null || roles.length == 0) {
+            throw new NotAuthorizedException("checkAccess failed, no roles given");
+        }
+
+        for(String role: roles) {
+            for(GrantedAuthority authority : currentUser.getAuthorities()) {
+                if(roleMatchesToAuthority(role, authority)) {
+                    return;
+                }
+            }
+        }
+
+        // todo: cas todo logitus täältä pois
+        LOGGER.info("Not authorized! currentUser: "+currentUser+", roles: "+ Arrays.asList(roles));
+        throw new NotAuthorizedException("Not authorized! currentUser: "+currentUser+", roles: "+ Arrays.asList(roles));
     }
 
     private List<String> getSelfAndParentOidsCached(Authentication currentUser, String targetOrganisationOid) {

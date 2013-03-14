@@ -25,8 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 /**
  * Abstract base class for UI permission checks
  *
- * @author wuoti
- *
+ * @author wuotix
  */
 public abstract class AbstractPermissionService implements PermissionService {
 
@@ -42,9 +41,9 @@ public abstract class AbstractPermissionService implements PermissionService {
     private OrganisationHierarchyAuthorizer authorizer;
 
     protected AbstractPermissionService(String application) {
-        ROLE_CRUD = "APP_"+application+"_CRUD";
-        ROLE_RU = "APP_"+application+"_READ_UPDATE";
-        ROLE_R = "APP_"+application+"_READ";
+        ROLE_CRUD = "APP_" + application + "_CRUD";
+        ROLE_RU = "APP_" + application + "_READ_UPDATE";
+        ROLE_R = "APP_" + application + "_READ";
     }
 
     protected final String getReadRole() {
@@ -59,20 +58,37 @@ public abstract class AbstractPermissionService implements PermissionService {
         return ROLE_CRUD;
     }
 
+    public final boolean checkAccess(String[] roles) {
+        if (authorizer == null) {
+            throw new NullPointerException(this.getClass().getSimpleName() + ".authorizer -property is not wired, do it with spring or manuyally");
+        }
+
+        boolean hasAccess = false;
+
+        try {
+            authorizer.checkAccess(getUser().getAuthentication(), roles);
+            hasAccess = true;
+        } catch (Exception e) {
+            hasAccess = false;
+        }
+
+        return hasAccess;
+    }
+
 
     @Override
     public final boolean userCanRead() {
-        return getUser().isUserInRole(getReadRole()) || userCanReadAndUpdate() || userCanCreateReadUpdateAndDelete();
+        return checkAccess(new String[]{ROLE_R, ROLE_RU, ROLE_CRUD});
     }
 
     @Override
     public final boolean userCanReadAndUpdate() {
-        return getUser().isUserInRole(getReadUpdateRole()) || userCanCreateReadUpdateAndDelete();
+        return checkAccess(new String[]{ROLE_RU, ROLE_CRUD});
     }
 
     @Override
     public final boolean userCanCreateReadUpdateAndDelete() {
-        return getUser().isUserInRole(getCreateReadUpdateDeleteRole());
+        return checkAccess(new String[]{ROLE_CRUD});
     }
 
     protected final User getUser() {
@@ -80,20 +96,23 @@ public abstract class AbstractPermissionService implements PermissionService {
     }
 
     protected final boolean userIsMemberOfOrganisation(final String organisaatioOid) {
-        //return getUser().getOrganisationsHierarchy().contains(organisaatioOid);
         return checkAccess(organisaatioOid, ANY_ROLE);
     }
 
     public final boolean checkAccess(String targetOrganisaatioOid, String... roles) {
         if (authorizer == null) {
-            throw new NullPointerException(this.getClass().getSimpleName()+".authorizer -property is not wired, do it with spring or manuyally");
+            throw new NullPointerException(this.getClass().getSimpleName() + ".authorizer -property is not wired, do it with spring or manuyally");
         }
+
+        boolean hasAccess = false;
         try {
             authorizer.checkAccess(getUser().getAuthentication(), targetOrganisaatioOid, roles);
-            return true;
+            hasAccess = true;
         } catch (Exception e) {
-            return false;
+            hasAccess = false;
         }
+
+        return hasAccess;
     }
 
     public String getRootOrgOid() {
