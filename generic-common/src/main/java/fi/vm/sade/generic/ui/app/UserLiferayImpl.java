@@ -91,7 +91,9 @@ public class UserLiferayImpl implements User {
         this.servletRequest = request;
         // build mock user - TODO: cas todo, aina admin@oph.fi, jos tulee järjestelmään uusia rooleja, pitää tännekin lisätä, ei hyvä
         Set<GrantedAuthority> authorities = buildMockAuthorities();
-        authentication = new TestingAuthenticationToken("admin@oph.fi", "admin@oph.fi", new ArrayList<GrantedAuthority>(authorities));
+        //String mockUser = "admin@oph.fi";
+        String mockUser = "1.2.246.562.24.00000000001";
+        authentication = new TestingAuthenticationToken(mockUser, mockUser, new ArrayList<GrantedAuthority>(authorities));
         initSupportForOldAuthzFromSpringAuthentication();
     }
 
