@@ -14,21 +14,23 @@
 	</parent>
 
 	<modules>
+
+        <!-- dependency aggregation modules -->
         <module>dependencies-esb</module>
         <module>dependencies-service</module>
         <module>dependencies-vaadin</module>
+
+        <!-- generic classes -->
         <module>generic-common</module>
-        <!--<module>generic-security</module>-->
-		<!--<module>generic-dao</module>-->
-		<!--<module>generic-service</module>-->
+
+        <!-- generic test classes -->
 		<module>dbunit-support</module>
 		<module>generic-test-support</module>
 		<module>generic-test-aspects</module>
-		<!--<module>generic-portlet-support</module>-->
-		<!--<module>generic-vaadin-widgetset</module>-->
-        <!-- todo: migratoi nämä vielä -->
-		<module>generic-configuration</module>
+
+        <!-- todo: migratoi vielä tämäkin, mutta ei jms dependencyjä dependencies-* moduuleihin -->
 		<module>generic-events</module>
+
   </modules>
 
 	<!-- Here comes all the dependencies used in modules. Versions can be managed 
