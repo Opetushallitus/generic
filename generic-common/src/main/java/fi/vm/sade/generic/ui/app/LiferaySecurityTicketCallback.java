@@ -64,7 +64,7 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
                 } else {
                     // TODO: cas todo very temp dev ympäristön asetus!
                     ticketHeader.casTicket = "oldDeprecatedSecurity_REMOVE";
-                    ticketHeader.username = "admin@oph.fi";
+                    ticketHeader.username = u.getAuthentication().getName();
                     String allRoles = "";
                     for (GrantedAuthority authority : UserLiferayImpl.buildMockAuthorities()) {
                         allRoles += authority.getAuthority()+",";

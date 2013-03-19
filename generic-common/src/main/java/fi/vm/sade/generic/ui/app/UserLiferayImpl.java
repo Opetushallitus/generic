@@ -94,13 +94,9 @@ public class UserLiferayImpl implements User {
 
         // if we have spring security context
         SecurityContext securityContext = SecurityContextHolder.getContext();
-        if (securityContext != null) {
-            Authentication tempAuth = securityContext.getAuthentication();
-            if (tempAuth == null) {
-                throw new NullPointerException("spring security context available but authentication -object is null!!!");
-            }
-            authentication = tempAuth;
-            log.warn("building user from spring security authentication object: "+tempAuth);
+        if (securityContext != null && securityContext.getAuthentication() != null) {
+            authentication = securityContext.getAuthentication();
+            log.warn("building user from spring security authentication object: "+authentication);
             initSupportForOldAuthzFromSpringAuthentication();
         }
 
