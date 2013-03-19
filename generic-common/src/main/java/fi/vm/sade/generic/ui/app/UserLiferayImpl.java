@@ -30,6 +30,8 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletSession;
@@ -89,12 +91,28 @@ public class UserLiferayImpl implements User {
 
     public UserLiferayImpl(HttpServletRequest request) {
         this.servletRequest = request;
-        // build mock user - TODO: cas todo, aina admin@oph.fi, jos tulee järjestelmään uusia rooleja, pitää tännekin lisätä, ei hyvä
-        Set<GrantedAuthority> authorities = buildMockAuthorities();
-        //String mockUser = "admin@oph.fi";
-        String mockUser = "1.2.246.562.24.00000000001";
-        authentication = new TestingAuthenticationToken(mockUser, mockUser, new ArrayList<GrantedAuthority>(authorities));
-        initSupportForOldAuthzFromSpringAuthentication();
+
+        // if we have spring security context
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        if (securityContext != null) {
+            Authentication tempAuth = securityContext.getAuthentication();
+            if (tempAuth == null) {
+                throw new NullPointerException("spring security context available but authentication -object is null!!!");
+            }
+            authentication = tempAuth;
+            log.warn("building user from spring security authentication object: "+tempAuth);
+            initSupportForOldAuthzFromSpringAuthentication();
+        }
+
+        // else build mock user - TODO: cas todo, poistettava tämä! rethink deviympäristön security/auth!
+        else {
+            Set<GrantedAuthority> authorities = buildMockAuthorities();
+            //String mockUser = "admin@oph.fi";
+            String mockUser = "1.2.246.562.24.00000000001";
+            log.warn("building mock user: "+mockUser+", authorities: "+authorities);
+            authentication = new TestingAuthenticationToken(mockUser, mockUser, new ArrayList<GrantedAuthority>(authorities));
+            initSupportForOldAuthzFromSpringAuthentication();
+        }
     }
 
     public static Set<GrantedAuthority> buildMockAuthorities() {
