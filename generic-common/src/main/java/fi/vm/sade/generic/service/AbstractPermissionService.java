@@ -16,9 +16,12 @@
  */
 package fi.vm.sade.generic.service;
 
+import fi.vm.sade.generic.service.exception.NotAuthorizedException;
 import fi.vm.sade.generic.ui.feature.UserFeature;
 import fi.vm.sade.generic.ui.portlet.security.User;
 import fi.vm.sade.security.OrganisationHierarchyAuthorizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -28,6 +31,8 @@ import org.springframework.beans.factory.annotation.Value;
  * @author wuotix
  */
 public abstract class AbstractPermissionService implements PermissionService {
+
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     public static final String ANY_ROLE = OrganisationHierarchyAuthorizer.ANY_ROLE;
     public final String ROLE_CRUD;
@@ -109,6 +114,9 @@ public abstract class AbstractPermissionService implements PermissionService {
             authorizer.checkAccess(getUser().getAuthentication(), targetOrganisaatioOid, roles);
             hasAccess = true;
         } catch (Exception e) {
+            if (!(e instanceof NotAuthorizedException)) {
+                log.warn("checkAccess failed because exception: "+e+", auth: "+getUser().getAuthentication());
+            }
             hasAccess = false;
         }
 
