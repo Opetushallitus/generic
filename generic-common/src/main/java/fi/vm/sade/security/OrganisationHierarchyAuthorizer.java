@@ -63,12 +63,10 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
 
         // sen sijaan että tarkastettaisiin käyttäjän roolipuussa alaspäin, tarkastetaan kohde-puussa ylöspäin
         // jos käyttäjällä on rooli organisaatioon, tai johonkin sen parenttiin, pääsy sallitaan
-        System.out.println(" ##### OrganisationHierarchyAuthorizer... roles: "+Arrays.asList(roles)+", targetOrganisationOid: "+targetOrganisationOid+", targetOrganisationAndParentsOids: "+targetOrganisationAndParentsOids);
         for (String role : roles) {
             for (String oid : targetOrganisationAndParentsOids) {
                 for (GrantedAuthority authority : currentUser.getAuthorities()) {
                     if (roleMatchesToAuthority(role, authority) && authorityIsTargetedToOrganisation(authority, oid)) {
-                        System.out.println(" ##### OrganisationHierarchyAuthorizer: SUCCESS! roles: "+Arrays.asList(roles)+", targetOrganisationAndParentsOids: "+targetOrganisationAndParentsOids);
                         return;
                     }
                 }
