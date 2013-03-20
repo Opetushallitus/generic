@@ -6,6 +6,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.dellroad.stuff.vaadin.SpringContextApplication;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 
 import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
@@ -53,5 +56,30 @@ public abstract class AbstractSpringContextApplication extends SpringContextAppl
     @Override
     protected void doOnRequestEnd(HttpServletRequest request, HttpServletResponse response) {
         UserFeature.remove();
+    }
+
+    public boolean hasRole(String role) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if(authentication == null) {
+            return false;
+        }
+        for(GrantedAuthority authority : authentication.getAuthorities()) {
+            if(authority.getAuthority().equals(role)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if(authentication == null) {
+            return false;
+        }
+        return true;
+    }
+
+    public Authentication getCurrentUser() {
+        return SecurityContextHolder.getContext().getAuthentication();
     }
 }
