@@ -1,0 +1,2 @@
+# Module fi.vm.sade.widgetset.OPH
+# RPC service class, partial path of RPC policy file
