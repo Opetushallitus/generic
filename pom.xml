@@ -29,9 +29,11 @@
 		<module>generic-test-aspects</module>
 
         <!-- todo: migratoi vielä tämäkin, mutta ei jms dependencyjä dependencies-* moduuleihin -->
-		<module>generic-events</module>
+        <module>generic-events</module>
 
-                <module>generic-vaadin-widgetset</module>
+        <module>webapp-portal-decorator</module>
+        <module>generic-vaadin-widgetset</module>
+
   </modules>
 
 	<!-- Here comes all the dependencies used in modules. Versions can be managed 
