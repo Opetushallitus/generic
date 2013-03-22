@@ -38,7 +38,7 @@ public class LiferaySecurityTicketCallback implements SecurityTicketCallback {
     public TicketHeader getTicketHeader(SoapMessage message) {
         TicketHeader ticketHeader = new TicketHeader();
         User u = UserFeature.get();
-        if (u != null) {
+        if (u instanceof UserLiferayImpl) {
             ticketHeader.username = u.getOid();
 //            ticketHeader.ticket = u.getTicket(); cas todo deprecated
 
