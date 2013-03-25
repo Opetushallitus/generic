@@ -85,7 +85,7 @@ public class UserLiferayImpl implements User {
         } catch (Exception e) {
             throw new RuntimeException(e); // todo: errors
         }
-        authentication = new TestingAuthenticationToken(getLiferayUser().getEmailAddress(), getLiferayUser().getEmailAddress(), new ArrayList<GrantedAuthority>(authorities));
+        authentication = new TestingAuthenticationToken(getLiferayUser().getScreenName(), getLiferayUser().getScreenName(), new ArrayList<GrantedAuthority>(authorities));
         initSupportForOldAuthzFromSpringAuthentication();
     }
 
@@ -163,6 +163,7 @@ public class UserLiferayImpl implements User {
 
     @Override
     public String getOid() {
+        /*
         String oid = null;
         if (portletRequest != null) {
             oid =  (String) getLiferayUser().getExpandoBridge()
@@ -172,6 +173,8 @@ public class UserLiferayImpl implements User {
         }
         //DEBUGSAWAY:log.debug("getOid::" + oid);
         return oid;
+        */
+        return getAuthentication().getName();
     }
 
     /* cas todo deprecated
