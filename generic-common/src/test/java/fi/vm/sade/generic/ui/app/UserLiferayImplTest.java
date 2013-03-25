@@ -30,7 +30,7 @@ public class UserLiferayImplTest {
         com.liferay.portal.model.User user = createMock(com.liferay.portal.model.User.class);
         List<UserGroup> portalGroups = new ArrayList<UserGroup>();
         expect(user.getUserGroups()).andReturn(portalGroups);
-        expect(user.getEmailAddress()).andReturn("foo@bar").anyTimes();
+        expect(user.getScreenName()).andReturn("foo@bar").anyTimes();
         
         portalGroups.add(createGroup("APP_ORGANISAATIOHALLINTA_CRUD_123456"));
         portalGroups.add(createGroup("APP_ORGANISAATIOHALLINTA_READ_UPDATE_123457"));
