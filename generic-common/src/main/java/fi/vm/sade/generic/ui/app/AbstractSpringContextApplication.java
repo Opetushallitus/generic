@@ -76,7 +76,7 @@ public abstract class AbstractSpringContextApplication extends SpringContextAppl
         if(authentication == null) {
             return false;
         }
-        return true;
+        return authentication.isAuthenticated();
     }
 
     public Authentication getCurrentUser() {
