@@ -2,12 +2,27 @@
 <%@ page import="java.util.Properties" %>
 <%@ page import="java.io.FileInputStream" %>
 <%@ page import="java.io.File" %>
+<%@ page import="org.springframework.security.core.context.SecurityContextHolder" %>
+<%@ page import="org.springframework.security.core.Authentication" %>
+<%@ page import="org.springframework.security.core.context.SecurityContext" %>
+<%@ page import="org.springframework.security.authentication.AnonymousAuthenticationToken" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="org.springframework.security.core.GrantedAuthority" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF8" %>
 <%
     InputStream stream = new FileInputStream(new File(System.getProperty("user.home"), "oph-configuration/common.properties"));
     Properties props = new Properties();
     props.load(stream);
     request.setAttribute("props", props);
+    SecurityContext securityContext = SecurityContextHolder.getContext();
+    Authentication authentication;
+    if (securityContext != null) {
+        authentication = securityContext.getAuthentication();
+    } else {
+        authentication = new AnonymousAuthenticationToken("anonymous", "anonymous", new ArrayList<GrantedAuthority>());
+    }
+    request.setAttribute("authentication", authentication);
+    request.setAttribute("userRoles", authentication.getAuthorities().toString().replaceAll("\\[","").replaceAll("\\]","").replaceAll(", ",","));
 %>
 <!DOCTYPE html>
 <!-- saved from url=(0077)${props['cas.service.liferay']}/group/virkailijan-tyopoyta/eops-ja-etutkinnot1 -->
@@ -25,6 +40,9 @@
     <script src="../decorator/main.js" type="text/javascript"></script>
 </head>
 <body class=" yui3-skin-sam controls-visible signed-in private-page site">
+
+<input type="hidden" id="oph_user_roles" value="${userRoles}"/>
+
 <div id="heading">
     <div id="tools-left" class="left">
         <div class="tools-item"> <!-- old: <a href="/group/guest">Virkailijan työpöytä</a> --> <a
@@ -35,7 +53,8 @@
         <div class="tools-item"><a href="${props['web.url.cas']}/logout?service=${props['cas.service.liferay']}/c/portal/logout">Kirjaudu ulos</a>
         </div>
         <div class="tools-item virkailija-select"><select>
-            <option><%= request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : "NULL USER!!!" %></option>
+            <%--<option><%= request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : "NULL USER!!!" %></option>--%>
+            <option>${request.userPrincipal.employeeNumber}</option>
             <option> * Omat tiedot</option>
             <option> * Omat asetukset</option>
             <option>-----</option>
@@ -70,9 +89,8 @@
         <nav class="sort-pages modify-pages" id="main-navigation">
             <ul class="navigation-list">
                 <li class="nav-item"><a href="${props['cas.service.liferay']}/group/virkailijan-tyopoyta/koti"> Koti </a></li>
-                <li class="nav-item"><a href="#" onclick="return false;">
+                <li class="nav-item" requires-role="ROLE_APP_ORGANISAATIOHALLINTA"><a href="#" onclick="return false;">
                     Organisaatiot </a>
-
                     <div class="sub-navigation">
                         <ul>
                             <%--<li><a href="${props['cas.service.liferay']}/group/virkailijan-tyopoyta/organisaatiot"> Organisaation tietojen ylläpito </a></li>--%>
@@ -81,7 +99,7 @@
                     </div>
                     <div class="clear"></div>
                 </li>
-                <li class="nav-item"><a href="#" onclick="return false;">
+                <li class="nav-item" requires-role="ROLE_APP_TARJONTA"><a href="#" onclick="return false;">
                     Suunnittelu ja tarjonta </a>
 
                     <div class="sub-navigation">
@@ -150,14 +168,14 @@
 
                     <div class="sub-navigation">
                         <ul>
-                            <li><a href="${props['cas.service.liferay']}/group/virkailijan-tyopoyta/yhteystietotyypit"> Yhteystietotyypit </a></li>
+                            <li requires-role="ROLE_APP_ORGANISAATIOHALLINTA"><a href="${props['cas.service.liferay']}/group/virkailijan-tyopoyta/yhteystietotyypit"> Yhteystietotyypit </a></li>
                             <li><a href="${props['cas.service.liferay']}/group/virkailijan-tyopoyta/henkilotietojenhallinta"> Henkilötietojen käsittely </a></li>
                             <li><a href="${props['cas.service.liferay']}/group/virkailijan-tyopoyta/kayttooikeusanomukset"> Käyttöoikeusanomukset </a></li>
                             <li><a href="${props['cas.service.liferay']}/group/virkailijan-tyopoyta/koosteroolienyllapito"> Käyttöoikeusryhmien hallinta </a>
                             </li>
                             <li><a href="${props['cas.service.liferay']}/group/virkailijan-tyopoyta/kayttoohjeiden-yllapito"> Käyttöohjeiden ylläpito </a></li>
                             <%--<li><a href="${props['cas.service.liferay']}/group/virkailijan-tyopoyta/koodisto"> Koodistojen ylläpito </a></li>--%>
-                            <li><a href="${props['cas.service.koodisto-app']}/koodistoapp/app"> Koodistojen ylläpito </a></li>
+                            <li requires-role="ROLE_APP_KOODISTO"><a href="${props['cas.service.koodisto-app']}/koodistoapp/app"> Koodistojen ylläpito </a></li>
                             <li><a href="${props['cas.service.liferay']}/group/virkailijan-tyopoyta/web-analytiikka"> Web-analytiikkaraportit </a></li>
                             <li><a href="${props['cas.service.liferay']}/group/virkailijan-tyopoyta/raportit-ja-tilastointi"> Muut raportit </a></li>
                         </ul>

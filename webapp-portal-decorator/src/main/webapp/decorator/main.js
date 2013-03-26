@@ -36,21 +36,28 @@ if(window.attachEvent) {
 }
 
 function doOnLoad() {
+
+    // apply hover opening behaviour to the navi
+
     var els = document.getElementsByClassName('nav-item');
     var elsArray = Array.prototype.slice.call(els, 0);
     elsArray.forEach(function(el) {
-        // Do stuff with the element
-        console.log(el.tagName);
+        //console.log(el.tagName);
         el.onmouseover = function(){this.children[1].style.display='block';};
         el.onmouseout = function(){this.children[1].style.display='none';};
     });
-    /*
-    for (var navItem in navItems) {
-//        alert('xxxx');
-        //navItem.onmouseover = this.children[1].style.display='block';
-        console.log('tagName: '+navItem.innerHTML);
-        navItem.onmouseover = function(){alert('xxx2')};
-        navItem.onmouseout = function(){alert('xxx')};
-    }
-    */
+
+    // hide navi elems based on role
+
+    var els = document.getElementById("main-navigation").getElementsByTagName("li");
+    var elsArray = Array.prototype.slice.call(els, 0);
+    var userRoles = document.getElementById("oph_user_roles").getAttribute("value");
+    elsArray.forEach(function(el) {
+        var requiresRole = el.getAttribute('requires-role');
+        console.log("userRoles: "+userRoles+", elem: "+el.nodeValue+", requiresRole: "+requiresRole+", index: "+userRoles.indexOf(requiresRole));
+        if (requiresRole != null && userRoles.indexOf(requiresRole) == -1) { // if requires some role, but user doesn't have it -> hide
+            el.style.display='none';
+        }
+    });
+
 }
