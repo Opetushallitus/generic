@@ -16,18 +16,19 @@
  */
 package fi.vm.sade.generic.service;
 
-import fi.vm.sade.generic.service.exception.NotAuthorizedException;
-import fi.vm.sade.generic.ui.feature.UserFeature;
-import fi.vm.sade.generic.ui.portlet.security.User;
-import fi.vm.sade.security.OrganisationHierarchyAuthorizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import fi.vm.sade.generic.service.exception.NotAuthorizedException;
+import fi.vm.sade.generic.ui.feature.UserFeature;
+import fi.vm.sade.generic.ui.portlet.security.User;
+import fi.vm.sade.security.OrganisationHierarchyAuthorizer;
+
 /**
  * Abstract base class for UI permission checks
- *
+ * 
  * @author wuotix
  */
 public abstract class AbstractPermissionService implements PermissionService {
@@ -39,6 +40,7 @@ public abstract class AbstractPermissionService implements PermissionService {
     public final String ROLE_RU;
     public final String ROLE_R;
 
+    @Deprecated
     @Value("${root.organisaatio.oid}")
     private String rootOrgOid;
 
@@ -65,7 +67,8 @@ public abstract class AbstractPermissionService implements PermissionService {
 
     public final boolean checkAccess(String[] roles) {
         if (authorizer == null) {
-            throw new NullPointerException(this.getClass().getSimpleName() + ".authorizer -property is not wired, do it with spring or manuyally");
+            throw new NullPointerException(this.getClass().getSimpleName()
+                    + ".authorizer -property is not wired, do it with spring or manuyally");
         }
 
         boolean hasAccess = false;
@@ -80,20 +83,19 @@ public abstract class AbstractPermissionService implements PermissionService {
         return hasAccess;
     }
 
-
     @Override
     public final boolean userCanRead() {
-        return checkAccess(new String[]{ROLE_R, ROLE_RU, ROLE_CRUD});
+        return checkAccess(new String[] { ROLE_R, ROLE_RU, ROLE_CRUD });
     }
 
     @Override
     public final boolean userCanReadAndUpdate() {
-        return checkAccess(new String[]{ROLE_RU, ROLE_CRUD});
+        return checkAccess(new String[] { ROLE_RU, ROLE_CRUD });
     }
 
     @Override
     public final boolean userCanCreateReadUpdateAndDelete() {
-        return checkAccess(new String[]{ROLE_CRUD});
+        return checkAccess(new String[] { ROLE_CRUD });
     }
 
     protected final User getUser() {
@@ -106,7 +108,8 @@ public abstract class AbstractPermissionService implements PermissionService {
 
     public final boolean checkAccess(String targetOrganisaatioOid, String... roles) {
         if (authorizer == null) {
-            throw new NullPointerException(this.getClass().getSimpleName() + ".authorizer -property is not wired, do it with spring or manuyally");
+            throw new NullPointerException(this.getClass().getSimpleName()
+                    + ".authorizer -property is not wired, do it with spring or manuyally");
         }
 
         boolean hasAccess = false;
@@ -115,7 +118,7 @@ public abstract class AbstractPermissionService implements PermissionService {
             hasAccess = true;
         } catch (Exception e) {
             if (!(e instanceof NotAuthorizedException)) {
-                log.warn("checkAccess failed because exception: "+e+", auth: "+getUser().getAuthentication());
+                log.warn("checkAccess failed because exception: " + e + ", auth: " + getUser().getAuthentication());
             }
             hasAccess = false;
         }
@@ -123,6 +126,7 @@ public abstract class AbstractPermissionService implements PermissionService {
         return hasAccess;
     }
 
+    @Deprecated
     public String getRootOrgOid() {
         if (rootOrgOid == null) {
             throw new RuntimeException("rootOrgId is null!");
@@ -130,6 +134,7 @@ public abstract class AbstractPermissionService implements PermissionService {
         return rootOrgOid;
     }
 
+    @Deprecated
     public boolean isOPHUser() {
         return checkAccess(getRootOrgOid(), ANY_ROLE);
     }
