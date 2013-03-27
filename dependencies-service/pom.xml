@@ -235,6 +235,13 @@
             <version>2.0.2</version>
         </dependency>
 
+        <!-- documents the database -->
+        <dependency>
+            <groupId>net.sourceforge.schemacrawler</groupId>
+            <artifactId>schemacrawler</artifactId>
+            <version>9.6</version>
+        </dependency>
+
         <!-- TODO: depsukat miks tämän joutui lisäämään? poistuiko siivouksessa joku xalan/xerces tms jonka takana tää aiemmin oli? -->
         <dependency>
             <groupId>xml-apis</groupId>
@@ -243,5 +250,4 @@
         </dependency>
 
     </dependencies>
-
 </project>
