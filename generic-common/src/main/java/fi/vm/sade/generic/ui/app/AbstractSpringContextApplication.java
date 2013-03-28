@@ -19,7 +19,10 @@ import fi.vm.sade.generic.ui.portlet.security.User;
 
 /**
  * User: tommiha Date: 11/13/12 Time: 12:20 PM
+ * 
+ * @Deprecated Liitoksissa UserLiferayImpl-toteutuksen kanssa.
  */
+@Deprecated
 public abstract class AbstractSpringContextApplication extends SpringContextApplication implements
         HttpServletRequestListener, PortletRequestListener {
     @Override
@@ -60,11 +63,11 @@ public abstract class AbstractSpringContextApplication extends SpringContextAppl
 
     public boolean hasRole(String role) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(authentication == null) {
+        if (authentication == null) {
             return false;
         }
-        for(GrantedAuthority authority : authentication.getAuthorities()) {
-            if(authority.getAuthority().equals(role)) {
+        for (GrantedAuthority authority : authentication.getAuthorities()) {
+            if (authority.getAuthority().equals(role)) {
                 return true;
             }
         }
@@ -73,7 +76,7 @@ public abstract class AbstractSpringContextApplication extends SpringContextAppl
 
     public boolean isAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(authentication == null) {
+        if (authentication == null) {
             return false;
         }
         return authentication.isAuthenticated();

@@ -4,7 +4,11 @@ import fi.vm.sade.generic.ui.portlet.security.User;
 
 /**
  * User: tommiha Date: 11/13/12 Time: 12:24 PM
+ * 
+ * @Deprecated Mieluummin Spring Security tavalla,
+ *             SecurityContextHolder.getContext().getAuthentication()...
  */
+@Deprecated
 public class UserFeature {
 
     private static ThreadLocal<User> userThreadLocal = new ThreadLocal<User>();

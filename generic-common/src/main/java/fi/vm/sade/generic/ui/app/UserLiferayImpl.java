@@ -16,14 +16,17 @@
  */
 package fi.vm.sade.generic.ui.app;
 
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.UserGroup;
-import com.liferay.portal.util.PortalUtil;
-import fi.vm.sade.generic.auth.LiferayCustomAttributes;
-import fi.vm.sade.generic.ui.portlet.security.AccessRight;
-import fi.vm.sade.generic.ui.portlet.security.SecuritySessionAttributes;
-import fi.vm.sade.generic.ui.portlet.security.User;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+import javax.portlet.PortletRequest;
+import javax.portlet.PortletSession;
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.TestingAuthenticationToken;
@@ -33,17 +36,20 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletSession;
-import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.model.UserGroup;
+import com.liferay.portal.util.PortalUtil;
+
+import fi.vm.sade.generic.ui.portlet.security.AccessRight;
+import fi.vm.sade.generic.ui.portlet.security.User;
 
 /**
  * Consider writing this impl in different way that does not stash
  * {@link PortletRequest}
- *
+ * 
  * @author kkammone
- *
+ * 
  */
 public class UserLiferayImpl implements User {
 
@@ -61,23 +67,30 @@ public class UserLiferayImpl implements User {
 
     public UserLiferayImpl(PortletRequest request) {
         this.portletRequest = request;
-        // build spring authentication-object out of liferay user + roles // todo: cas todo, eroon authentication-objektin käsin tekemisestä, käytä spring securityä / hae ldapista
+        // build spring authentication-object out of liferay user + roles //
+        // todo: cas todo, eroon authentication-objektin käsin tekemisestä,
+        // käytä spring securityä / hae ldapista
         Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
         try {
             for (UserGroup group : getLiferayUser().getUserGroups()) {
                 String name = group.getName();
-                if (name.matches(".*_.*_.*_.*")) { // app_koodisto_crud_1.2.3 TAI app_koodisto_read_update_1.2.3
+                if (name.matches(".*_.*_.*_.*")) { // app_koodisto_crud_1.2.3
+                                                   // TAI
+                                                   // app_koodisto_read_update_1.2.3
                     String[] parts = name.split("_");
                     AccessRight right;
                     if (parts.length == 4) {
                         right = new AccessRight(parts[3], parts[2].toUpperCase(), parts[1].toUpperCase());
                     } else if (parts.length == 5) {
-                        right = new AccessRight(parts[4], (parts[2]+"_"+parts[3]).toUpperCase(), parts[1].toUpperCase());
+                        right = new AccessRight(parts[4], (parts[2] + "_" + parts[3]).toUpperCase(),
+                                parts[1].toUpperCase());
                     } else {
-                        throw new RuntimeException("cannot parse usergroup to accessright: "+name);
+                        throw new RuntimeException("cannot parse usergroup to accessright: " + name);
                     }
-                    GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_APP_"+right.getApplication()+"_"+right.getRole()); // sama rooli ilman oidia
-                    GrantedAuthority authorityOid = new SimpleGrantedAuthority("ROLE_APP_"+right.getApplication()+"_"+right.getRole()+"_"+right.getOrganizatioOid());
+                    GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_APP_" + right.getApplication() + "_"
+                            + right.getRole()); // sama rooli ilman oidia
+                    GrantedAuthority authorityOid = new SimpleGrantedAuthority("ROLE_APP_" + right.getApplication()
+                            + "_" + right.getRole() + "_" + right.getOrganizatioOid());
                     authorities.add(authority);
                     authorities.add(authorityOid);
                 }
@@ -85,7 +98,8 @@ public class UserLiferayImpl implements User {
         } catch (Exception e) {
             throw new RuntimeException(e); // todo: errors
         }
-        authentication = new TestingAuthenticationToken(getLiferayUser().getScreenName(), getLiferayUser().getScreenName(), new ArrayList<GrantedAuthority>(authorities));
+        authentication = new TestingAuthenticationToken(getLiferayUser().getScreenName(), getLiferayUser()
+                .getScreenName(), new ArrayList<GrantedAuthority>(authorities));
         initSupportForOldAuthzFromSpringAuthentication();
     }
 
@@ -96,31 +110,39 @@ public class UserLiferayImpl implements User {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         if (securityContext != null && securityContext.getAuthentication() != null) {
             authentication = securityContext.getAuthentication();
-            log.warn("building user from spring security authentication object: "+authentication);
+            log.warn("building user from spring security authentication object: " + authentication);
             initSupportForOldAuthzFromSpringAuthentication();
         }
 
-        // else build mock user - TODO: cas todo, poistettava tämä! rethink deviympäristön security/auth!
+        // else build mock user - TODO: cas todo, poistettava tämä! rethink
+        // deviympäristön security/auth!
         else {
             Set<GrantedAuthority> authorities = buildMockAuthorities();
-            //String mockUser = "admin@oph.fi";
+            // String mockUser = "admin@oph.fi";
             String mockUser = "1.2.246.562.24.00000000001";
-            log.warn("building mock user: "+mockUser+", authorities: "+authorities);
-            authentication = new TestingAuthenticationToken(mockUser, mockUser, new ArrayList<GrantedAuthority>(authorities));
+            log.warn("building mock user: " + mockUser + ", authorities: " + authorities);
+            authentication = new TestingAuthenticationToken(mockUser, mockUser, new ArrayList<GrantedAuthority>(
+                    authorities));
             initSupportForOldAuthzFromSpringAuthentication();
         }
     }
 
+    @Deprecated
+    // Metodi ei ole produktioon kelpaava
     public static Set<GrantedAuthority> buildMockAuthorities() {
         Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
-        //String org = "1.2.246.562.10.10108401950"; // espoon kaupunki
+        // String org = "1.2.246.562.10.10108401950"; // espoon kaupunki
         String org = "1.2.246.562.10.00000000001"; // root
-        String apps[] = new String[]{"ANOMUSTENHALLINTA", "ORGANISAATIOHALLINTA", "HENKILONHALLINTA", "KOODISTO", "KOOSTEROOLIENHALLINTA", "OID", "OMATTIEDOT", "ORGANISAATIOHALLINTA", "TARJONTA"};
-        String roles[] = new String[]{"READ", "READ_UPDATE", "CRUD"};
+        String apps[] = new String[] { "ANOMUSTENHALLINTA", "ORGANISAATIOHALLINTA", "HENKILONHALLINTA", "KOODISTO",
+                "KOOSTEROOLIENHALLINTA", "OID", "OMATTIEDOT", "ORGANISAATIOHALLINTA", "TARJONTA" };
+        String roles[] = new String[] { "READ", "READ_UPDATE", "CRUD" };
         for (String app : apps) {
             for (String role : roles) {
-                GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_APP_"+app+"_"+role); // sama rooli ilman oidia
-                GrantedAuthority authorityOid = new SimpleGrantedAuthority("ROLE_APP_"+app+"_"+role+"_"+org);
+                GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_APP_" + app + "_" + role); // sama
+                                                                                                         // rooli
+                                                                                                         // ilman
+                                                                                                         // oidia
+                GrantedAuthority authorityOid = new SimpleGrantedAuthority("ROLE_APP_" + app + "_" + role + "_" + org);
                 authorities.add(authority);
                 authorities.add(authorityOid);
             }
@@ -137,21 +159,23 @@ public class UserLiferayImpl implements User {
                 if (parts.length == 5) {
                     right = new AccessRight(parts[4], parts[3].toUpperCase(), parts[2].toUpperCase());
                 } else if (parts.length == 6) {
-                    right = new AccessRight(parts[5], (parts[3]+"_"+parts[4]).toUpperCase(), parts[2].toUpperCase());
+                    right = new AccessRight(parts[5], (parts[3] + "_" + parts[4]).toUpperCase(), parts[2].toUpperCase());
                 } else {
-                    throw new RuntimeException("cannot parse usergroup to accessright: "+name);
+                    throw new RuntimeException("cannot parse usergroup to accessright: " + name);
                 }
                 if (!"UPDATE".equalsIgnoreCase(right.getOrganizatioOid())) {
                     rawAccessRights.add(right);
                     organisations.add(right.getOrganizatioOid());
                 }
-                //System.out.println(name + "->" + right.getOrganizatioOid());
+                // System.out.println(name + "->" + right.getOrganizatioOid());
             }
         }
     }
 
     @Override
-    @Deprecated // TODO: cas todo ei pitäisi käyttää, vaan spring security, tai esim PermissionService/OrganisaatioHierarchyAuthorization.checkAccess
+    @Deprecated
+    // TODO: cas todo ei pitäisi käyttää, vaan spring security, tai esim
+    // PermissionService/OrganisaatioHierarchyAuthorization.checkAccess
     public boolean isUserInRole(String role) {
         if (portletRequest != null) {
             return portletRequest.isUserInRole(role);
@@ -164,116 +188,89 @@ public class UserLiferayImpl implements User {
     @Override
     public String getOid() {
         /*
-        String oid = null;
-        if (portletRequest != null) {
-            oid =  (String) getLiferayUser().getExpandoBridge()
-                    .getAttribute(LiferayCustomAttributes.OID_HENKILO, false);
-        } else if (servletRequest != null) {
-            oid =  "oidhenkilo8"; // TODO: cas todo pois
-        }
-        //DEBUGSAWAY:log.debug("getOid::" + oid);
-        return oid;
-        */
+         * String oid = null; if (portletRequest != null) { oid = (String)
+         * getLiferayUser().getExpandoBridge()
+         * .getAttribute(LiferayCustomAttributes.OID_HENKILO, false); } else if
+         * (servletRequest != null) { oid = "oidhenkilo8"; // TODO: cas todo
+         * pois } //DEBUGSAWAY:log.debug("getOid::" + oid); return oid;
+         */
         return getAuthentication().getName();
     }
 
-    /* cas todo deprecated
-    @SuppressWarnings("unchecked")
-    @Override
-    public String getTicket() {
-        String ticket = null;
-        if (portletRequest != null) {
-            Object o =  portletRequest.getPortletSession().getAttribute(SecuritySessionAttributes.TICKET, PortletSession.APPLICATION_SCOPE);
-            if (o != null && o instanceof String) {
-                ticket = (String) o;
-            }
-//            log.info("trying to get ticket [" +SecuritySessionAttributes.TICKET + "] from application scope portlet request ticket=[" + ticket + "] object[" + o +"]");
-
-//            if(ticket == null) {
-//                log.info("no luck");
-//
-//                HttpServletRequest s = PortalUtil.getHttpServletRequest(portletRequest);
-//
-//                o = s.getSession().getAttribute(SecuritySessionAttributes.TICKET);
-//                if (o != null && o instanceof String) {
-//                    ticket = (String) o;
-//                }
-//                log.info("trying to get ticket [" +SecuritySessionAttributes.TICKET + "] from HttpServletRequest ticket=[" + ticket + "] object[" + o +"]");
-//            }
-//            return ticket;
-        } else {
-            Object o = this.servletRequest.getSession().getAttribute(SecuritySessionAttributes.TICKET);
-            if (o != null && o instanceof String) {
-                ticket = (String) o;
-            }
-        }
-
-        log.info("getTicket: [" + ticket + "]");
-        return ticket;
-    }
-    */
+    /*
+     * cas todo deprecated
+     * 
+     * @SuppressWarnings("unchecked")
+     * 
+     * @Override public String getTicket() { String ticket = null; if
+     * (portletRequest != null) { Object o =
+     * portletRequest.getPortletSession().getAttribute
+     * (SecuritySessionAttributes.TICKET, PortletSession.APPLICATION_SCOPE); if
+     * (o != null && o instanceof String) { ticket = (String) o; } //
+     * log.info("trying to get ticket [" +SecuritySessionAttributes.TICKET +
+     * "] from application scope portlet request ticket=[" + ticket +
+     * "] object[" + o +"]");
+     * 
+     * // if(ticket == null) { // log.info("no luck"); // // HttpServletRequest
+     * s = PortalUtil.getHttpServletRequest(portletRequest); // // o =
+     * s.getSession().getAttribute(SecuritySessionAttributes.TICKET); // if (o
+     * != null && o instanceof String) { // ticket = (String) o; // } //
+     * log.info("trying to get ticket [" +SecuritySessionAttributes.TICKET +
+     * "] from HttpServletRequest ticket=[" + ticket + "] object[" + o +"]"); //
+     * } // return ticket; } else { Object o =
+     * this.servletRequest.getSession().getAttribute
+     * (SecuritySessionAttributes.TICKET); if (o != null && o instanceof String)
+     * { ticket = (String) o; } }
+     * 
+     * log.info("getTicket: [" + ticket + "]"); return ticket; }
+     */
 
     @Override
     public List<AccessRight> getRawAccessRights() {
 
-        /* cas todo deprecated
-        if (rawAccessRights != null) {
-            return rawAccessRights;
-        }
-
-        rawAccessRights = new ArrayList<AccessRight>();
-        HttpServletRequest s = null;
-
-        if (portletRequest != null) {
-            s = PortalUtil.getHttpServletRequest(portletRequest);
-        } else {
-            s = this.servletRequest;
-        }
-        if (s != null) {
-
-            // cas todo, ldap roles -> liferay groups -> oph accessrights, poista vanha?
-            if ("true".equals(s.getSession().getAttribute("USER_authenticatedByCAS"))) {
-                try {
-                    for (UserGroup group : getLiferayUser().getUserGroups()) {
-                        String name = group.getName();
-                        if (name.matches(".*_.*_.*_.*")) { // app_koodisto_crud_1.2.3 TAI app_koodisto_read_update_1.2.3
-                            String[] parts = name.split("_");
-                            AccessRight right;
-                            if (parts.length == 4) {
-                                right = new AccessRight(parts[3], parts[2].toUpperCase(), parts[1].toUpperCase());
-                            } else if (parts.length == 5) {
-                                 right = new AccessRight(parts[4], (parts[2]+"_"+parts[3]).toUpperCase(), parts[1].toUpperCase());
-                            } else {
-                                throw new RuntimeException("cannot parse usergroup to accessright: "+name);
-                            }
-                            rawAccessRights.add(right);
-                        }
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(e); // todo: errors
-                }
-
-            } else {
-
-                Object o = s.getSession().getAttribute(SecuritySessionAttributes.AUTHENTICATION_DATA);
-
-                if (o != null && o instanceof List) {
-                    try {
-                        rawAccessRights = (List<AccessRight>) o;
-                        return rawAccessRights;
-                    } catch (ClassCastException e) {
-                        log.warn("Failed to get "
-                                + SecuritySessionAttributes.AUTHENTICATION_DATA
-                                + " Attribute from session. Session contained something else than expected. Expected List<AccessRight> got: ["
-                                + o + "]");
-                    }
-                }
-
-            }
-
-        }
-        return rawAccessRights;
-        */
+        /*
+         * cas todo deprecated if (rawAccessRights != null) { return
+         * rawAccessRights; }
+         * 
+         * rawAccessRights = new ArrayList<AccessRight>(); HttpServletRequest s
+         * = null;
+         * 
+         * if (portletRequest != null) { s =
+         * PortalUtil.getHttpServletRequest(portletRequest); } else { s =
+         * this.servletRequest; } if (s != null) {
+         * 
+         * // cas todo, ldap roles -> liferay groups -> oph accessrights, poista
+         * vanha? if
+         * ("true".equals(s.getSession().getAttribute("USER_authenticatedByCAS"
+         * ))) { try { for (UserGroup group : getLiferayUser().getUserGroups())
+         * { String name = group.getName(); if (name.matches(".*_.*_.*_.*")) {
+         * // app_koodisto_crud_1.2.3 TAI app_koodisto_read_update_1.2.3
+         * String[] parts = name.split("_"); AccessRight right; if (parts.length
+         * == 4) { right = new AccessRight(parts[3], parts[2].toUpperCase(),
+         * parts[1].toUpperCase()); } else if (parts.length == 5) { right = new
+         * AccessRight(parts[4], (parts[2]+"_"+parts[3]).toUpperCase(),
+         * parts[1].toUpperCase()); } else { throw new
+         * RuntimeException("cannot parse usergroup to accessright: "+name); }
+         * rawAccessRights.add(right); } } } catch (Exception e) { throw new
+         * RuntimeException(e); // todo: errors }
+         * 
+         * } else {
+         * 
+         * Object o =
+         * s.getSession().getAttribute(SecuritySessionAttributes.AUTHENTICATION_DATA
+         * );
+         * 
+         * if (o != null && o instanceof List) { try { rawAccessRights =
+         * (List<AccessRight>) o; return rawAccessRights; } catch
+         * (ClassCastException e) { log.warn("Failed to get " +
+         * SecuritySessionAttributes.AUTHENTICATION_DATA +
+         * " Attribute from session. Session contained something else than expected. Expected List<AccessRight> got: ["
+         * + o + "]"); } }
+         * 
+         * }
+         * 
+         * } return rawAccessRights;
+         */
 
         return rawAccessRights;
     }
@@ -302,48 +299,47 @@ public class UserLiferayImpl implements User {
 
     @Override
     public Set<String> getOrganisations() { // todo: cachetus
-        /* cas todo vanhat pois
-        Set<String> organisaatioOids = new HashSet<String>();
-
-        if (portletRequest != null) {
-
-            try {
-
-                // cas todo, ldap organizations -> liferay groups -> oph organisaatios, poista vanha
-                if ("true".equals(portletRequest.getPortletSession().getAttribute("USER_authenticatedByCAS", PortletSession.APPLICATION_SCOPE))) {
-                    for (UserGroup group : getLiferayUser().getUserGroups()) {
-                        String name = group.getName();
-                        if (name.matches(".*_.*_.*_.*")) {
-                            String organizationOid = name.substring(name.lastIndexOf("_")+1);
-                            if (!organisaatioOids.contains(organizationOid)) {
-                                log.info("Adding organization oid to user: " + organizationOid + " (name: "+name+")");
-                                organisaatioOids.add(organizationOid);
-                            }
-                        }
-                    }
-
-                } else {
-                    for (com.liferay.portal.model.Organization o : getLiferayUser().getOrganizations()) {
-                        String organizationOid = (String) o.getExpandoBridge().getAttribute(LiferayCustomAttributes.ORGANISAATIO_OID, false);
-                        log.info("Adding organization oid to user: " + organizationOid);
-                        organisaatioOids.add(organizationOid);
-                    }
-                }
-            } catch (PortalException e) {
-                log.error("Failed to get organizations for Liferay User, PortalException", e);
-                throw new RuntimeException("Failed to get organizations for Liferay User, PortalException", e);
-            } catch (SystemException e) {
-                log.error("Failed to get organizations for Liferay User, SystemException", e);
-                throw new RuntimeException("Failed to get organizations for Liferay User, SystemException", e);
-            }
-        } else if (servletRequest != null) {
-            organisaatioOids.add("1.2.2004.3"); // todo: pois?
-            organisaatioOids.add("1.2.2004.4");
-            organisaatioOids.add("1.2.2004.9");
-        }
-
-        return organisaatioOids;
-        */
+        /*
+         * cas todo vanhat pois Set<String> organisaatioOids = new
+         * HashSet<String>();
+         * 
+         * if (portletRequest != null) {
+         * 
+         * try {
+         * 
+         * // cas todo, ldap organizations -> liferay groups -> oph
+         * organisaatios, poista vanha if
+         * ("true".equals(portletRequest.getPortletSession
+         * ().getAttribute("USER_authenticatedByCAS",
+         * PortletSession.APPLICATION_SCOPE))) { for (UserGroup group :
+         * getLiferayUser().getUserGroups()) { String name = group.getName(); if
+         * (name.matches(".*_.*_.*_.*")) { String organizationOid =
+         * name.substring(name.lastIndexOf("_")+1); if
+         * (!organisaatioOids.contains(organizationOid)) {
+         * log.info("Adding organization oid to user: " + organizationOid +
+         * " (name: "+name+")"); organisaatioOids.add(organizationOid); } } }
+         * 
+         * } else { for (com.liferay.portal.model.Organization o :
+         * getLiferayUser().getOrganizations()) { String organizationOid =
+         * (String) o.getExpandoBridge().getAttribute(LiferayCustomAttributes.
+         * ORGANISAATIO_OID, false);
+         * log.info("Adding organization oid to user: " + organizationOid);
+         * organisaatioOids.add(organizationOid); } } } catch (PortalException
+         * e) {
+         * log.error("Failed to get organizations for Liferay User, PortalException"
+         * , e); throw new RuntimeException(
+         * "Failed to get organizations for Liferay User, PortalException", e);
+         * } catch (SystemException e) {
+         * log.error("Failed to get organizations for Liferay User, SystemException"
+         * , e); throw new RuntimeException(
+         * "Failed to get organizations for Liferay User, SystemException", e);
+         * } } else if (servletRequest != null) {
+         * organisaatioOids.add("1.2.2004.3"); // todo: pois?
+         * organisaatioOids.add("1.2.2004.4");
+         * organisaatioOids.add("1.2.2004.9"); }
+         * 
+         * return organisaatioOids;
+         */
 
         return organisations;
     }
@@ -357,17 +353,16 @@ public class UserLiferayImpl implements User {
 
     @Override
     public Authentication getAuthentication() {
-        /* cas todo deprecated
-        // todo: cas todo, eroon tästä, käytä spring securityä
-        if (authentication == null) {
-            List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-            for (AccessRight ar : getRawAccessRights()) {
-                authorities.add(new SimpleGrantedAuthority(ar.getApplication() + "_" + ar.getRole() + "_" + ar.getOrganizatioOid()));
-            }
-            authentication = new TestingAuthenticationToken("USEROID", "USEROID", authorities);
-        }
-        return authentication;
-        */
+        /*
+         * cas todo deprecated // todo: cas todo, eroon tästä, käytä spring
+         * securityä if (authentication == null) { List<GrantedAuthority>
+         * authorities = new ArrayList<GrantedAuthority>(); for (AccessRight ar
+         * : getRawAccessRights()) { authorities.add(new
+         * SimpleGrantedAuthority(ar.getApplication() + "_" + ar.getRole() + "_"
+         * + ar.getOrganizatioOid())); } authentication = new
+         * TestingAuthenticationToken("USEROID", "USEROID", authorities); }
+         * return authentication;
+         */
         return authentication;
     }
 
