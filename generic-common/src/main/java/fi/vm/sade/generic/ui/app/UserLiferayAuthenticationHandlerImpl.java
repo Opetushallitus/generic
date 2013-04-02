@@ -12,12 +12,7 @@ import fi.vm.sade.generic.ui.portlet.security.User;
  * 
  * @author Jussi Jartamo
  * 
- *         Ensimmäinen steppi UserLiferayImpl:n abstrahoimiseen.
- * @Deprecated Tee produktioon (portletille) oma kirjautumiskilke ja devaajille
- *             (servlet) oma. Näin devaaja voi testata sovellusta helposti minä
- *             tahansa käyttäjänä.
  */
-@Deprecated
 public class UserLiferayAuthenticationHandlerImpl implements HttpServletRequestAuthenticationHandler,
         PortletRequestAuthenticationHandler {
 

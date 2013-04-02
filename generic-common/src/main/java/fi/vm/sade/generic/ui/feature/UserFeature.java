@@ -8,7 +8,7 @@ import fi.vm.sade.generic.ui.portlet.security.User;
  * @Deprecated Mieluummin Spring Security tavalla,
  *             SecurityContextHolder.getContext().getAuthentication()...
  */
-@Deprecated
+// @Deprecated
 public class UserFeature {
 
     private static ThreadLocal<User> userThreadLocal = new ThreadLocal<User>();

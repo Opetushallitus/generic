@@ -22,7 +22,7 @@ import fi.vm.sade.generic.ui.portlet.security.User;
  * 
  * @Deprecated Liitoksissa UserLiferayImpl-toteutuksen kanssa.
  */
-@Deprecated
+// @Deprecated
 public abstract class AbstractSpringContextApplication extends SpringContextApplication implements
         HttpServletRequestListener, PortletRequestListener {
     @Override
