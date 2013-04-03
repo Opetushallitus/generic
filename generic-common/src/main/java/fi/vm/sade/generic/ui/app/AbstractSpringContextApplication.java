@@ -6,13 +6,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.dellroad.stuff.vaadin.SpringContextApplication;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 
+import com.vaadin.terminal.ExternalResource;
+import com.vaadin.terminal.Terminal.ErrorListener;
 import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
 import com.vaadin.terminal.gwt.server.PortletRequestListener;
+import com.vaadin.ui.Window;
 
 import fi.vm.sade.generic.ui.feature.UserFeature;
 import fi.vm.sade.generic.ui.portlet.security.User;
@@ -25,10 +29,48 @@ import fi.vm.sade.generic.ui.portlet.security.User;
 // @Deprecated
 public abstract class AbstractSpringContextApplication extends SpringContextApplication implements
         HttpServletRequestListener, PortletRequestListener {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
+    // Toteuttaa Vaadinin Applicationin ErrorListenerin logiikan jos palvelu
+    // tarjotaan.
+    // Tarkoitus on mahdollistaa kaikille Vaadin sovelluksille yhteinen tapa
+    // toteuttaa omat virhesivut.
+    @Autowired(required = false)
+    private GenericExceptionInterceptor exceptionInterceptor;
+
     @Override
     protected final void initSpringApplication(ConfigurableWebApplicationContext context) {
+        optionalExceptionHandler();
         initialize();
     }
+
+    private void optionalExceptionHandler() {
+        if (exceptionInterceptor != null) {
+            setErrorHandler(new ErrorListener() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public void terminalError(com.vaadin.terminal.Terminal.ErrorEvent event) {
+
+                    Window mainWindow = AbstractSpringContextApplication.this.getMainWindow();
+                    if (mainWindow != null) {
+                        if (exceptionInterceptor.intercept(event.getThrowable())) {
+                            mainWindow.open(new ExternalResource(exceptionInterceptor.redirect(event.getThrowable())));
+                        }
+                    }
+
+                }
+            });
+        }
+    }
+
+    /*
+     * @Override public static SystemMessages getSystemMessages() { return null;
+     * }
+     */
 
     protected abstract void initialize();
 
@@ -37,6 +79,7 @@ public abstract class AbstractSpringContextApplication extends SpringContextAppl
         User user = new UserLiferayImpl(request);
         setLocale(user.getLang());
         UserFeature.set(user);
+        getSystemMessages();
     }
 
     @Override
