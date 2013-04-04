@@ -21,20 +21,12 @@ public class ThreadLocalAuthorizer implements Authorizer {
     private OrganisationHierarchyAuthorizer authorizer;
 
     @Override
-    public void checkOrganisationAccess(String targetOrganisationOid, Role... roles) throws NotAuthorizedException {
+    public void checkOrganisationAccess(String targetOrganisationOid, String... roles) throws NotAuthorizedException {
         /*OrganisationHierarchyAuthorizer*/authorizer.checkAccess(
                 SecurityContextHolder.getContext().getAuthentication(),
                 /*oidProvider.getSelfAndParentOids(targetOrganisationOid),*/
                 targetOrganisationOid,
-                rolesAsStrings(roles)); // TODO: cas todo, onko oikeet roolinimet, eli ROLE_KOODISTO_CRUD, eikä esim pelkkä CRUD ???
-    }
-
-    private String[] rolesAsStrings(Role[] roles) {
-        String[] roleStrings = new String[roles.length];
-        for (int i = 0; i < roles.length; i++) {
-            roleStrings[i] = roles[i].name();
-        }
-        return roleStrings;
+                roles); // TODO: cas todo, onko oikeet roolinimet, eli ROLE_KOODISTO_CRUD, eikä esim pelkkä CRUD ???
     }
 
     @Override
