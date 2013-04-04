@@ -21,14 +21,14 @@ public class ThreadLocalAuthorizerTest {
 
         // organisaatiorakenne: foobar on parent, keijo ja jorma lapsia
         ThreadLocalAuthorizer authorizer = createAuthorizerWithOrgHierarchy("foobar", new String[]{"keijo", "jorma"});
-        // oikeudet: READ_UPDATE oikeus annettu userille ja kohdistettu parent organisaatioon
-        createUserAndRoles("foobar", Role.READ_UPDATE.toString());
+        // oikeudet: READ_UPDATE.name() oikeus annettu userille ja kohdistettu parent organisaatioon
+        createUserAndRoles("foobar", Role.READ_UPDATE.name().toString());
 
         // pitäisi olla oikeus parenttiin
-        authorizer.checkOrganisationAccess("foobar", Role.READ_UPDATE, Role.CRUD);
+        authorizer.checkOrganisationAccess("foobar", Role.READ_UPDATE.name(), Role.CRUD.name());
 
         // pitäisi olla oikeus lapseen
-        authorizer.checkOrganisationAccess("keijo", Role.READ_UPDATE, Role.CRUD);
+        authorizer.checkOrganisationAccess("keijo", Role.READ_UPDATE.name(), Role.CRUD.name());
 
     }
 
@@ -41,7 +41,7 @@ public class ThreadLocalAuthorizerTest {
         createUserAndRoles("foobar", Role.READ.toString());
 
         // ei pitäisi olla oikeus parenttiin
-        authorizer.checkOrganisationAccess("foobar", Role.READ_UPDATE, Role.CRUD);
+        authorizer.checkOrganisationAccess("foobar", Role.READ_UPDATE.name(), Role.CRUD.name());
     }
 
     @Test(expected = NotAuthorizedException.class)
@@ -49,11 +49,11 @@ public class ThreadLocalAuthorizerTest {
 
         // organisaatiorakenne: foobar on parent, keijo ja jorma lapsia
         ThreadLocalAuthorizer authorizer = createAuthorizerWithOrgHierarchy("foobar", new String[]{"keijo", "jorma"});
-        // oikeudet: READ_UPDATE oikeus annettu userille ja kohdistettu ihan toiseen organisaatioon
+        // oikeudet: READ_UPDATE.name() oikeus annettu userille ja kohdistettu ihan toiseen organisaatioon
         createUserAndRoles("notexistingorg", Role.READ.toString());
 
         // ei pitäisi olla oikeus parenttiin
-        authorizer.checkOrganisationAccess("foobar", Role.READ_UPDATE, Role.CRUD);
+        authorizer.checkOrganisationAccess("foobar", Role.READ_UPDATE.name(), Role.CRUD.name());
     }
 
     private void createUserAndRoles(String oid, String role) {
