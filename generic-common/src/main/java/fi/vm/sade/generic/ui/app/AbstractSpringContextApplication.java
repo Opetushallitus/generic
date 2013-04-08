@@ -12,7 +12,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 
-import com.vaadin.terminal.ExternalResource;
 import com.vaadin.terminal.Terminal.ErrorListener;
 import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
 import com.vaadin.terminal.gwt.server.PortletRequestListener;
@@ -57,8 +56,12 @@ public abstract class AbstractSpringContextApplication extends SpringContextAppl
 
                     Window mainWindow = AbstractSpringContextApplication.this.getMainWindow();
                     if (mainWindow != null) {
+
                         if (exceptionInterceptor.intercept(event.getThrowable())) {
-                            mainWindow.open(new ExternalResource(exceptionInterceptor.redirect(event.getThrowable())));
+                            removeWindow(mainWindow);
+                            setMainWindow(exceptionInterceptor.getErrorWindow(AbstractSpringContextApplication.this));
+                            // mainWindow.open(new
+                            // ExternalResource(exceptionInterceptor.redirect(event.getThrowable())));
                         }
                     }
 

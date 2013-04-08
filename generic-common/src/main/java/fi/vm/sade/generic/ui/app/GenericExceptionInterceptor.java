@@ -1,5 +1,8 @@
 package fi.vm.sade.generic.ui.app;
 
+import com.vaadin.Application;
+import com.vaadin.ui.Window;
+
 /**
  * 
  * @author Jussi Jartamo
@@ -25,4 +28,10 @@ public interface GenericExceptionInterceptor {
      * @return URL
      */
     String redirect(Throwable exception);
+
+    /**
+     * 
+     * @return
+     */
+    Window getErrorWindow(Application application);
 }
