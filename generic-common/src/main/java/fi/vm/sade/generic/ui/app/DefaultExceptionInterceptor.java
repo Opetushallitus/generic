@@ -30,6 +30,8 @@ public class DefaultExceptionInterceptor implements GenericExceptionInterceptor 
     private String errorPageUrl;
 
     public boolean intercept(Throwable exception) {
+        // TODO: Tee järkevämmässä paikassa stack trace heitto
+        exception.printStackTrace();
         return true;
     }
 
