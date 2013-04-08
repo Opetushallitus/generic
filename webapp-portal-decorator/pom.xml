@@ -18,6 +18,10 @@
         Project contains html etc that can be used to decorate webapp to look like it's running inside portal (needs sitemesh config in the webapp itself).
     </description>
 
+    <properties>
+        <buildversion_prefix>_${project.artifactId}_</buildversion_prefix>
+    </properties>
+
     <dependencies>
 
         <dependency>
