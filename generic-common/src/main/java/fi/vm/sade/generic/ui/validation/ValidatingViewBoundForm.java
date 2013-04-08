@@ -66,7 +66,7 @@ public class ValidatingViewBoundForm extends ViewBoundForm {
         for (final Iterator<?> i = getItemPropertyIds().iterator(); i.hasNext();) {
             Object itemPropertyId = i.next();
             Field field = getField(itemPropertyId);
-
+            
             if (field instanceof AbstractComponent) {
                 ((AbstractComponent) field).setComponentError(null);
             }
@@ -83,11 +83,12 @@ public class ValidatingViewBoundForm extends ViewBoundForm {
                     ((AbstractComponent) field).setComponentError(new UserError(e.getMessage()));
                 }
                 errors.add(e);
+
             }
         }
 
         if (!errors.isEmpty()) {
-            throw new InvalidValueException(getRequiredError(), errors.toArray(new InvalidValueException[0]));
+            throw new InvalidValueException(getRequiredError(), errors.toArray(new InvalidValueException[errors.size()]));
         }
     }
 }

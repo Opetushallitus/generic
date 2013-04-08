@@ -24,6 +24,7 @@ public class MLTextSizeValidator implements ConstraintValidator<MLTextSize, Mult
     }
 
     public boolean isValid(MultiLingualText mltext, ConstraintValidatorContext constraintValidatorContext) {
+    	
         // check that every field isn't null
         if (mltext == null || mltext.allAreNull()) {
             return !size.oneRequired();
@@ -33,11 +34,12 @@ public class MLTextSizeValidator implements ConstraintValidator<MLTextSize, Mult
         boolean fi = isValid(mltext.getTextFi(), constraintValidatorContext);
         boolean sv = isValid(mltext.getTextSv(), constraintValidatorContext);
         boolean en = isValid(mltext.getTextEn(), constraintValidatorContext);
+        
         return fi & sv && en;
     }
 
     public boolean isValid(String s, ConstraintValidatorContext constraintValidatorContext) {
-        if (s == null) {
+        if (s == null || s.trim().length()==0) {
             return !size.allRequired();
         } else {
             int length = s.length();
