@@ -8,10 +8,11 @@
 <%@ page import="org.springframework.security.authentication.AnonymousAuthenticationToken" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="org.springframework.security.core.GrantedAuthority" %>
+<%@ page import="fi.vm.sade.generic.common.EnhancedProperties" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF8" %>
 <%
     InputStream stream = new FileInputStream(new File(System.getProperty("user.home"), "oph-configuration/common.properties"));
-    Properties props = new Properties();
+    Properties props = new EnhancedProperties();
     props.load(stream);
     request.setAttribute("props", props);
     SecurityContext securityContext = SecurityContextHolder.getContext();
