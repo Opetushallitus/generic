@@ -22,14 +22,6 @@ public interface GenericExceptionInterceptor {
     boolean intercept(Throwable exception);
 
     /**
-     * Palauttaa virhesivun osoitteen
-     * 
-     * @param exception
-     * @return URL
-     */
-    String redirect(Throwable exception);
-
-    /**
      * 
      * @return
      */

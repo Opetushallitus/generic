@@ -21,7 +21,9 @@ import fi.vm.sade.vaadin.ui.OphAbstractWindow;
  * 
  *         Vakiototeutus vuotavien virheiden käsittelyyn. Lisää
  *         application-context.xml:ään niin vuotavat virheet ohjataan
- *         automaattisesti virhe-urliin
+ *         automaattisesti virhe-urliin.
+ * 
+ *         Muista <context:property-placeholder/>
  */
 public class DefaultExceptionInterceptor implements GenericExceptionInterceptor {
 
@@ -35,15 +37,14 @@ public class DefaultExceptionInterceptor implements GenericExceptionInterceptor 
         return true;
     }
 
-    public String redirect(Throwable exception) {
-        return errorPageUrl;
-    }
-
     @Value("${virhe.i18n.title:application.virhe.title}")
     private String applicationTitle;
 
-    @Value("${virhe.i18n.header:virhe.title}")
+    @Value("${virhe.i18n.header:application.virhe.header}")
     private String applicationHeader;
+
+    @Value("${virhe.i18n.header:application.virhe.button}")
+    private String tryAgain;
 
     public Window getErrorWindow(final Application application) {
 
@@ -52,13 +53,14 @@ public class DefaultExceptionInterceptor implements GenericExceptionInterceptor 
 
             @Override
             public void buildLayout(VerticalLayout layout) {
+                setTheme(Oph.THEME_NAME);
                 layout.setWidth("100%");
                 layout.setMargin(true);
-                layout.setSpacing(true);
+                // layout.setSpacing(true);
                 Label title = new Label(I18N.getMessage(applicationHeader));
                 title.addStyleName(Oph.LABEL_H1);
                 layout.addComponent(title);
-                Button refreshButton = new Button("Yritä uudelleen");
+                Button refreshButton = new Button(I18N.getMessage(tryAgain));
                 refreshButton.addListener(new ClickListener() {
 
                     public void buttonClick(ClickEvent event) {
@@ -68,6 +70,12 @@ public class DefaultExceptionInterceptor implements GenericExceptionInterceptor 
                     private static final long serialVersionUID = -8458336714931849802L;
                 });
                 layout.addComponent(refreshButton);
+                Label expandingGap = new Label();
+                expandingGap.setWidth("100%");
+                expandingGap.setHeight("100%");
+                layout.addComponent(expandingGap);
+                layout.setHeight("100%");
+                fullContentHeight();
             }
 
             private static final long serialVersionUID = 2713710441212947434L;
