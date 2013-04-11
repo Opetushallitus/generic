@@ -98,7 +98,7 @@ public class UserLiferayImpl implements User {
         } catch (Exception e) {
             throw new RuntimeException(e); // todo: errors
         }
-        authentication = new TestingAuthenticationToken(getLiferayUser().getScreenName(), getLiferayUser()
+        authentication = new TestingAuthenticationToken(getLiferayUser().getUuid(), getLiferayUser()
                 .getScreenName(), new ArrayList<GrantedAuthority>(authorities));
         initSupportForOldAuthzFromSpringAuthentication();
     }
