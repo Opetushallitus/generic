@@ -31,6 +31,7 @@ public class UserLiferayImplTest {
         List<UserGroup> portalGroups = new ArrayList<UserGroup>();
         expect(user.getUserGroups()).andReturn(portalGroups);
         expect(user.getScreenName()).andReturn("foo@bar").anyTimes();
+        expect(user.getUuid()).andReturn("foo@bar").anyTimes();
         
         portalGroups.add(createGroup("APP_ORGANISAATIOHALLINTA_CRUD_123456"));
         portalGroups.add(createGroup("APP_ORGANISAATIOHALLINTA_READ_UPDATE_123457"));
