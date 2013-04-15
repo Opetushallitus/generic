@@ -7,13 +7,12 @@ import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Button.ClickListener;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.Panel;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 
 import fi.vm.sade.generic.common.I18N;
 import fi.vm.sade.vaadin.Oph;
-import fi.vm.sade.vaadin.constants.UiConstant;
-import fi.vm.sade.vaadin.ui.OphAbstractWindow;
 
 /**
  * 
@@ -47,39 +46,42 @@ public class DefaultExceptionInterceptor implements GenericExceptionInterceptor 
     private String tryAgain;
 
     public Window getErrorWindow(final Application application) {
+        Window window = new Window(I18N.getMessage(applicationTitle));
+        Panel mainPanel = new Panel();
+        mainPanel.setHeight("300px");
 
-        return new OphAbstractWindow(I18N.getMessage(applicationTitle), "100%", UiConstant.DEFAULT_RELATIVE_SIZE, true,
-                null) {
+        VerticalLayout layout = new VerticalLayout();
+        window.setTheme(Oph.THEME_NAME);
+        layout.setWidth("100%");
+        layout.setMargin(true);
+        // layout.setSpacing(true);
+        Label title = new Label(I18N.getMessage(applicationHeader));
+        title.addStyleName(Oph.LABEL_H1);
+        layout.addComponent(title);
+        Button refreshButton = new Button(I18N.getMessage(tryAgain));
+        refreshButton.addListener(new ClickListener() {
 
-            @Override
-            public void buildLayout(VerticalLayout layout) {
-                setTheme(Oph.THEME_NAME);
-                layout.setWidth("100%");
-                layout.setMargin(true);
-                // layout.setSpacing(true);
-                Label title = new Label(I18N.getMessage(applicationHeader));
-                title.addStyleName(Oph.LABEL_H1);
-                layout.addComponent(title);
-                Button refreshButton = new Button(I18N.getMessage(tryAgain));
-                refreshButton.addListener(new ClickListener() {
-
-                    public void buttonClick(ClickEvent event) {
-                        application.close();
-                    }
-
-                    private static final long serialVersionUID = -8458336714931849802L;
-                });
-                layout.addComponent(refreshButton);
-                Label expandingGap = new Label();
-                expandingGap.setWidth("100%");
-                expandingGap.setHeight("100%");
-                layout.addComponent(expandingGap);
-                layout.setHeight("100%");
-                fullContentHeight();
+            public void buttonClick(ClickEvent event) {
+                try {
+                    // application.init();
+                    application.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
-            private static final long serialVersionUID = 2713710441212947434L;
-        };
+            private static final long serialVersionUID = -8458336714931849802L;
+        });
+        layout.addComponent(refreshButton);
+        Label expandingGap = new Label();
+        expandingGap.setWidth("100%");
+        expandingGap.setHeight("100%");
+        layout.addComponent(expandingGap);
+        mainPanel.addComponent(layout);
+        window.addComponent(mainPanel);
+
+        return window;
 
     }
+
 }
