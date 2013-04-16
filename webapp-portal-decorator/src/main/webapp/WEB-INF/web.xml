@@ -16,3 +16,13 @@ webapp-portal-decorator web.xml placeholder needed here because maven, copypaste
 <filter-name>sitemesh</filter-name>
 <url-pattern>/koodistoapp/*</url-pattern>
 </filter-mapping>
+
+        <!-- standalone navigation -->
+<servlet>
+<servlet-name>htmltemplate</servlet-name>
+<servlet-class>fi.vm.sade.generic.ui.LoadHtmlTemplateServlet</servlet-class>
+</servlet>
+<servlet-mapping>
+<servlet-name>htmltemplate</servlet-name>
+<url-pattern>/htmltemplate</url-pattern>
+</servlet-mapping>
