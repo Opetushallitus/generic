@@ -35,7 +35,10 @@ public class LoadHtmlTemplateServlet extends HttpServlet {
         try {
             Properties props = new EnhancedProperties();
             props.load(new FileInputStream(new File(System.getProperty("user.home"), "oph-configuration/common.properties")));
-            targetService = props.getProperty("cas.service.liferay");
+            targetService = "http://"+props.getProperty("host.virkailija");
+            if (!"80".equals(props.getProperty("port.liferay"))) {
+                 targetService += props.getProperty("port.liferay");
+            }
             casUrl = props.getProperty("web.url.cas");
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -58,38 +61,60 @@ public class LoadHtmlTemplateServlet extends HttpServlet {
 
     private String loadTemplateHtml(HttpServletRequest request) throws IOException {
 
-        // if cached, return it
-        String cached = (String) request.getSession().getAttribute(CACHEKEY);
-        if (cached != null) {
-            return cached;
-        }
+        // TODO: syö ticket poikkeuksen jollei olla kirjauduttu sisään? lopulta tämmönen kun testaa http://itest-virkailija.oph.ware.fi:7004/organisaatio-app/htmltemplate
+        /*
+        javax.servlet.ServletException: org.jasig.cas.client.validation.TicketValidationException:
+        ticket 'ST-48-lu092afC4AsSHCbBgzgY-cas01.example.org' does not match supplied service.  The original service was 'http://itest-virkailija.oph.ware.fi:8180' and the supplied service was 'http://itest-virkailija.oph.ware.fi/group/virkailijan-tyopoyta'.
+        */
 
-        // obtain cas authentication object
-        String ticket;
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication instanceof CasAuthenticationToken) {
-            Assertion assertion = ((CasAuthenticationToken) authentication).getAssertion();
+        try {
 
-            // obtain proxyticket for target service
-            ticket = assertion.getPrincipal().getProxyTicketFor(targetService);
-            if (ticket == null) {
-                throw new NullPointerException("could not obtain ticket");
+            // if cached, return it
+            String cached = (String) request.getSession().getAttribute(CACHEKEY);
+            if (cached != null) {
+                return cached;
             }
+
+            // obtain cas authentication object
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String ticketTargetService = targetService + targetResource;
+            String ticket;
+            /* TODO: proxy autentikointi kuntoon jotta tämä toimii omalla käyttäjällä
+            if (authentication instanceof CasAuthenticationToken) {
+                Assertion assertion = ((CasAuthenticationToken) authentication).getAssertion();
+
+                // obtain proxyticket for target service
+                System.out.println("loadTemplateHtml, get ticket for service: "+targetService+targetResource);
+                ticket = assertion.getPrincipal().getProxyTicketFor(ticketTargetService);
+                if (ticket == null) {
+                    throw new NullPointerException("could not obtain ticket");
+                }
+            }
+
+            // in dev env use root user's navi - TODO: ei tuotantoon, tämä konffattavaksi jonkun dev-vivun taakse?
+            else {
+            */
+                System.err.println("WARNING - temp using root user's navi, authentication object was: "+authentication+", casurl: "+casUrl+", targetservice: "+ticketTargetService);
+                ticket = CasClient.getTicket(casUrl + "/v1/tickets", "ophadmin", "ilonkautta", ticketTargetService);
+            /*
+            }
+            */
+
+            // call rest resource with proxyticket as parameter
+            String htmlResourceUrl = targetService + targetResource + "?ticket=" + ticket;
+            System.out.println("loadTemplateHtml, get html from url: "+htmlResourceUrl);
+            String response = doHttpCall(htmlResourceUrl);
+
+            // cache the html
+            request.getSession().setAttribute(CACHEKEY, response);
+
+            return response;
+
+        } catch (Exception e) {
+            System.err.println("FAILED to load htmltemplate, targetService: "+targetService+", targetResource: "+targetResource+", casUrl: "+casUrl+", exception: "+e);
+            throw new RuntimeException(e);
         }
 
-        // in dev env use root user's navi - TODO: ei tuotantoon, tämä konffattavaksi jonkun dev-vivun taakse?
-        else {
-            System.err.println("WARNING - temp using root user's navi, authentication object was: "+authentication+", casurl: "+casUrl+", targetservice: "+targetService);
-            ticket = CasClient.getTicket(casUrl + "/v1/tickets", "ophadmin", "ilonkautta", targetService+targetResource);
-        }
-
-        // call rest resource with proxyticket as parameter
-        String response = doHttpCall(targetService + targetResource + "?ticket=" + ticket);
-
-        // cache the html
-        request.getSession().setAttribute(CACHEKEY, response);
-
-        return response;
     }
 
     private String doHttpCall(String urlString) throws IOException {
