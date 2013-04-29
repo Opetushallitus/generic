@@ -1,10 +1,7 @@
 package fi.vm.sade.generic.ui.app;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
+import fi.vm.sade.generic.ui.portlet.security.User;
 import org.dellroad.stuff.vaadin.SpringContextApplication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -12,10 +9,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 
-import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
-import com.vaadin.terminal.gwt.server.PortletRequestListener;
-
-import fi.vm.sade.generic.ui.portlet.security.User;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * 
@@ -27,13 +22,10 @@ import fi.vm.sade.generic.ui.portlet.security.User;
  * 
  */
 public abstract class AbstractSpringSecurityApplicationContext extends SpringContextApplication implements
-        HttpServletRequestListener, PortletRequestListener {
+        HttpServletRequestListener {
 
     @Autowired
     private HttpServletRequestAuthenticationHandler servletRequestAuthenticationHandler;
-
-    @Autowired
-    private PortletRequestAuthenticationHandler portletRequestAuthenticationHandler;
 
     @Override
     protected final void initSpringApplication(ConfigurableWebApplicationContext context) {
@@ -41,17 +33,6 @@ public abstract class AbstractSpringSecurityApplicationContext extends SpringCon
     }
 
     protected abstract void initialize();
-
-    @Override
-    public void onRequestStart(PortletRequest request, PortletResponse response) {
-        portletRequestAuthenticationHandler.onRequestStart(request, response);
-        setCurrentUserLocale();
-    }
-
-    @Override
-    public void onRequestEnd(PortletRequest request, PortletResponse response) {
-        portletRequestAuthenticationHandler.onRequestEnd(request, response);
-    }
 
     @Override
     public User getUser() {

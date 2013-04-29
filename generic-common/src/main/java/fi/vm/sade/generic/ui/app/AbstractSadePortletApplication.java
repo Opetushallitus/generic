@@ -17,40 +17,19 @@
 
 package fi.vm.sade.generic.ui.app;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-
-import org.springframework.beans.factory.annotation.Configurable;
-
 import com.github.wolfie.blackboard.Blackboard;
 import com.vaadin.service.ApplicationContext;
-import com.vaadin.terminal.gwt.server.PortletRequestListener;
-
-import fi.vm.sade.generic.ui.feature.UserFeature;
-import fi.vm.sade.generic.ui.portlet.security.User;
+import org.springframework.beans.factory.annotation.Configurable;
 
 /**
  * @author Antti
  * @author Marko Lyly
  */
 @Configurable(preConstruction = false)
-public abstract class AbstractSadePortletApplication extends AbstractBlackboardSadeApplication implements
-        PortletRequestListener, ApplicationContext.TransactionListener {
+@Deprecated
+public abstract class AbstractSadePortletApplication extends AbstractBlackboardSadeApplication implements ApplicationContext.TransactionListener {
 
     private static final long serialVersionUID = 1L;
-
-    @Override
-    public void onRequestStart(PortletRequest portletRequest, PortletResponse portletResponse) {
-        User user = new UserLiferayImpl(portletRequest);
-        // User user = new UserMock();
-        setLocale(user.getLang());
-        UserFeature.set(user);
-    }
-
-    @Override
-    public void onRequestEnd(PortletRequest portletRequest, PortletResponse portletResponse) {
-        UserFeature.remove();
-    }
 
     @Override
     protected void registerListeners(Blackboard blackboard) {

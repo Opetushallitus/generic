@@ -16,17 +16,8 @@
  */
 package fi.vm.sade.generic.ui.app;
 
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletSession;
-import javax.servlet.http.HttpServletRequest;
-
+import fi.vm.sade.generic.ui.portlet.security.AccessRight;
+import fi.vm.sade.generic.ui.portlet.security.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.TestingAuthenticationToken;
@@ -36,18 +27,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.model.UserGroup;
-import com.liferay.portal.util.PortalUtil;
-
-import fi.vm.sade.generic.ui.portlet.security.AccessRight;
-import fi.vm.sade.generic.ui.portlet.security.User;
+import javax.servlet.http.HttpServletRequest;
+import java.util.*;
 
 /**
  * Consider writing this impl in different way that does not stash
- * {@link PortletRequest}
- * 
+ *
  * @author kkammone
  * 
  */
@@ -57,51 +42,11 @@ public class UserLiferayImpl implements User {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
-    private PortletRequest portletRequest;
-
     private HttpServletRequest servletRequest;
 
     private List<AccessRight> rawAccessRights = new ArrayList<AccessRight>();
     private Set<String> organisations = new HashSet<String>();
     private Authentication authentication;
-
-    public UserLiferayImpl(PortletRequest request) {
-        this.portletRequest = request;
-        // build spring authentication-object out of liferay user + roles //
-        // todo: cas todo, eroon authentication-objektin käsin tekemisestä,
-        // käytä spring securityä / hae ldapista
-        Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
-        try {
-            for (UserGroup group : getLiferayUser().getUserGroups()) {
-                String name = group.getName();
-                if (name.matches(".*_.*_.*_.*")) { // app_koodisto_crud_1.2.3
-                                                   // TAI
-                                                   // app_koodisto_read_update_1.2.3
-                    String[] parts = name.split("_");
-                    AccessRight right;
-                    if (parts.length == 4) {
-                        right = new AccessRight(parts[3], parts[2].toUpperCase(), parts[1].toUpperCase());
-                    } else if (parts.length == 5) {
-                        right = new AccessRight(parts[4], (parts[2] + "_" + parts[3]).toUpperCase(),
-                                parts[1].toUpperCase());
-                    } else {
-                        throw new RuntimeException("cannot parse usergroup to accessright: " + name);
-                    }
-                    GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_APP_" + right.getApplication() + "_"
-                            + right.getRole()); // sama rooli ilman oidia
-                    GrantedAuthority authorityOid = new SimpleGrantedAuthority("ROLE_APP_" + right.getApplication()
-                            + "_" + right.getRole() + "_" + right.getOrganizatioOid());
-                    authorities.add(authority);
-                    authorities.add(authorityOid);
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e); // todo: errors
-        }
-        authentication = new TestingAuthenticationToken(getLiferayUser().getUuid(), getLiferayUser()
-                .getScreenName(), new ArrayList<GrantedAuthority>(authorities));
-        initSupportForOldAuthzFromSpringAuthentication();
-    }
 
     public UserLiferayImpl(HttpServletRequest request) {
         this.servletRequest = request;
@@ -177,9 +122,7 @@ public class UserLiferayImpl implements User {
     // TODO: cas todo ei pitäisi käyttää, vaan spring security, tai esim
     // PermissionService/OrganisaatioHierarchyAuthorization.checkAccess
     public boolean isUserInRole(String role) {
-        if (portletRequest != null) {
-            return portletRequest.isUserInRole(role);
-        } else if (servletRequest != null) {
+        if (servletRequest != null) {
             return servletRequest.isUserInRole(role);
         }
         return false;
@@ -277,24 +220,7 @@ public class UserLiferayImpl implements User {
 
     @Override
     public Locale getLang() {
-        if (portletRequest != null) {
-            return getLiferayUser().getLocale();
-        } else if (servletRequest != null) {
-            return servletRequest.getLocale();
-        }
-        return null;
-    }
-
-    private com.liferay.portal.model.User getLiferayUser() {
-        try {
-            return PortalUtil.getUser(this.portletRequest);
-        } catch (PortalException e) {
-            log.error("Failed to get Liferay User, PortalException", e);
-            throw new RuntimeException("Failed to get Liferay User, PortalException", e);
-        } catch (SystemException e) {
-            log.error("Failed to get Liferay User, SystemException", e);
-            throw new RuntimeException("Failed to get Liferay User, SystemException", e);
-        }
+        return servletRequest.getLocale();
     }
 
     @Override
@@ -370,24 +296,12 @@ public class UserLiferayImpl implements User {
         return servletRequest;
     }
 
-    public PortletRequest getPortletRequest() {
-        return portletRequest;
-    }
-
     public Object getGlobalSessionAttribute(String name) {
-        if (portletRequest != null) {
-            return portletRequest.getPortletSession().getAttribute(name, PortletSession.APPLICATION_SCOPE);
-        } else {
-            return servletRequest.getSession().getAttribute(name);
-        }
+        return servletRequest.getSession().getAttribute(name);
     }
 
     public Enumeration<String> getGlobalSessionAttributeNames() {
-        if (portletRequest != null) {
-            return portletRequest.getPortletSession().getAttributeNames(PortletSession.APPLICATION_SCOPE);
-        } else {
-            return servletRequest.getSession().getAttributeNames();
-        }
+        return servletRequest.getSession().getAttributeNames();
     }
 
 }

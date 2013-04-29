@@ -1,10 +1,10 @@
 package fi.vm.sade.generic.ui.app;
 
-import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.vaadin.terminal.Terminal.ErrorListener;
+import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
+import com.vaadin.ui.Window;
+import fi.vm.sade.generic.ui.feature.UserFeature;
+import fi.vm.sade.generic.ui.portlet.security.User;
 import org.dellroad.stuff.vaadin.SpringContextApplication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -12,13 +12,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 
-import com.vaadin.terminal.Terminal.ErrorListener;
-import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
-import com.vaadin.terminal.gwt.server.PortletRequestListener;
-import com.vaadin.ui.Window;
-
-import fi.vm.sade.generic.ui.feature.UserFeature;
-import fi.vm.sade.generic.ui.portlet.security.User;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * User: tommiha Date: 11/13/12 Time: 12:20 PM
@@ -26,8 +21,7 @@ import fi.vm.sade.generic.ui.portlet.security.User;
  * @Deprecated Liitoksissa UserLiferayImpl-toteutuksen kanssa.
  */
 // @Deprecated
-public abstract class AbstractSpringContextApplication extends SpringContextApplication implements
-        HttpServletRequestListener, PortletRequestListener {
+public abstract class AbstractSpringContextApplication extends SpringContextApplication implements HttpServletRequestListener {
     /**
      * 
      */
@@ -76,19 +70,6 @@ public abstract class AbstractSpringContextApplication extends SpringContextAppl
      */
 
     protected abstract void initialize();
-
-    @Override
-    public void onRequestStart(PortletRequest request, PortletResponse response) {
-        User user = new UserLiferayImpl(request);
-        setLocale(user.getLang());
-        UserFeature.set(user);
-        getSystemMessages();
-    }
-
-    @Override
-    public void onRequestEnd(PortletRequest request, PortletResponse response) {
-        UserFeature.remove();
-    }
 
     @Override
     public User getUser() {

@@ -57,17 +57,6 @@
             <version>2.0</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>javax.portlet</groupId>
-            <artifactId>portlet-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.liferay.portal</groupId>
-            <artifactId>portal-service</artifactId>
-            <scope>provided</scope>
-            <version>${liferay.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>com.mysema.querydsl</groupId>
