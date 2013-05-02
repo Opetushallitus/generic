@@ -35,8 +35,10 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if(authentication instanceof CasAuthenticationToken) {
             String endpointAddress = (String) message.get(Message.ENDPOINT_ADDRESS) + "/j_spring_cas_security_check";
+            log.info("CAS Endpoint: " + endpointAddress);
             CasAuthenticationToken casAuthenticationToken = (CasAuthenticationToken) authentication;
             String proxyTicket = casAuthenticationToken.getAssertion().getPrincipal().getProxyTicketFor(endpointAddress);
+            log.info("CAS Proxy ticket: " + proxyTicket);
             ((HttpURLConnection) message.get("http.connection")).setRequestProperty("CasSecurityTicket", proxyTicket);
             return;
         }
