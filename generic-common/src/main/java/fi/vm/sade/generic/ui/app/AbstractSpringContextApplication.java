@@ -14,6 +14,8 @@ import org.springframework.web.context.ConfigurableWebApplicationContext;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User: tommiha Date: 11/13/12 Time: 12:20 PM
@@ -111,5 +113,41 @@ public abstract class AbstractSpringContextApplication extends SpringContextAppl
 
     public Authentication getCurrentUser() {
         return SecurityContextHolder.getContext().getAuthentication();
+    }
+
+    public boolean hasOrganization(String oid) {
+        Authentication user = getCurrentUser();
+        if(user == null || oid == null || oid.isEmpty()) return false;
+
+        for(GrantedAuthority authority : user.getAuthorities()) {
+            String roleName = authority.getAuthority();
+            if(roleName.contains(oid)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Palauttaa kaikki organisaatiot, joihin käyttäjä on liitetty annetussa sovelluksessa.
+     * Esim. getOrganizationForApplication("KOODISTO") palauttaa ROLE_APP_KOODISTO_* -oidit.
+     * @param applicationKey
+     * @return
+     */
+    public Set<String> getOrganizationForApplication(String applicationKey) {
+        Authentication user = getCurrentUser();
+        final Set<String> orgSet = new HashSet<String>();
+
+        if(user == null || applicationKey == null || applicationKey.isEmpty()) return orgSet;
+
+        final String prefix = "ROLE_APP_" + applicationKey + "_";
+
+        for(GrantedAuthority authority : user.getAuthorities()) {
+            String roleName = authority.getAuthority();
+            if(roleName.startsWith(prefix)) {
+                orgSet.add(roleName.substring(prefix.length() - 1));
+            }
+        }
+        return orgSet;
     }
 }
