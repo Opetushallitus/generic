@@ -2,7 +2,7 @@
 <html dir="ltr" lang="fi-FI">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="/virkailija-raamit/jquery-1.9.1.min.js"></script>
     <script type="text/javascript" src="/virkailija-raamit/apply-raamit.js"></script>
 </head>
 <body>
