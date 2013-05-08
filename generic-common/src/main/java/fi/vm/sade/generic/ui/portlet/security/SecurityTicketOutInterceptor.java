@@ -8,11 +8,14 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.Phase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.cas.authentication.CasAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.net.HttpURLConnection;
+import java.util.Collection;
 
 /**
  * Interceptor for adding a security ticket SOAP header into outbound SOAP message.
@@ -24,6 +27,9 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
 
     private final static Logger log = LoggerFactory.getLogger(SecurityTicketOutInterceptor.class);
 
+    @Value("${auth.mode:cas}")
+    private String authMode;
+
     public SecurityTicketOutInterceptor() {
         super(Phase.PRE_PROTOCOL);
         getAfter().add(SoapPreProtocolOutInterceptor.class.getName());
@@ -32,7 +38,18 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
     @Override
     public void handleMessage(SoapMessage message) throws Fault {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(authentication instanceof CasAuthenticationToken) {
+
+        if (authentication != null && "dev".equals(authMode)) {
+            ((HttpURLConnection) message.get("http.connection")).setRequestProperty("CasSecurityTicket", "oldDeprecatedSecurity_REMOVE");
+            String user = authentication.getName();
+            String authorities = toString(authentication.getAuthorities());
+            ((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", user);
+            ((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_authorities", authorities);
+            log.info("DEV Proxy ticket! user: "+ user + ", authorities: "+authorities);
+            return;
+        }
+
+        else if(authentication instanceof CasAuthenticationToken) {
             String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
             log.info("CAS Endpoint: " + casTargetService);
             CasAuthenticationToken casAuthenticationToken = (CasAuthenticationToken) authentication;
@@ -45,6 +62,14 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
         //((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", authentication.getName());
         //((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_authorities", ticketHeader.ticket);
         log.warn("Could not attach security ticket to SOAP message from authentication " + authentication + ".");
+    }
+
+    private String toString(Collection<? extends GrantedAuthority> authorities) {
+        StringBuffer sb = new StringBuffer();
+        for (GrantedAuthority authority : authorities) {
+            sb.append(authority.getAuthority()).append(",");
+        }
+        return sb.toString();
     }
 
     /**
