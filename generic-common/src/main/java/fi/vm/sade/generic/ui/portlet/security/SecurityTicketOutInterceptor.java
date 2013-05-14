@@ -61,7 +61,7 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
 
         //((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", authentication.getName());
         //((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_authorities", ticketHeader.ticket);
-        log.warn("Could not attach security ticket to SOAP message from authentication " + authentication + ".");
+        log.warn("Could not attach security ticket to SOAP message, authMode: "+authMode+", authentication: " + authentication);
     }
 
     private String toString(Collection<? extends GrantedAuthority> authorities) {
@@ -81,7 +81,7 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
      * https://asd.asd.asd:8080/backend-service
      */
     private static String getCasTargetService(String url) {
-        return url.replaceAll("(.*?//.*?/.*?)/.*", "$1");
+        return url.replaceAll("(.*?//.*?/.*?)/.*", "$1") + "/j_spring_cas_security_check";
     }
 
 }
