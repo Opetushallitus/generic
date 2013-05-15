@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import fi.vm.sade.generic.service.exception.NotAuthorizedException;
 import fi.vm.sade.generic.ui.feature.UserFeature;
@@ -53,28 +54,28 @@ public abstract class AbstractPermissionService implements PermissionService {
         ROLE_R = "APP_" + application + "_READ";
     }
 
-    protected final String getReadRole() {
+    public final String getReadRole() {
         return ROLE_R;
     }
 
-    protected final String getReadUpdateRole() {
+    public final String getReadUpdateRole() {
         return ROLE_RU;
     }
 
-    protected final String getCreateReadUpdateDeleteRole() {
+    public final String getCreateReadUpdateDeleteRole() {
         return ROLE_CRUD;
     }
 
     public final boolean checkAccess(String[] roles) {
         if (authorizer == null) {
             throw new NullPointerException(this.getClass().getSimpleName()
-                    + ".authorizer -property is not wired, do it with spring or manuyally");
+                    + ".authorizer -property is not wired, do it with spring or manually");
         }
 
         boolean hasAccess = false;
 
         try {
-            authorizer.checkAccess(getUser().getAuthentication(), roles);
+            authorizer.checkAccess(SecurityContextHolder.getContext().getAuthentication(), roles);
             hasAccess = true;
         } catch (Exception e) {
             hasAccess = false;
@@ -114,11 +115,11 @@ public abstract class AbstractPermissionService implements PermissionService {
 
         boolean hasAccess = false;
         try {
-            authorizer.checkAccess(getUser().getAuthentication(), targetOrganisaatioOid, roles);
+            authorizer.checkAccess(SecurityContextHolder.getContext().getAuthentication(), targetOrganisaatioOid, roles);
             hasAccess = true;
         } catch (Exception e) {
             if (!(e instanceof NotAuthorizedException)) {
-                log.warn("checkAccess failed because exception: " + e + ", auth: " + getUser().getAuthentication());
+                log.warn("checkAccess failed because exception: " + e + ", auth: " + SecurityContextHolder.getContext().getAuthentication());
             }
             hasAccess = false;
         }
