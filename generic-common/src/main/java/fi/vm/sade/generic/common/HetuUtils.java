@@ -31,7 +31,7 @@ public final class HetuUtils {
      *
      * @return
      */
-    public static final String generateHetu() {
+    public static String generateHetu() {
         final Random rand = new Random();
         final int day = rand.nextInt(28) + 1;
         final int month = rand.nextInt(12) + 1;
@@ -49,7 +49,7 @@ public final class HetuUtils {
      * @param gender 0 = female, 1 = male
      * @return
      */
-    public static final String generateHetuWithArgs(final int day, final int month, final int year, final int gender) {
+    public static String generateHetuWithArgs(final int day, final int month, final int year, final int gender) {
         try {
             final SimpleDateFormat sdf = new SimpleDateFormat("ddMMyyyy");
             sdf.parse(String.format("%s%s%s",
