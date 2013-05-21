@@ -37,6 +37,38 @@ public final class HetuUtils {
         final int month = rand.nextInt(12) + 1;
         final int year = 1950 + rand.nextInt(40);
         final int gender = rand.nextInt(2); // 0 = female, 1 = male
+        return generateHetuWithArgs(day, month, year, gender);
+    }
+
+    /**
+     * Generates a valid Finnish National Identification Number with arguments.
+     *
+     * @param day day of birthday
+     * @param month month of birthday
+     * @param year year of birthday
+     * @param gender 0 = female, 1 = male
+     * @return
+     */
+    public static final String generateHetuWithArgs(final int day, final int month, final int year, final int gender) {
+        try {
+            final SimpleDateFormat sdf = new SimpleDateFormat("ddMMyyyy");
+            sdf.parse(String.format("%s%s%s",
+                    StringUtils.leftPad(String.valueOf(day), 2, '0'),
+                    StringUtils.leftPad(String.valueOf(month), 2, '0'),
+                    String.valueOf(year)));
+        } catch (final Exception e) {
+            throw new IllegalArgumentException("error parsing birthday", e);
+        }
+
+        if (year < 1800 || year > 2199) {
+            throw new IllegalArgumentException("year is invalid");
+        }
+
+        if (gender < 0 || gender > 1) {
+            throw new IllegalArgumentException("gender is invalid; should be 0 (female) or 1 (male)");
+        }
+
+        final Random rand = new Random();
         int identifier = rand.nextInt(998) + 1;
         if (gender == 0 && identifier % 2 != 0) {
             // female needs an even identifier
@@ -46,7 +78,7 @@ public final class HetuUtils {
                 StringUtils.leftPad(String.valueOf(day), 2, '0'),
                 StringUtils.leftPad(String.valueOf(month), 2, '0'),
                 StringUtils.substring(String.valueOf(year), 2),
-                separators.get(19),
+                separators.get(Integer.parseInt(StringUtils.substring(String.valueOf(year), 0, 2))),
                 StringUtils.leftPad(String.valueOf(identifier), 3, '0'));
         final char checksumCharacter = getChecksumCharacter(partialHetu);
 
