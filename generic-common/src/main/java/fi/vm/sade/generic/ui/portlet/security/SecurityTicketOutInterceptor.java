@@ -1,5 +1,6 @@
 package fi.vm.sade.generic.ui.portlet.security;
 
+import fi.vm.sade.security.SimpleCache;
 import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
 import org.apache.cxf.binding.soap.interceptor.SoapPreProtocolOutInterceptor;
@@ -16,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.net.HttpURLConnection;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Interceptor for adding a security ticket SOAP header into outbound SOAP message.
@@ -26,6 +28,11 @@ import java.util.Collection;
 public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
 
     private final static Logger log = LoggerFactory.getLogger(SecurityTicketOutInterceptor.class);
+
+    public static final int MAX_TICKET_CACHE_SIZE = 10000;
+
+    // simple in-memory cache is sufficient when we use user user auth as part of cache key
+    private static Map<String, String> ticketCache = SimpleCache.<String, String>buildCache(MAX_TICKET_CACHE_SIZE);
 
     @Value("${auth.mode:cas}")
     private String authMode;
@@ -51,10 +58,8 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
 
         else if(authentication instanceof CasAuthenticationToken) {
             String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
-            log.info("CAS Endpoint: " + casTargetService);
             CasAuthenticationToken casAuthenticationToken = (CasAuthenticationToken) authentication;
-            String proxyTicket = casAuthenticationToken.getAssertion().getPrincipal().getProxyTicketFor(casTargetService);
-            log.info("CAS Proxy ticket: " + proxyTicket);
+            String proxyTicket = getCachedProxyTicket(casTargetService, casAuthenticationToken);
             ((HttpURLConnection) message.get("http.connection")).setRequestProperty("CasSecurityTicket", proxyTicket);
             return;
         }
@@ -62,6 +67,18 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
         //((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", authentication.getName());
         //((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_authorities", ticketHeader.ticket);
         log.warn("Could not attach security ticket to SOAP message, authMode: "+authMode+", authentication: " + authentication);
+    }
+
+    private String getCachedProxyTicket(String casTargetService, CasAuthenticationToken casAuthenticationToken) {
+        String cacheKey = casAuthenticationToken.hashCode()+"_"+casTargetService;
+        String proxyTicket = ticketCache.get(cacheKey);
+        boolean cached = proxyTicket != null;
+        if (!cached) {
+            proxyTicket = casAuthenticationToken.getAssertion().getPrincipal().getProxyTicketFor(casTargetService);
+            ticketCache.put(cacheKey, proxyTicket);
+        }
+        log.info("CAS Proxy ticket, key: "+cacheKey+", cached: "+cached+", ticket: "+proxyTicket);
+        return proxyTicket;
     }
 
     private String toString(Collection<? extends GrantedAuthority> authorities) {

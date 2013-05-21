@@ -8,10 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -21,14 +18,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OrganisationHierarchyAuthorizer.class);
-    private static final int MAX_CACHE_SIZE = 10000;
+    public static final int MAX_CACHE_SIZE = 10000;
     public static final String ANY_ROLE = "*";
 
     @Autowired
     private OidProvider oidProvider;
 
     // poor man's cache, use auth object as part of key so objects will last only one authenticated session
-    private Map<String,List<String>> cache = new ConcurrentHashMap<String, List<String>>();
+    //private Map<String,List<String>> cache = new ConcurrentHashMap<String, List<String>>();
+    // not linked to user anymore, remove oldest entries instead
+    // http://stackoverflow.com/questions/224868/easy-simple-to-use-lru-cache-in-java
+    private static Map<String,List<String>> cache = SimpleCache.<String, List<String>>buildCache(MAX_CACHE_SIZE);
 
     public OrganisationHierarchyAuthorizer() {
     }
@@ -108,14 +108,17 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
     }
 
     private List<String> getSelfAndParentOidsCached(Authentication currentUser, String targetOrganisationOid) {
-        String cacheKey = currentUser.hashCode()+"_"+targetOrganisationOid; // user hash mukana keyssä jotta resultit eläisi vain autentikoidun session
+        //String cacheKey = currentUser.hashCode()+"_"+targetOrganisationOid; // user hash mukana keyssä jotta resultit eläisi vain autentikoidun session
+        String cacheKey = targetOrganisationOid; // ei enää user-kohtaista cachea koska organisaatioparentit ei about ikinä muutu
         List<String> cacheResult = cache.get(cacheKey);
         if (cacheResult == null) {
             cacheResult = oidProvider.getSelfAndParentOids(targetOrganisationOid);
+            /* tämäkin hoidettu itse cachessa nyt
             if (cache.size() > MAX_CACHE_SIZE) {
                 LOGGER.info("cleaning getSelfAndParentOids -cache");
                 cache.clear();
             }
+            */
             cache.put(cacheKey, cacheResult);
         }
         return cacheResult;
