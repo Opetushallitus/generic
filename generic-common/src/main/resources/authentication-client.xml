@@ -2,8 +2,10 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:cxf="http://cxf.apache.org/core"
+       xmlns:http-conf="http://cxf.apache.org/transports/http/configuration"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-       http://cxf.apache.org/core http://cxf.apache.org/schemas/core.xsd">
+       http://cxf.apache.org/core http://cxf.apache.org/schemas/core.xsd
+       http://cxf.apache.org/transports/http/configuration http://cxf.apache.org/schemas/configuration/http-conf.xsd">
 
     <!-- Bean configuration for interceptor & callback -->
     <bean id="ticketInterceptor" class="fi.vm.sade.generic.ui.portlet.security.SecurityTicketOutInterceptor">
@@ -22,5 +24,10 @@
         	<!--<cxf:logging/>-->
         </cxf:features>
     </cxf:bus>
+
+    <http-conf:conduit name="*.http-conduit">
+        <!-- needed because too large soap requests will otherwise sent in chunked-mode, and nginx does NOT support it -->
+        <http-conf:client AllowChunking="false"/>
+    </http-conf:conduit>
 
 </beans>
