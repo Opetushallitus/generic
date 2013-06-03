@@ -500,7 +500,7 @@ public class UiUtil extends UiLayoutUtil {
         OphRichTextArea rta = new OphRichTextArea();
         rta.setNullRepresentation("");
         rta.setWidth(UiConstant.PCT100);
-        rta.setImmediate(true);
+        rta.setImmediate(false);
 
         // Bind to model
         if (psi != null && expression != null) {
@@ -511,7 +511,7 @@ public class UiUtil extends UiLayoutUtil {
 
         return rta;
     }
-    
+
     /**
      * Create RichTextArea. Possibly bind to property. Rich text are is actually TinyMCE editor.
      *
@@ -525,7 +525,7 @@ public class UiUtil extends UiLayoutUtil {
         OphRichTextArea rta = new OphRichTextArea(maxLength, maxLengthErrorMessage);
         rta.setNullRepresentation("");
         rta.setWidth(UiConstant.PCT100);
-        rta.setImmediate(true);
+        rta.setImmediate(false);
 
         // Bind to model
         if (psi != null && expression != null) {
@@ -536,6 +536,6 @@ public class UiUtil extends UiLayoutUtil {
 
         return rta;
     }
-    
-    
+
+
 }
