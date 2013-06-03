@@ -17,11 +17,12 @@ package fi.vm.sade.vaadin.ui;
 
 import com.vaadin.terminal.ThemeResource;
 import com.vaadin.ui.MenuBar;
-import com.vaadin.ui.MenuBar.Command;
 
 public class OphRowMenuBar extends MenuBar {
 
-    private MenuBar.MenuItem file;
+	private static final long serialVersionUID = 1L;
+	
+	private MenuBar.MenuItem file;
 
     public OphRowMenuBar() {
         this.setWidth(-1, UNITS_PIXELS);
@@ -35,7 +36,7 @@ public class OphRowMenuBar extends MenuBar {
         file = this.addItem("", new ThemeResource(iconUrl), null);
     }
 
-    public void addMenuCommand(String caption, Command command) {
-        file.addItem(caption, command);
+    public MenuItem addMenuCommand(String caption, Command command) {
+    	return file.addItem(caption, command);
     }
 }
