@@ -80,7 +80,8 @@ public abstract class OphAbstractInfoLayout<T extends AbstractLayout> extends Ve
         LOG.info("attach()");
 
         setMargin(true);
-        VerticalLayout topArea = UiUtil.verticalLayout(UiConstant.PCT100, "120px");
+        VerticalLayout topArea = UiUtil.verticalLayout();
+        topArea.setWidth(UiConstant.PCT100);
 
         if (_message != null) {
             UiUtil.label(topArea, _message);
@@ -88,6 +89,7 @@ public abstract class OphAbstractInfoLayout<T extends AbstractLayout> extends Ve
 
         topArea.addComponent(buttonsHL);
         Label title = UiUtil.label(topArea, _pageTitle);
+        title.setWidth(UiConstant.PCT100);
         title.setStyleName(Oph.LABEL_H1);
         HorizontalLayout buildNavigation = buildNavigation(_pageNavigationDTO);
         topArea.addComponent(buildNavigation);
