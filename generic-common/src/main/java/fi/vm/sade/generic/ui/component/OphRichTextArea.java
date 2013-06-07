@@ -15,7 +15,6 @@
  */
 package fi.vm.sade.generic.ui.component;
 
-import com.vaadin.data.validator.AbstractStringValidator;
 import com.vaadin.data.validator.StringLengthValidator;
 import org.vaadin.tinymceeditor.TinyMCETextField;
 
@@ -43,6 +42,9 @@ public class OphRichTextArea extends TinyMCETextField {
             + "theme_advanced_buttons2 : '', "
             + "theme_advanced_buttons3 : '', "
             + "theme_advanced_statusbar_location : ''}";
+
+    private static final String _readOnlyConfig = "{theme : 'advanced', mode : 'textareas', readonly : true}";
+
     /*
      * Max length for the data.
      */
@@ -88,5 +90,10 @@ public class OphRichTextArea extends TinyMCETextField {
         return _maxLength;
     }
 
+    @Override
+    public void setReadOnly(boolean readOnly) {
+        super.setReadOnly(readOnly);
+        setConfig(readOnly ? _readOnlyConfig : _config);
+    }
 
 }
