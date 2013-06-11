@@ -54,9 +54,9 @@ public final class XssFilter {
 		try {
 			return input==null ? null : antiSamy.scan(input.trim()).getCleanHTML();
 		} catch (ScanException e) {
-			throw new IllegalArgumentException("AntiSamy failed while scanning following html: '"+input+"'");
+			throw new IllegalArgumentException("AntiSamy failed while scanning following html: '"+input+"'",e);
 		} catch (PolicyException e) {
-			throw new IllegalArgumentException("AntiSamy failed due to invalid profile");
+			throw new IllegalArgumentException("AntiSamy failed due to invalid profile",e);
 		}
 	}
 	
