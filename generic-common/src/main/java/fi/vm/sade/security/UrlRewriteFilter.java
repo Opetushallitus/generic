@@ -1,5 +1,7 @@
 package fi.vm.sade.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +24,8 @@ import java.util.Set;
 public class UrlRewriteFilter implements Filter {
 
     public static final String ALREADY_PROCESSED = UrlRewriteFilter.class.getName()+"_alreadyProcessed";
+
+    private final static Logger logger = LoggerFactory.getLogger(UrlRewriteFilter.class);
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -47,7 +51,7 @@ public class UrlRewriteFilter implements Filter {
                         }
                     }
                     PreAuthenticatedAuthenticationToken authentication = new PreAuthenticatedAuthenticationToken(oldDeprecatedSecurity_REMOVE_username, oldDeprecatedSecurity_REMOVE_username, authorities);
-                    System.out.println("\nMOCK service call, request: "+request.getRequestURL().append("?").append(request.getQueryString())+", authentication: "+authentication);
+                    logger.debug("\nMOCK service call, request: {}, authentication: {}", request.getRequestURL().append("?").append(request.getQueryString()), authentication);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     forward(request, servletResponse, "oldDeprecatedSecurity_REMOVE", "true"); // huom! forwardin jälkeen ei ajeta enää springin securityputkea
                     return;
@@ -77,7 +81,7 @@ public class UrlRewriteFilter implements Filter {
             path += "?";
         }
         path += paramName + "=" + paramValue;
-        System.out.println("WARNING - UrlRewriteFilter forward to: " + path);
+        logger.debug("WARNING - UrlRewriteFilter forward to: {}", path);
         request.setAttribute(ALREADY_PROCESSED, "true");
         request.getRequestDispatcher(path).forward(request, servletResponse);
     }

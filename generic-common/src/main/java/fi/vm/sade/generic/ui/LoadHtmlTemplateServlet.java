@@ -5,6 +5,8 @@ import fi.vm.sade.generic.common.EnhancedProperties;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.jasig.cas.client.validation.Assertion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.cas.authentication.CasAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +31,8 @@ public class LoadHtmlTemplateServlet extends HttpServlet {
     private String targetService;
     private String targetResource = "/group/virkailijan-tyopoyta";
     private String casUrl;
+
+    private static final Logger logger = LoggerFactory.getLogger(LoadHtmlTemplateServlet.class);
 
     @Override
     public void init() throws ServletException {
@@ -102,7 +106,7 @@ public class LoadHtmlTemplateServlet extends HttpServlet {
 
             // call rest resource with proxyticket as parameter
             String htmlResourceUrl = targetService + targetResource + "?ticket=" + ticket;
-            System.out.println("loadTemplateHtml, get html from url: "+htmlResourceUrl);
+            logger.debug("loadTemplateHtml, get html from url: {}", htmlResourceUrl);
             String response = doHttpCall(htmlResourceUrl);
 
             // cache the html
@@ -111,7 +115,8 @@ public class LoadHtmlTemplateServlet extends HttpServlet {
             return response;
 
         } catch (Exception e) {
-            System.err.println("FAILED to load htmltemplate, targetService: "+targetService+", targetResource: "+targetResource+", casUrl: "+casUrl+", exception: "+e);
+            logger.error("FAILED to load htmltemplate, targetService: {}, targetResource: {}, casUrl: {}, exception: {}",
+                    new Object[] {targetService, targetResource, casUrl, e});
             throw new RuntimeException(e);
         }
 

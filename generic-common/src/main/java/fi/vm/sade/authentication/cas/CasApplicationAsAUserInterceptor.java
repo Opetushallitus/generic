@@ -4,6 +4,8 @@ import org.apache.cxf.binding.soap.SoapMessage;
 import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.phase.Phase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.HttpURLConnection;
 
@@ -13,6 +15,8 @@ import java.net.HttpURLConnection;
  * @author Antti Salonen
  */
 public class CasApplicationAsAUserInterceptor extends AbstractSoapInterceptor {
+
+    private static final Logger logger = LoggerFactory.getLogger(CasApplicationAsAUserInterceptor.class);
 
     private String webCasUrl;
     private String targetService;
@@ -31,7 +35,7 @@ public class CasApplicationAsAUserInterceptor extends AbstractSoapInterceptor {
         // put service ticket to SOAP message as a http header 'CasSecurityTicket'
         ((HttpURLConnection)message.get("http.connection")).setRequestProperty("CasSecurityTicket", serviceTicket);
 
-        System.out.println("CasApplicationAsAUserInterceptor.handleMessage added CasSecurityTicket="+serviceTicket+" -header");
+        logger.debug("CasApplicationAsAUserInterceptor.handleMessage added CasSecurityTicket={} -header", serviceTicket);
     }
 
     public void setWebCasUrl(String webCasUrl) {
