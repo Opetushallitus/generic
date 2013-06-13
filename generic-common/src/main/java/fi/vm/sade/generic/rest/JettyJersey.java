@@ -13,7 +13,7 @@ import org.mortbay.jetty.servlet.ServletHolder;
 public class JettyJersey {
     static Server server;
 
-    static void startServer(int port, String packageContainingJerseyRestResources, String jerseyFilterClasses) throws Exception {
+    public static void startServer(int port, String packageContainingJerseyRestResources, String jerseyFilterClasses) throws Exception {
         server = new Server(port);
         Context root = new Context(server, "/", Context.SESSIONS);
         ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
@@ -27,7 +27,7 @@ public class JettyJersey {
         server.start();
     }
 
-    static void stopServer() throws Exception {
+    public static void stopServer() throws Exception {
         server.stop();
     }
 }
