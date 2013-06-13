@@ -28,7 +28,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *     </init-param>
  *     <init-param>
  *     <param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
- *     <param-value>fi.vm.sade.koodisto.service.filter.CorsFilter,fi.vm.sade.generic.rest.CacheableJerseyFilter</param-value>
+ *     <param-value>fi.vm.sade.generic.rest.CacheableJerseyFilter</param-value>
  *     </init-param>
  *     <load-on-startup>1</load-on-startup>
  *     </servlet>
