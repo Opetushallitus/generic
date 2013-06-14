@@ -70,8 +70,7 @@ public final class HetuUtils {
 
         final Random rand = new Random();
         int identifier = rand.nextInt(998) + 1;
-        if (gender == 0 && identifier % 2 != 0) {
-            // female needs an even identifier
+        if ((gender == 0 && identifier % 2 != 0) || (gender == 1 && identifier % 2 == 0)) {
             identifier++;
         }
         final String partialHetu = String.format("%s%s%s%c%s",
