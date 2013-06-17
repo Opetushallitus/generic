@@ -82,7 +82,7 @@ public class CachingRestClient {
         HttpGet httpget = new HttpGet(url);
         response = cachingClient.execute(httpget, localContext);
         cacheStatus = (CacheResponseStatus) localContext.getAttribute(CachingHttpClient.CACHE_RESPONSE_STATUS);
-        logger.info("get done, url: {}, status: {}, cacheStatus: {}, headers: {}", url, new Object[]{response.getStatusLine(), cacheStatus, response.getAllHeaders()});
+        logger.info("get done, url: {}, status: {}, cacheStatus: {}, headers: {}", new Object[]{url, response.getStatusLine(), cacheStatus, response.getAllHeaders()});
 //        System.out.println("==> get done, url: "+url+", status: "+response.getStatusLine()+", cacheStatus: "+cacheStatus+", headers: "+ Arrays.asList(response.getAllHeaders()));
 //        System.out.println(IOUtils.toString(response.getEntity().getContent()));
         return response.getEntity().getContent();

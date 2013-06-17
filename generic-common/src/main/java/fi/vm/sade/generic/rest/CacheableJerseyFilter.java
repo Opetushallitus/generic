@@ -4,6 +4,7 @@ import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerResponse;
 import com.sun.jersey.spi.container.ContainerResponseFilter;
 
+import javax.ws.rs.core.CacheControl;
 import java.lang.annotation.Annotation;
 
 /**
@@ -19,7 +20,8 @@ public class CacheableJerseyFilter implements ContainerResponseFilter {
 
         Cacheable cacheableAnnotation = getAnnotation(containerResponse, Cacheable.class);
         if (cacheableAnnotation != null) {
-            containerResponse.getHttpHeaders().add("Cache-Control", "max-age="+cacheableAnnotation.maxAgeSeconds());
+            containerResponse.getHttpHeaders().putSingle("Cache-Control", "public, max-age="+cacheableAnnotation.maxAgeSeconds());
+            containerResponse.getHttpHeaders().putSingle("Age", "0");
         }
 
         return containerResponse;
