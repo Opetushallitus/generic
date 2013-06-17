@@ -17,6 +17,7 @@ public class JettyJersey {
         server = new Server(port);
         Context root = new Context(server, "/", Context.SESSIONS);
         ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
+        servletHolder.setInitOrder(1); // have to be set so that jersey will load on startup (otherwise might cause problems in cache timeout tests..)
         servletHolder.setInitParameter("com.sun.jersey.config.property.resourceConfigClass", "com.sun.jersey.api.core.PackagesResourceConfig");
         servletHolder.setInitParameter("com.sun.jersey.config.property.packages", packageContainingJerseyRestResources);
 //        servletHolder.setInitParameter("com.sun.jersey.config.feature.Debug", "true");

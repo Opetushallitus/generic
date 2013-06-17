@@ -39,7 +39,7 @@ public class CachingRestClient {
     private HttpClient cachingClient;
     private HttpContext localContext;
     private HttpResponse response;
-    private CacheResponseStatus cacheStatus;
+    private Object cacheStatus;
     private Gson gson;
 
     public CachingRestClient() {
@@ -88,7 +88,7 @@ public class CachingRestClient {
         return response.getEntity().getContent();
     }
 
-    public CacheResponseStatus getCacheStatus() {
+    public Object getCacheStatus() {
         return cacheStatus;
     }
 

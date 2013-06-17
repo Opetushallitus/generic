@@ -21,7 +21,6 @@ public class CacheableJerseyFilter implements ContainerResponseFilter {
         Cacheable cacheableAnnotation = getAnnotation(containerResponse, Cacheable.class);
         if (cacheableAnnotation != null) {
             containerResponse.getHttpHeaders().putSingle("Cache-Control", "public, max-age="+cacheableAnnotation.maxAgeSeconds());
-            containerResponse.getHttpHeaders().putSingle("Age", "0");
         }
 
         return containerResponse;
