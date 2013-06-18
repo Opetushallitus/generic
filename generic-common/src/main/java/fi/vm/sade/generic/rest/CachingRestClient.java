@@ -81,7 +81,7 @@ public class CachingRestClient {
      * get REST Json resource as Java object of type resultType (deserialized with gson).
      */
     public <T> T get(String url, Class<? extends T> resultType) throws IOException {
-        return gson.fromJson(new InputStreamReader(get(url)), resultType);
+        return gson.fromJson(new InputStreamReader(get(url), "utf-8"), resultType);
     }
 
     /**
