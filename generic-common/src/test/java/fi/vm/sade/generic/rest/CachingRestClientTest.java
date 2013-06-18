@@ -7,7 +7,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.IOException;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 /**
  * @author Antti Salonen
@@ -16,6 +19,20 @@ public class CachingRestClientTest {
 
     CachingRestClient client = new CachingRestClient();
     private int port = 6789;
+
+    @Test
+    public void testXmlGregorianCalendarParsing() throws Exception {
+        Calendar now = new GregorianCalendar();
+        assertDay(now, client.get("http://localhost:" + port + "/httptest/xmlgregoriancalendar1", XMLGregorianCalendar.class));
+        assertDay(now, client.get("http://localhost:" + port + "/httptest/xmlgregoriancalendar2", XMLGregorianCalendar.class));
+    }
+
+    private void assertDay(Calendar now, XMLGregorianCalendar xmlGregorianCalendar) {
+        System.out.println("CachingRestClientTest.assertDay, now: "+now+", xmlGregCal: "+xmlGregorianCalendar);
+        Assert.assertEquals(now.get(Calendar.YEAR), xmlGregorianCalendar.toGregorianCalendar().get(Calendar.YEAR));
+        Assert.assertEquals(now.get(Calendar.MONTH), xmlGregorianCalendar.toGregorianCalendar().get(Calendar.MONTH));
+        Assert.assertEquals(now.get(Calendar.DAY_OF_MONTH), xmlGregorianCalendar.toGregorianCalendar().get(Calendar.DAY_OF_MONTH));
+    }
 
     @Test
     public void testCachingWithCommonsHttpClientAndJersey() throws Exception {

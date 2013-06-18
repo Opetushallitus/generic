@@ -23,6 +23,8 @@ import java.lang.reflect.Type;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.GregorianCalendar;
 
 /**
@@ -35,6 +37,8 @@ import java.util.GregorianCalendar;
 public class CachingRestClient {
 
     protected Logger logger = LoggerFactory.getLogger(getClass());
+    private static DateFormat df1 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+    private static DateFormat df2 = new SimpleDateFormat("yyyy-MM-dd");
 
     private HttpClient cachingClient;
     private HttpContext localContext;
@@ -60,19 +64,14 @@ public class CachingRestClient {
 
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(XMLGregorianCalendar.class, new JsonDeserializer<XMLGregorianCalendar>() {
-            DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
             @Override
             public XMLGregorianCalendar deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context)
                     throws JsonParseException {
-                try {
-                    GregorianCalendar cal = new GregorianCalendar();
-                    cal.setTime(df.parse(json.getAsString()));
-                    return new XMLGregorianCalendarImpl(cal);
-                } catch (ParseException e) {
-                    return null;
-                }
+                String string = json.getAsString();
+                return parseXmlGregorianCalendar(string);
             }
+
         });
         gson = gsonBuilder.create();
     }
@@ -100,6 +99,35 @@ public class CachingRestClient {
 
     public Object getCacheStatus() {
         return cacheStatus;
+    }
+
+    private XMLGregorianCalendar parseXmlGregorianCalendar(String string) {
+        if (string == null || string.isEmpty()) {
+            return null;
+        }
+        try {
+            // parse from yyyy-MM-dd HH:mm
+            GregorianCalendar cal = new GregorianCalendar();
+            cal.setTime(df1.parse(string));
+            return new XMLGregorianCalendarImpl(cal);
+        } catch (ParseException e1) {
+            try {
+                // parse from yyyy-MM-dd
+                GregorianCalendar cal = new GregorianCalendar();
+                cal.setTime(df2.parse(string));
+                return new XMLGregorianCalendarImpl(cal);
+            } catch (ParseException e2) {
+                try {
+                    // parse from 1371449469346
+                    GregorianCalendar cal = new GregorianCalendar();
+                    cal.setTime(new Date(Long.parseLong(string)));
+                    return new XMLGregorianCalendarImpl(cal);
+                } catch (NumberFormatException e3) {
+                    logger.warn("error parsing json to xmlgregoriancal: "+ string);
+                    return null;
+                }
+            }
+        }
     }
 
 }

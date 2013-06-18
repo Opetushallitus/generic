@@ -7,12 +7,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
 
 /**
  * @author Antti Salonen
@@ -77,6 +76,20 @@ public class HttpTestResource {
     public Response oneSecondResource() throws InterruptedException {
         Thread.sleep(1000);
         return Response.ok("OK").build();
+    }
+
+    @Path("/xmlgregoriancalendar1")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public String xmlgregoriancalendar1() throws InterruptedException {
+        return ""+new Date().getTime();
+    }
+
+    @Path("/xmlgregoriancalendar2")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public String xmlgregoriancalendar2() throws InterruptedException {
+        return new SimpleDateFormat("yyyy-MM-dd").format(new Date());
     }
 
     private Date date(int dSeconds) {
