@@ -9,6 +9,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.cache.CacheConfig;
 import org.apache.http.impl.client.cache.CachingHttpClient;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
@@ -22,7 +23,6 @@ import java.lang.reflect.Type;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.GregorianCalendar;
 
 /**
@@ -43,15 +43,25 @@ public class CachingRestClient {
     private Gson gson;
 
     public CachingRestClient() {
+        // multithread support + max connections
+        PoolingClientConnectionManager connectionManager = new PoolingClientConnectionManager();
+        connectionManager.setDefaultMaxPerRoute(100); // default 2
+        connectionManager.setMaxTotal(1000); // default 20
+
+        // cache config
         CacheConfig cacheConfig = new CacheConfig();
-        cacheConfig.setMaxCacheEntries(50*1000);
-        cacheConfig.setMaxObjectSize(10*1024*1024); // 10M, eg oppilaitosnumero -koodisto is 7,5M
-        cachingClient = new CachingHttpClient(new DefaultHttpClient(), cacheConfig);
+        cacheConfig.setMaxCacheEntries(50 * 1000);
+        cacheConfig.setMaxObjectSize(10 * 1024 * 1024); // 10M, eg oppilaitosnumero -koodisto is 7,5M
+
+        // init stuff
+        final DefaultHttpClient actualClient = new DefaultHttpClient(connectionManager);
+        cachingClient = new CachingHttpClient(actualClient, cacheConfig);
         localContext = new BasicHttpContext();
 
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(XMLGregorianCalendar.class, new JsonDeserializer<XMLGregorianCalendar>() {
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
             @Override
             public XMLGregorianCalendar deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context)
                     throws JsonParseException {

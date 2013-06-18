@@ -31,6 +31,47 @@ public class CacheableJerseyFilterAndAnnotationTest {
         Assert.assertEquals("cacheable 2", get("/httptest/cacheableAnnotatedResource"));
     }
 
+    @Test
+    public void testHttpClientThreading() throws InterruptedException, IOException {
+        get("/httptest/oneSecondResource"); // first force init jersey stuff
+        long t0 = System.currentTimeMillis();
+
+        // call 1-second resource in 100 threads
+        int threads = 100;
+        final int[] done = {0};
+        final int[] errors = {0};
+        for (int i=0; i < threads; i++) {
+            new Thread(){
+                @Override
+                public void run() {
+                    try {
+                        String result = get("/httptest/oneSecondResource");
+//                        System.out.println(result);
+                    } catch (Exception e) {
+                        errors[0]++;
+                        throw new RuntimeException(e);
+                    } finally {
+                        done[0]++;
+                    }
+                }
+            }.start();
+        }
+
+        // wait until threads finished
+        while (true) {
+            if (done[0] == threads) {
+                break;
+            }
+            Thread.sleep(100);
+        }
+
+        // assert all ok and calls were simultaneous
+        long took = System.currentTimeMillis() - t0;
+        System.out.println("took: "+ took +" ms");
+        Assert.assertEquals(0, errors[0]);
+        Assert.assertTrue(took < 1500); // because 100 max threads/connections per route in CachingRestClient, and calling resource takes 1000 ms
+    }
+
     @Before
     public void start() throws Exception {
         JettyJersey.startServer(port, "fi.vm.sade.generic.rest", "fi.vm.sade.generic.rest.CacheableJerseyFilter");

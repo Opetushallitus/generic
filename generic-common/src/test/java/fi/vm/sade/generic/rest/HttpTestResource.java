@@ -71,6 +71,14 @@ public class HttpTestResource {
                 .build();
     }
 
+    @Path("/oneSecondResource")
+    @GET
+    @Produces("text/plain")
+    public Response oneSecondResource() throws InterruptedException {
+        Thread.sleep(1000);
+        return Response.ok("OK").build();
+    }
+
     private Date date(int dSeconds) {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.SECOND, dSeconds); // 24h
