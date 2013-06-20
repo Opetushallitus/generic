@@ -18,13 +18,12 @@ import java.util.GregorianCalendar;
 public class CachingRestClientTest {
 
     CachingRestClient client = new CachingRestClient();
-    private int port = 6789;
 
     @Test
     public void testXmlGregorianCalendarParsing() throws Exception {
         Calendar now = new GregorianCalendar();
-        assertDay(now, client.get("http://localhost:" + port + "/httptest/xmlgregoriancalendar1", XMLGregorianCalendar.class));
-        assertDay(now, client.get("http://localhost:" + port + "/httptest/xmlgregoriancalendar2", XMLGregorianCalendar.class));
+        assertDay(now, client.get("http://localhost:" + JettyJersey.getPort() + "/httptest/xmlgregoriancalendar1", XMLGregorianCalendar.class));
+        assertDay(now, client.get("http://localhost:" + JettyJersey.getPort() + "/httptest/xmlgregoriancalendar2", XMLGregorianCalendar.class));
     }
 
     private void assertDay(Calendar now, XMLGregorianCalendar xmlGregorianCalendar) {
@@ -96,7 +95,7 @@ public class CachingRestClientTest {
 
     @Before
     public void start() throws Exception {
-        JettyJersey.startServer(port, "fi.vm.sade.generic.rest", null);
+        JettyJersey.startServer("fi.vm.sade.generic.rest", null);
         HttpTestResource.counter = 1;
         HttpTestResource.someResource = "original value";
     }
@@ -107,7 +106,7 @@ public class CachingRestClientTest {
     }
 
     private String get(String url) throws IOException {
-        return IOUtils.toString(client.get("http://localhost:"+port+url));
+        return IOUtils.toString(client.get("http://localhost:"+JettyJersey.getPort()+url));
     }
 
 }

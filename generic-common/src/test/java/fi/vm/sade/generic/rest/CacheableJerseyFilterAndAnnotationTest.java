@@ -14,7 +14,6 @@ import java.io.IOException;
 public class CacheableJerseyFilterAndAnnotationTest {
 
     CachingRestClient client = new CachingRestClient();
-    private int port = 6789;
 
     @Test
     public void testCacheableJerseyFilterAndAnnotation() throws Exception {
@@ -74,7 +73,7 @@ public class CacheableJerseyFilterAndAnnotationTest {
 
     @Before
     public void start() throws Exception {
-        JettyJersey.startServer(port, "fi.vm.sade.generic.rest", "fi.vm.sade.generic.rest.CacheableJerseyFilter");
+        JettyJersey.startServer("fi.vm.sade.generic.rest", "fi.vm.sade.generic.rest.CacheableJerseyFilter");
         HttpTestResource.counter = 1;
         HttpTestResource.someResource = "original value";
     }
@@ -85,7 +84,7 @@ public class CacheableJerseyFilterAndAnnotationTest {
     }
 
     private String get(String url) throws IOException {
-        return IOUtils.toString(client.get("http://localhost:"+port+url));
+        return IOUtils.toString(client.get("http://localhost:"+JettyJersey.getPort()+url));
     }
 
 }

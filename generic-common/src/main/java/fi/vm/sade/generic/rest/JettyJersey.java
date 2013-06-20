@@ -12,8 +12,13 @@ import org.mortbay.jetty.servlet.ServletHolder;
  */
 public class JettyJersey {
     static Server server;
+    static int port;
 
-    public static void startServer(int port, String packageContainingJerseyRestResources, String jerseyFilterClasses) throws Exception {
+    public static void startServer(String packageContainingJerseyRestResources, String jerseyFilterClasses) throws Exception {
+
+        // randomize port
+        port = (int) (6000 + 1000 * Math.random());
+
         server = new Server(port);
         Context root = new Context(server, "/", Context.SESSIONS);
         ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
@@ -26,9 +31,14 @@ public class JettyJersey {
         servletHolder.setInitParameter("com.sun.jersey.spi.container.ContainerResponseFilters", /*"com.sun.jersey.api.container.filter.LoggingFilter,"*/""+(jerseyFilterClasses != null ? jerseyFilterClasses : ""));
         root.addServlet(servletHolder, "/*");
         server.start();
+        System.out.println("jetty started at port "+port);
     }
 
     public static void stopServer() throws Exception {
         server.stop();
+    }
+
+    public static int getPort() {
+        return port;
     }
 }
