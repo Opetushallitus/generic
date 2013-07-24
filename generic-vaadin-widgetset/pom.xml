@@ -6,13 +6,13 @@
     <parent>
         <artifactId>generic</artifactId>
         <groupId>fi.vm.sade.generic</groupId>
-        <version>5.1-SNAPSHOT</version>
+        <version>6.0-SNAPSHOT</version>
         <relativePath>..</relativePath>
     </parent>
 
     <artifactId>generic-vaadin-widgetset</artifactId>
     <groupId>fi.vm.sade.generic</groupId>
-    <version>5.1-SNAPSHOT</version>
+    <version>6.0-SNAPSHOT</version>
     <packaging>war</packaging>
     <name>Generic :: Vaadin Widgetset</name>
     <description>Common vaadin widgetset for all vaadin applications</description>
