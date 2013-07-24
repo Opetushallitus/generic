@@ -5,12 +5,12 @@
 	<artifactId>generic</artifactId>
 	<packaging>pom</packaging>
 	<name>Generic :: Parent</name>
-    <version>5.1-SNAPSHOT</version>
+    <version>5.1</version>
 
 	<parent>
 		<groupId>fi.vm.sade.generic</groupId>
 		<artifactId>build-parent</artifactId>
-		<version>5.1-SNAPSHOT</version>
+		<version>5.1</version>
 	</parent>
 
 	<modules>

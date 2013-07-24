@@ -4,7 +4,7 @@
     <parent>
         <artifactId>generic</artifactId>
         <groupId>fi.vm.sade.generic</groupId>
-        <version>5.1-SNAPSHOT</version>
+        <version>5.1</version>
         <relativePath>..</relativePath>
     </parent>
 
@@ -13,7 +13,7 @@
     <description>Common thirdparty dependencies for service projects, includes spring, hibernate, postgres, cxf ws/rs, logging, querydsl, commons-*, etc</description>
     <name>${project.artifactId}</name>
     <packaging>pom</packaging>
-    <version>5.1-SNAPSHOT</version>
+    <version>5.1</version>
 
     <dependencies>
         <dependency>

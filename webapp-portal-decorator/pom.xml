@@ -7,11 +7,11 @@
     <parent>
         <groupId>fi.vm.sade.generic</groupId>
         <artifactId>generic</artifactId>
-        <version>5.1-SNAPSHOT</version>
+        <version>5.1</version>
     </parent>
 
     <artifactId>webapp-portal-decorator</artifactId>
-    <version>5.1-SNAPSHOT</version>
+    <version>5.1</version>
     <packaging>war</packaging>
     <description>
         Project contains html etc that can be used to decorate webapp to look like it's running inside portal (needs sitemesh config in the webapp itself).
