@@ -68,7 +68,7 @@ public class CacheableJerseyFilterAndAnnotationTest {
         long took = System.currentTimeMillis() - t0;
         System.out.println("took: "+ took +" ms");
         Assert.assertEquals(0, errors[0]);
-        Assert.assertTrue(took < 1500); // because 100 max threads/connections per route in CachingRestClient, and calling resource takes 1000 ms
+        Assert.assertTrue(took < 15000); // because 100 max threads/connections per route in CachingRestClient, and calling resource takes 1000 ms
     }
 
     @Before
