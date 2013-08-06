@@ -32,8 +32,7 @@ import fi.vm.sade.generic.ui.blackboard.BlackboardContext;
  * @see fi.vm.sade.generic.ui.blackboard.BlackboardProvider
  * @author Antti Salonen
  */
-public abstract class AbstractBlackboardSadeApplication extends AbstractSadeApplication implements
-        ApplicationContext.TransactionListener {
+public abstract class AbstractBlackboardSadeApplication extends AbstractSadeApplication implements ApplicationContext.TransactionListener {
 
     private static final long serialVersionUID = 1L;
 
@@ -67,6 +66,8 @@ public abstract class AbstractBlackboardSadeApplication extends AbstractSadeAppl
      */
     @Override
     public void transactionStart(Application application, Object transactionData) {
+        super.transactionStart(application, transactionData);
+
         if (application == this) {
             BlackboardContext.setBlackboard(blackboardInstance);
         }
@@ -74,6 +75,8 @@ public abstract class AbstractBlackboardSadeApplication extends AbstractSadeAppl
 
     @Override
     public void transactionEnd(Application application, Object transactionData) {
+        super.transactionEnd(application, transactionData);
+
         if (application == this) {
             BlackboardContext.setBlackboard(null);
         }

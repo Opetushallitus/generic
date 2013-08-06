@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.i18n.LocaleContextHolder;
 
 import com.vaadin.Application;
+import com.vaadin.service.ApplicationContext;
 import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Window;
@@ -33,14 +34,17 @@ import com.vaadin.ui.Window;
 import fi.vm.sade.generic.common.I18N;
 import fi.vm.sade.generic.ui.feature.UserFeature;
 import fi.vm.sade.generic.ui.portlet.security.User;
+import org.slf4j.MDC;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 
 /**
  * Super class for sade vaadin based vaadin applications, handles locale.
- * 
+ *
  * @author Jukka Raanamo
  * @author Marko Lyly
  */
-public abstract class AbstractSadeApplication extends Application implements HttpServletRequestListener {
+public abstract class AbstractSadeApplication extends Application implements HttpServletRequestListener, ApplicationContext.TransactionListener {
 
     private static final long serialVersionUID = 1L;
 
@@ -92,7 +96,7 @@ public abstract class AbstractSadeApplication extends Application implements Htt
 
     /**
      * shows modal error dialog, for testers, disable for production
-     * 
+     *
      * @param t
      */
     protected void showStackTrace(Throwable t) {
@@ -131,7 +135,7 @@ public abstract class AbstractSadeApplication extends Application implements Htt
 
     /**
      * Gets parameter value from HttpServletRequest.
-     * 
+     *
      * @param req
      * @param name
      * @return
@@ -143,7 +147,7 @@ public abstract class AbstractSadeApplication extends Application implements Htt
 
     /**
      * Gets parameter value from HttpServletRequest.
-     * 
+     *
      * @param req
      * @param name
      * @return
@@ -151,5 +155,32 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     protected Object getSessionAttribute(Object req, String name) {
         HttpServletRequest request = (HttpServletRequest) req;
         return request.getSession().getAttribute(name);
+    }
+
+    // Implement ApplicationContext.TransactionListener interface
+
+    private static final String MDC_USER = "user";
+
+    @Override
+    public void transactionStart(Application application, Object transactionData) {
+        // TODO "user to MDC" should be moved to correct filter when somone finds the correct location, preferably same for front/backend...
+        {
+            // Add user principal (OID) to MDC for logging if available
+            if (SecurityContextHolder.getContext().getAuthentication() != null) {
+                if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof UserDetails) {
+                	UserDetails ud = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                    MDC.put(MDC_USER, ud.getUsername());
+                } else {
+                	MDC.put(MDC_USER, "" + SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+                }
+            } else {
+                MDC.put(MDC_USER, "-");
+            }
+        }
+    }
+
+    @Override
+    public void transactionEnd(Application application, Object transactionData) {
+        MDC.remove(MDC_USER);
     }
 }
