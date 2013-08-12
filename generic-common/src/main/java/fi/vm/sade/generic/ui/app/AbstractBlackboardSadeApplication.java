@@ -81,5 +81,11 @@ public abstract class AbstractBlackboardSadeApplication extends AbstractSadeAppl
             BlackboardContext.setBlackboard(null);
         }
     }
+    
+    @Override
+    public void close() {
+        super.close();
+        getContext().removeTransactionListener(this);
+    }
 
 }
