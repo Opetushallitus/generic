@@ -121,8 +121,9 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     @Override
     public void terminalError(Terminal.ErrorEvent event) {
         final Throwable t = event.getThrowable();
+        String stamp = String.format("%s", System.currentTimeMillis());
         if (getMainWindow() != null) {
-            getMainWindow().showNotification(I18N.getMessage("unexpectedError"), Notification.TYPE_ERROR_MESSAGE);
+            getMainWindow().showNotification(I18N.getMessage("unexpectedError") + "\n" + I18N.getMessage("unexpectedErrorCode",stamp), Notification.TYPE_ERROR_MESSAGE);
             
             if (t instanceof SocketException) {
                 // Most likely client browser closed socket
@@ -146,12 +147,12 @@ public abstract class AbstractSadeApplication extends Application implements Htt
 
             // Shows the error in AbstractComponent
             if (owner instanceof AbstractComponent) {
-                ((AbstractComponent) owner).setComponentError(new UserError(I18N.getMessage("unexpectedError")));
+                ((AbstractComponent) owner).setComponentError(new UserError(I18N.getMessage("unexpectedError") + "\n" + I18N.getMessage("unexpectedErrorCode",stamp)));
             }
 
         } 
         // also print the error on console
-        log.error("Terminal error:", t);
+        log.error("Terminal error, code: " + stamp, t);
     }
     
 

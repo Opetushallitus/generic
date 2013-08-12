@@ -30,6 +30,8 @@ public class ErrorPageHandler {
     private static final Logger LOG = LoggerFactory.getLogger(ErrorPageHandler.class);
     
     private String messageKey;
+    private String codeKey;
+    private String stamp;
     
     
     public void setMessage(String messageKey) {
@@ -40,9 +42,18 @@ public class ErrorPageHandler {
         return I18N.getMessage(messageKey);
     }
     
+    public void setCode(String codeKey) {
+        this.codeKey = codeKey;
+        this.stamp = String.format("%s", System.currentTimeMillis());
+    }
+    
+    public String getCode() {
+        return I18N.getMessage(codeKey, stamp);
+    }
+    
     public void logError(Throwable t) {
         t.printStackTrace();
-        LOG.error("Unexpected error: ", t);
+        LOG.error("Unexpected error, code: " + stamp, t);
     }
     
 }
