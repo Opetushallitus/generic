@@ -15,6 +15,7 @@
  */
 package fi.vm.sade.generic.ui.app;
 
+import java.net.SocketException;
 import java.util.Locale;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,9 +28,17 @@ import org.springframework.context.i18n.LocaleContextHolder;
 
 import com.vaadin.Application;
 import com.vaadin.service.ApplicationContext;
+import com.vaadin.terminal.ParameterHandler;
+import com.vaadin.terminal.Terminal;
+import com.vaadin.terminal.URIHandler;
+import com.vaadin.terminal.UserError;
+import com.vaadin.terminal.VariableOwner;
+import com.vaadin.terminal.gwt.server.ChangeVariablesErrorEvent;
 import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
+import com.vaadin.ui.AbstractComponent;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.Window;
+import com.vaadin.ui.Window.Notification;
 
 import fi.vm.sade.generic.common.I18N;
 import fi.vm.sade.generic.ui.feature.UserFeature;
@@ -108,13 +117,44 @@ public abstract class AbstractSadeApplication extends Application implements Htt
             getMainWindow().addWindow(dialog);
         }
     }
+    
+    @Override
+    public void terminalError(Terminal.ErrorEvent event) {
+        final Throwable t = event.getThrowable();
+        String stamp = String.format("%s", System.currentTimeMillis());
+        if (getMainWindow() != null) {
+            getMainWindow().showNotification(I18N.getMessage("unexpectedError") + "\n" + I18N.getMessage("unexpectedErrorCode",stamp), Notification.TYPE_ERROR_MESSAGE);
+            
+            if (t instanceof SocketException) {
+                // Most likely client browser closed socket
+                log.info(
+                        "SocketException in CommunicationManager."
+                                + " Most likely client (browser) closed socket.");
+                return;
+            }
 
-    public void terminalError(ErrorEvent event) {
-        super.terminalError(event);
-        if (log.isDebugEnabled()) {
-            this.showStackTrace(event.getThrowable());
-        }
+            // Finds the original source of the error/exception
+            Object owner = null;
+            if (event instanceof VariableOwner.ErrorEvent) {
+                owner = ((VariableOwner.ErrorEvent) event).getVariableOwner();
+            } else if (event instanceof URIHandler.ErrorEvent) {
+                owner = ((URIHandler.ErrorEvent) event).getURIHandler();
+            } else if (event instanceof ParameterHandler.ErrorEvent) {
+                owner = ((ParameterHandler.ErrorEvent) event).getParameterHandler();
+            } else if (event instanceof ChangeVariablesErrorEvent) {
+                owner = ((ChangeVariablesErrorEvent) event).getComponent();
+            }
+
+            // Shows the error in AbstractComponent
+            if (owner instanceof AbstractComponent) {
+                ((AbstractComponent) owner).setComponentError(new UserError(I18N.getMessage("unexpectedError") + "\n" + I18N.getMessage("unexpectedErrorCode",stamp)));
+            }
+
+        } 
+        // also print the error on console
+        log.error("Terminal error, code: " + stamp, t);
     }
+    
 
     /*
      * Implement HttpServletRequestListener interface
