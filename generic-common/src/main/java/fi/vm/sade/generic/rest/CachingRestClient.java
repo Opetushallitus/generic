@@ -119,7 +119,7 @@ cacheStatus = localContext.get().getAttribute(CachingHttpClient.CACHE_RESPONSE_S
         return response.getEntity().getContent();
     }
 
-    Object getCacheStatus() {
+    public Object getCacheStatus() {
         return cacheStatus;
     }
 
