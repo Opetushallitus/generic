@@ -4,7 +4,6 @@ import com.google.gson.*;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.cache.CacheResponseStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.cache.CacheConfig;
@@ -21,9 +20,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
@@ -37,13 +34,28 @@ import java.util.GregorianCalendar;
 public class CachingRestClient {
 
     protected Logger logger = LoggerFactory.getLogger(getClass());
-    private static DateFormat df1 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-    private static DateFormat df2 = new SimpleDateFormat("yyyy-MM-dd");
+    private static ThreadLocal<DateFormat> df1 = new ThreadLocal<DateFormat>(){
+        protected DateFormat initialValue() {
+            return new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        };
+    };
+    private static ThreadLocal<DateFormat> df2 = new ThreadLocal<DateFormat>(){
+        @Override
+        protected SimpleDateFormat initialValue() {
+            return new SimpleDateFormat("yyyy-MM-dd");
+        }
+        
+    };
 
     private HttpClient cachingClient;
-    private HttpContext localContext;
-    private HttpResponse response;
-    private Object cacheStatus;
+    private ThreadLocal<HttpContext> localContext = new ThreadLocal<HttpContext>(){
+        @Override
+        protected HttpContext initialValue() {
+            return new BasicHttpContext();
+        }
+    };
+    //private HttpResponse response;
+    private Object cacheStatus;  //used in tests
     private Gson gson;
 
     public CachingRestClient() {
@@ -60,7 +72,6 @@ public class CachingRestClient {
         // init stuff
         final DefaultHttpClient actualClient = new DefaultHttpClient(connectionManager);
         cachingClient = new CachingHttpClient(actualClient, cacheConfig);
-        localContext = new BasicHttpContext();
 
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(XMLGregorianCalendar.class, new JsonDeserializer<XMLGregorianCalendar>() {
@@ -69,7 +80,11 @@ public class CachingRestClient {
             public XMLGregorianCalendar deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context)
                     throws JsonParseException {
                 String string = json.getAsString();
-                return parseXmlGregorianCalendar(string);
+                try {
+                 return parseXmlGregorianCalendar(string);
+                } catch (Throwable t){
+                    return null;
+                }
             }
 
         });
@@ -80,7 +95,14 @@ public class CachingRestClient {
      * get REST Json resource as Java object of type resultType (deserialized with gson).
      */
     public <T> T get(String url, Class<? extends T> resultType) throws IOException {
-        return gson.fromJson(new InputStreamReader(get(url), "utf-8"), resultType);
+        InputStream is = null;
+        try {
+            is = get(url);
+            T t = gson.fromJson(new InputStreamReader(is, "utf-8"), resultType);
+            return t;
+        } finally {
+            is.close();
+        }
     }
 
     /**
@@ -88,46 +110,46 @@ public class CachingRestClient {
      */
     public InputStream get(String url) throws IOException {
 //        logger.info("get... url: {}", url);
-        HttpGet httpget = new HttpGet(url);
-        response = cachingClient.execute(httpget, localContext);
-        cacheStatus = (CacheResponseStatus) localContext.getAttribute(CachingHttpClient.CACHE_RESPONSE_STATUS);
-        logger.info("get done, url: {}, status: {}, cacheStatus: {}, headers: {}", new Object[]{url, response.getStatusLine(), cacheStatus, response.getAllHeaders()});
+        final HttpGet httpget = new HttpGet(url);
+        final HttpResponse response = cachingClient.execute(httpget, localContext.get());
+cacheStatus = localContext.get().getAttribute(CachingHttpClient.CACHE_RESPONSE_STATUS);
+//        logger.info("get done, url: {}, status: {}, cacheStatus: {}, headers: {}", new Object[]{url, response.getStatusLine(), null, response.getAllHeaders()});
 //        System.out.println("==> get done, url: "+url+", status: "+response.getStatusLine()+", cacheStatus: "+cacheStatus+", headers: "+ Arrays.asList(response.getAllHeaders()));
 //        System.out.println(IOUtils.toString(response.getEntity().getContent()));
         return response.getEntity().getContent();
     }
 
-    public Object getCacheStatus() {
+    Object getCacheStatus() {
         return cacheStatus;
     }
 
     private XMLGregorianCalendar parseXmlGregorianCalendar(String string) {
+        // long t = System.currentTimeMillis();
         if (string == null || string.isEmpty()) {
             return null;
         }
-        try {
-            // parse from yyyy-MM-dd HH:mm
-            GregorianCalendar cal = new GregorianCalendar();
-            cal.setTime(df1.parse(string));
-            return new XMLGregorianCalendarImpl(cal);
-        } catch (ParseException e1) {
-            try {
-                // parse from yyyy-MM-dd
-                GregorianCalendar cal = new GregorianCalendar();
-                cal.setTime(df2.parse(string));
-                return new XMLGregorianCalendarImpl(cal);
-            } catch (ParseException e2) {
-                try {
-                    // parse from 1371449469346
-                    GregorianCalendar cal = new GregorianCalendar();
-                    cal.setTime(new Date(Long.parseLong(string)));
-                    return new XMLGregorianCalendarImpl(cal);
-                } catch (NumberFormatException e3) {
-                    logger.warn("error parsing json to xmlgregoriancal: "+ string);
-                    return null;
-                }
-            }
-        }
-    }
 
+        final boolean hasSemicolon = string.indexOf(":") != -1;
+        final boolean hasDash = string.indexOf("-") != -1;
+
+        try {
+            if (hasSemicolon) {
+                GregorianCalendar cal = new GregorianCalendar();
+                cal.setTime(df1.get().parse(string));
+                return new XMLGregorianCalendarImpl(cal);
+            } else if (hasDash) {
+                GregorianCalendar cal = new GregorianCalendar();
+                cal.setTime(df2.get().parse(string));
+                return new XMLGregorianCalendarImpl(cal);
+            } else {
+                GregorianCalendar cal = new GregorianCalendar();
+                cal.setTime(new Date(Long.parseLong(string)));
+                return new XMLGregorianCalendarImpl(cal);
+
+            }
+        } catch (Throwable th) {
+            logger.warn("error parsing json to xmlgregoriancal: " + string);
+        }
+        return null;
+    }
 }
