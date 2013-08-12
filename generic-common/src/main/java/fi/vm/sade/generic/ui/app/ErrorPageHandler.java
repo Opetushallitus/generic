@@ -52,7 +52,6 @@ public class ErrorPageHandler {
     }
     
     public void logError(Throwable t) {
-        t.printStackTrace();
         LOG.error("Unexpected error, code: " + stamp, t);
     }
     
