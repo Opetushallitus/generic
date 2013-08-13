@@ -59,6 +59,8 @@ public abstract class AbstractSadeApplication extends Application implements Htt
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
+    private static final String MDC_USER = "user";
+
     public static final String DEFAULT_LOCALE = "fi_FI";
 
     protected static ThreadLocal<User> userThreadLocal = new ThreadLocal<User>();
@@ -117,14 +119,14 @@ public abstract class AbstractSadeApplication extends Application implements Htt
             getMainWindow().addWindow(dialog);
         }
     }
-    
+
     @Override
     public void terminalError(Terminal.ErrorEvent event) {
         final Throwable t = event.getThrowable();
         String stamp = String.format("%s", System.currentTimeMillis());
         if (getMainWindow() != null) {
             getMainWindow().showNotification(I18N.getMessage("unexpectedError") + "\n" + I18N.getMessage("unexpectedErrorCode",stamp), Notification.TYPE_ERROR_MESSAGE);
-            
+
             if (t instanceof SocketException) {
                 // Most likely client browser closed socket
                 log.info(
@@ -150,59 +152,24 @@ public abstract class AbstractSadeApplication extends Application implements Htt
                 ((AbstractComponent) owner).setComponentError(new UserError(I18N.getMessage("unexpectedError") + "\n" + I18N.getMessage("unexpectedErrorCode",stamp)));
             }
 
-        } 
+        }
         // also print the error on console
         log.error("Terminal error, code: " + stamp, t);
     }
-    
+
 
     /*
      * Implement HttpServletRequestListener interface
      */
     @Override
     public void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
+        log.debug("onRequestStart()");
+
         // NO SUPER
         User user = new UserLiferayImpl(request);
         UserFeature.set(user);
         setLocale(user.getLang());
-    }
 
-    @Override
-    public void onRequestEnd(HttpServletRequest request, HttpServletResponse response) {
-        // NO SUPER
-        UserFeature.remove();
-    }
-
-    /**
-     * Gets parameter value from HttpServletRequest.
-     *
-     * @param req
-     * @param name
-     * @return
-     */
-    private String getParameter(Object req, String name) {
-        HttpServletRequest request = (HttpServletRequest) req;
-        return request.getParameter(name);
-    }
-
-    /**
-     * Gets parameter value from HttpServletRequest.
-     *
-     * @param req
-     * @param name
-     * @return
-     */
-    protected Object getSessionAttribute(Object req, String name) {
-        HttpServletRequest request = (HttpServletRequest) req;
-        return request.getSession().getAttribute(name);
-    }
-
-    // Implement ApplicationContext.TransactionListener interface
-
-    private static final String MDC_USER = "user";
-
-    @Override
-    public void transactionStart(Application application, Object transactionData) {
         // TODO "user to MDC" should be moved to correct filter when somone finds the correct location, preferably same for front/backend...
         {
             // Add user principal (OID) to MDC for logging if available
@@ -220,7 +187,36 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     }
 
     @Override
-    public void transactionEnd(Application application, Object transactionData) {
+    public void onRequestEnd(HttpServletRequest request, HttpServletResponse response) {
+        log.debug("onRequestEnd()");
+
+        // NO SUPER
+        UserFeature.remove();
+
         MDC.remove(MDC_USER);
+    }
+
+    /**
+     * Gets parameter value from Session.
+     *
+     * @param req
+     * @param name
+     * @return
+     */
+    protected Object getSessionAttribute(Object req, String name) {
+        HttpServletRequest request = (HttpServletRequest) req;
+        return request.getSession().getAttribute(name);
+    }
+
+    // Implement ApplicationContext.TransactionListener interface
+
+    @Override
+    public void transactionStart(Application application, Object transactionData) {
+        log.debug("transactionStart()");
+    }
+
+    @Override
+    public void transactionEnd(Application application, Object transactionData) {
+        log.debug("transactionEnd()");
     }
 }
