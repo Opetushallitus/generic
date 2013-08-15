@@ -36,13 +36,20 @@ import com.vaadin.terminal.VariableOwner;
 import com.vaadin.terminal.gwt.server.ChangeVariablesErrorEvent;
 import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
 import com.vaadin.ui.AbstractComponent;
+import com.vaadin.ui.Alignment;
+import com.vaadin.ui.Button;
+import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
+import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Window.Notification;
 
 import fi.vm.sade.generic.common.I18N;
 import fi.vm.sade.generic.ui.feature.UserFeature;
 import fi.vm.sade.generic.ui.portlet.security.User;
+import fi.vm.sade.vaadin.util.UiUtil;
+
 import org.slf4j.MDC;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -125,7 +132,49 @@ public abstract class AbstractSadeApplication extends Application implements Htt
         final Throwable t = event.getThrowable();
         String stamp = String.format("%s", System.currentTimeMillis());
         if (getMainWindow() != null) {
-            getMainWindow().showNotification(I18N.getMessage("unexpectedError") + "\n" + I18N.getMessage("unexpectedErrorCode",stamp), Notification.TYPE_ERROR_MESSAGE);
+            
+            final Window errorPopup = new Window(I18N.getMessage("error"));
+            errorPopup.setClosable(false);
+            VerticalLayout vl = new VerticalLayout();
+            vl.setWidth("300px");
+            vl.setMargin(true);
+            vl.setSpacing(true);
+            VerticalLayout vl1 =new VerticalLayout();
+            vl1.setSizeFull();
+            vl1.addStyleName("error-container");
+            vl1.setSpacing(true);
+            Label unexpectedLabel = new Label(I18N.getMessage("unexpectedError"));
+            unexpectedLabel.addStyleName("error");
+            unexpectedLabel.setWidth("100%");
+            vl1.addComponent(unexpectedLabel);
+            Label errorCodeLabel = new Label(I18N.getMessage("unexpectedErrorCode",stamp));
+            errorCodeLabel.addStyleName("error");
+            errorCodeLabel.setWidth("100%");
+            vl1.addComponent(errorCodeLabel);
+            vl.addComponent(vl1);
+            Button okButton = UiUtil.button(vl, I18N.getMessage("OK"), new Button.ClickListener() {
+
+                private static final long serialVersionUID = 6028471405922131311L;
+
+                @Override
+                public void buttonClick(ClickEvent event) {
+                    if (errorPopup != null) {
+                        getMainWindow().removeWindow(errorPopup);
+                    }
+                }
+            });
+           
+            
+            vl.setComponentAlignment(okButton, Alignment.BOTTOM_CENTER);
+            errorPopup.setContent(vl);
+            
+            errorPopup.setModal(true);
+            errorPopup.center();
+            
+            
+            getMainWindow().addWindow(errorPopup);
+            
+            //getMainWindow().showNotification(I18N.getMessage("unexpectedError") + "\n" + I18N.getMessage("unexpectedErrorCode",stamp), Notification.TYPE_ERROR_MESSAGE);
 
             if (t instanceof SocketException) {
                 // Most likely client browser closed socket
