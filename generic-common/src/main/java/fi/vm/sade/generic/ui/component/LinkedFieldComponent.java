@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.data.util.ObjectProperty;
@@ -178,5 +179,13 @@ public class LinkedFieldComponent extends VerticalLayout {
     public void setTitle(String title) {
         this.titleLabel.setContentMode(Label.CONTENT_DEFAULT);
         this.titleLabel.setPropertyDataSource(new ObjectProperty<String>(title, String.class));
+    }
+
+    public void addCheckboxValueChangeListener(ValueChangeListener valueChangeListener) {
+
+        if(linked != null) {
+            linked.addListener(valueChangeListener);
+        }
+
     }
 }
