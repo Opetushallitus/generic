@@ -31,6 +31,7 @@ public class ErrorPageHandler {
     
     private String messageKey;
     private String codeKey;
+    private String toFrontPageKey;
     private String stamp;
     
     
@@ -53,6 +54,14 @@ public class ErrorPageHandler {
     
     public void logError(Throwable t) {
         LOG.error("Unexpected error, code: " + stamp, t);
+    }
+
+    public String getToFrontPage() {
+        return I18N.getMessage(toFrontPageKey);
+    }
+
+    public void setToFrontPage(String toFrontPageKey) {
+        this.toFrontPageKey = toFrontPageKey;
     }
     
 }
