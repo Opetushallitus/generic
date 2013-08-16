@@ -136,21 +136,18 @@ public abstract class AbstractSadeApplication extends Application implements Htt
             final Window errorPopup = new Window(I18N.getMessage("error"));
             errorPopup.setClosable(false);
             VerticalLayout vl = new VerticalLayout();
-            vl.setWidth("300px");
-            vl.setMargin(true);
+            vl.setWidth("380px");
             vl.setSpacing(true);
+            vl.setMargin(true);
             VerticalLayout vl1 =new VerticalLayout();
             vl1.setSizeFull();
             vl1.addStyleName("error-container");
             vl1.setSpacing(true);
-            Label unexpectedLabel = new Label(I18N.getMessage("unexpectedError"));
+            Label unexpectedLabel = new Label(I18N.getMessage("unexpectedError", stamp));
             unexpectedLabel.addStyleName("error");
             unexpectedLabel.setWidth("100%");
             vl1.addComponent(unexpectedLabel);
-            Label errorCodeLabel = new Label(I18N.getMessage("unexpectedErrorCode",stamp));
-            errorCodeLabel.addStyleName("error");
-            errorCodeLabel.setWidth("100%");
-            vl1.addComponent(errorCodeLabel);
+            vl1.setComponentAlignment(unexpectedLabel, Alignment.MIDDLE_CENTER);
             vl.addComponent(vl1);
             Button okButton = UiUtil.button(vl, I18N.getMessage("OK"), new Button.ClickListener() {
 
@@ -165,9 +162,10 @@ public abstract class AbstractSadeApplication extends Application implements Htt
             });
            
             
+            vl.setComponentAlignment(vl1, Alignment.MIDDLE_CENTER);
             vl.setComponentAlignment(okButton, Alignment.BOTTOM_CENTER);
-            errorPopup.setContent(vl);
             
+            errorPopup.setContent(vl);
             errorPopup.setModal(true);
             errorPopup.center();
             

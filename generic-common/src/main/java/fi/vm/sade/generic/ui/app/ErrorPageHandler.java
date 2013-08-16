@@ -30,26 +30,17 @@ public class ErrorPageHandler {
     private static final Logger LOG = LoggerFactory.getLogger(ErrorPageHandler.class);
     
     private String messageKey;
-    private String codeKey;
     private String toFrontPageKey;
     private String stamp;
     
     
     public void setMessage(String messageKey) {
         this.messageKey = messageKey;
+        stamp = String.format("%s", System.currentTimeMillis());
     }
     
     public String getMessage() {
-        return I18N.getMessage(messageKey);
-    }
-    
-    public void setCode(String codeKey) {
-        this.codeKey = codeKey;
-        this.stamp = String.format("%s", System.currentTimeMillis());
-    }
-    
-    public String getCode() {
-        return I18N.getMessage(codeKey, stamp);
+        return I18N.getMessage(messageKey, stamp);
     }
     
     public void logError(Throwable t) {
