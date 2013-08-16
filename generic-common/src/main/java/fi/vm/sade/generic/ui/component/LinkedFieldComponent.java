@@ -131,6 +131,8 @@ public class LinkedFieldComponent extends VerticalLayout {
             for (Entry<AbstractField, Label> e : otherFields.entrySet()) {
                 if (linked.booleanValue()) {
                     e.getKey().setValue(primaryField.getValue());
+                } else {
+                	e.getKey().setValue(null);
                 }
                 e.getKey().setEnabled(!linked.booleanValue());
                 e.getValue().setEnabled(!linked.booleanValue());
