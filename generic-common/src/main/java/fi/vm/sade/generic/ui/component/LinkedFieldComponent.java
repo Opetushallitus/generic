@@ -36,19 +36,28 @@ public class LinkedFieldComponent extends VerticalLayout {
     private String linkedText;
     private Label primaryLabel;
     private Label titleLabel;
-
+    private boolean cannotBeEmpty;
+    
     private void addField(GridLayout fieldLayout, Label label, AbstractField field) {
         int row = fieldLayout.getRows();
         fieldLayout.insertRow(row);
 
         fieldLayout.addComponent(field, 0, row);
         fieldLayout.setComponentAlignment(field, Alignment.TOP_LEFT);
-
-        fieldLayout.addComponent(label, 1, row);
+        
+        if (cannotBeEmpty && field == primaryField) {
+	        Label star = new Label("*");
+	        star.setStyleName("v-required-field-indicator");
+	        fieldLayout.addComponent(star, 1, 1);
+	        fieldLayout.setComponentAlignment(star, Alignment.TOP_LEFT);
+        }   
+        
+        fieldLayout.addComponent(label, 2, row);
         fieldLayout.setComponentAlignment(label, Alignment.MIDDLE_LEFT);
         label.setSizeUndefined();
 
         field.setWidth("100%");
+     
     }
 
     public LinkedFieldComponent(String linkedText, AbstractField... fields) {
@@ -76,11 +85,12 @@ public class LinkedFieldComponent extends VerticalLayout {
     }
 
     public LinkedFieldComponent(String linkedText, AbstractField primaryField, Label primaryFieldLabel,
-            Map<AbstractField, Label> otherFields) {
+            Map<AbstractField, Label> otherFields, boolean cannotBeEmpty) {
         this.linkedText = linkedText;
         this.primaryField = primaryField;
         this.primaryLabel = primaryFieldLabel;
         this.otherFields = otherFields;
+        this.cannotBeEmpty = cannotBeEmpty;
         initializeComponent();
     }
 
@@ -88,22 +98,27 @@ public class LinkedFieldComponent extends VerticalLayout {
         setMargin(false, false, true, false);
         setWidth("100%");
 
-        GridLayout fieldLayout = new GridLayout(2, 1);
+        GridLayout fieldLayout = new GridLayout(3, 1);
         fieldLayout.setWidth("100%");
         fieldLayout.setColumnExpandRatio(0, 1.0f);
         fieldLayout.setSpacing(true);
 
         titleLabel = new Label();
         fieldLayout.addComponent(titleLabel, 0, 0);
-
+        fieldLayout.addComponent(new Label(""), 1, 0);
+        
         linked = new CheckBox(linkedText);
         linked.addListener(new LinkedCheckBoxValueChangeListener());
         linked.setImmediate(true);
-        fieldLayout.addComponent(linked, 1, 0);
+        fieldLayout.addComponent(linked, 2, 0);
         fieldLayout.setComponentAlignment(linked, Alignment.BOTTOM_RIGHT);
-
+        
+   
+        
         addField(fieldLayout, this.primaryLabel, primaryField);
-
+        
+     
+        
         primaryField.setImmediate(true);
 
         if (primaryField instanceof AbstractTextField) {
