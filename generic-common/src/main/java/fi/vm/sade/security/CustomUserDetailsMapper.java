@@ -20,8 +20,13 @@ public class CustomUserDetailsMapper extends LdapUserDetailsMapper {
         if (oid == null) {
             oid = ctx.getStringAttribute("uid");
         }
+        String lang = ctx.getStringAttribute("preferredLanguage");
+
         UserDetails userDetails = super.mapUserFromContext(ctx, oid, authorities);
-        return userDetails;
+
+        SadeUserDetailsWrapper wrapper = new SadeUserDetailsWrapper(userDetails,lang);
+
+        return wrapper;
     }
 
 }
