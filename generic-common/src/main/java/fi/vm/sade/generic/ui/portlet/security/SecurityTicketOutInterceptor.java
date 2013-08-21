@@ -59,7 +59,7 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
         else if(authentication instanceof CasAuthenticationToken) {
             String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
             CasAuthenticationToken casAuthenticationToken = (CasAuthenticationToken) authentication;
-            String proxyTicket = getCachedProxyTicket(casTargetService, casAuthenticationToken);
+            String proxyTicket = getCachedProxyTicket(casTargetService, casAuthenticationToken, true);
             ((HttpURLConnection) message.get("http.connection")).setRequestProperty("CasSecurityTicket", proxyTicket);
             return;
         }
@@ -69,11 +69,22 @@ public class SecurityTicketOutInterceptor extends AbstractSoapInterceptor {
         log.warn("Could not attach security ticket to SOAP message, authMode: "+authMode+", authentication: " + authentication);
     }
 
-    private String getCachedProxyTicket(String casTargetService, CasAuthenticationToken casAuthenticationToken) {
+    @Override
+    public void handleFault(SoapMessage message) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if(authentication instanceof CasAuthenticationToken) {
+            String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
+            String cachedProxyTicket = getCachedProxyTicket(casTargetService, (CasAuthenticationToken) authentication, false);
+            String msgProxyTicket = ((HttpURLConnection) message.get("http.connection")).getRequestProperty("CasSecurityTicket");
+            log.error("FAULT in soap call, authentication: " + authentication+", msgProxyTicket: "+msgProxyTicket+", cachedProxyTicket: "+cachedProxyTicket);
+        }
+    }
+
+    private String getCachedProxyTicket(String casTargetService, CasAuthenticationToken casAuthenticationToken, boolean createIfNotCached) {
         String cacheKey = casAuthenticationToken.hashCode()+"_"+casTargetService;
         String proxyTicket = ticketCache.get(cacheKey);
         boolean cached = proxyTicket != null;
-        if (!cached) {
+        if (!cached && createIfNotCached) {
             proxyTicket = casAuthenticationToken.getAssertion().getPrincipal().getProxyTicketFor(casTargetService);
             ticketCache.put(cacheKey, proxyTicket);
         }

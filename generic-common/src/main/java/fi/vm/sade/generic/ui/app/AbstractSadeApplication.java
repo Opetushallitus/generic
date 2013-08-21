@@ -21,6 +21,8 @@ import java.util.Locale;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import fi.vm.sade.security.SadeUserDetailsWrapper;
+import org.apache.commons.lang.LocaleUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,12 +98,7 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     @Override
     public void setLocale(Locale locale) {
         // DEBUGSAWAY:log.debug("setLocale({})", locale);
-        if (locale == null) {
-            locale = new Locale(DEFAULT_LOCALE);
-            // DEBUGSAWAY:log.debug("locale was null, defaulting({})", locale);
-        }
-        I18N.setLocale(locale);
-        LocaleContextHolder.setLocale(locale);
+
         super.setLocale(locale);
     }
 
@@ -110,6 +107,15 @@ public abstract class AbstractSadeApplication extends Application implements Htt
             Locale locale = new Locale(lang);
             setLocale(locale);
         }
+    }
+
+    private void setUserLocale(Locale locale) {
+        if (locale == null) {
+            locale = new Locale(DEFAULT_LOCALE);
+            // DEBUGSAWAY:log.debug("locale was null, defaulting({})", locale);
+        }
+        I18N.setLocale(locale);
+        LocaleContextHolder.setLocale(locale);
     }
 
     /**
@@ -215,8 +221,20 @@ public abstract class AbstractSadeApplication extends Application implements Htt
         // NO SUPER
         User user = new UserLiferayImpl(request);
         UserFeature.set(user);
-        setLocale(user.getLang());
 
+        //setLocale(user.getLang());
+        String lang = null;
+        if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof SadeUserDetailsWrapper) {
+           lang =  ((SadeUserDetailsWrapper)SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getLang();
+        }
+        Locale userLocale = null;
+        if (lang != null) {
+            userLocale = LocaleUtils.toLocale(lang);
+
+        }  else {
+            userLocale = LocaleUtils.toLocale(DEFAULT_LOCALE);
+        }
+        setUserLocale(userLocale);
         // TODO "user to MDC" should be moved to correct filter when somone finds the correct location, preferably same for front/backend...
         {
             // Add user principal (OID) to MDC for logging if available
