@@ -34,11 +34,12 @@ import java.util.List;
  */
 public abstract class WrapperComponent<DTOCLASS> extends CustomComponent implements Field {
 
+    private static final String FIELD_CAPTION = "fieldCaption";
     protected Logger log = LoggerFactory.getLogger(getClass());
     protected AbstractSelect field;
     protected Layout root;
-    protected CaptionFormatter captionFormatter;
-    protected FieldValueFormatter fieldValueFormatter;
+    protected CaptionFormatter<DTOCLASS> captionFormatter;
+    protected FieldValueFormatter<DTOCLASS> fieldValueFormatter;
     protected final IndexedContainer container = new IndexedContainer();
 
     protected WrapperComponent(CaptionFormatter<DTOCLASS> captionFormatter, FieldValueFormatter<DTOCLASS> fieldValueFormatter) {
@@ -51,28 +52,28 @@ public abstract class WrapperComponent<DTOCLASS> extends CustomComponent impleme
     public void setField(AbstractSelect field) {
         this.field = field;
         container.removeAllItems();
-        container.addContainerProperty("fieldCaption", String.class, "");
+        container.addContainerProperty(FIELD_CAPTION, String.class, "");
         field.setContainerDataSource(container);
-        field.setItemCaptionPropertyId("fieldCaption");
+        field.setItemCaptionPropertyId(FIELD_CAPTION);
         root.addComponent(field);
     }
 
     protected void setFieldValues() {
-        List<DTOCLASS> dtos = loadOptions();
+        final List<DTOCLASS> dtos = loadOptions();
         for (DTOCLASS dto : dtos) {
-            Object value = this.fieldValueFormatter.formatFieldValue(dto);
-            Item item = container.addItem(value);
+            final Object value = this.fieldValueFormatter.formatFieldValue(dto);
+            final Item item = container.addItem(value);
             if (item == null) {
                 // this should happen only when closing view etc, but shouldn't matter anyway?
                 //throw new NullPointerException("WrapperComponent.setFieldValues failed, null item for value: "+value+", dto: "+dto);
-                log.warn("setFieldValues failed, null item for value: " + value + ", dto: " + dto);
+//                log.debug("setFieldValues failed, null item for value: " + value + ", dto: " + dto);
             } else {
-                String formattedCaption = formatCaption(dto);
-                Property fieldCaption = item.getItemProperty("fieldCaption");
+                final String formattedCaption = formatCaption(dto);
+                final Property fieldCaption = item.getItemProperty(FIELD_CAPTION);
                 fieldCaption.setValue(formattedCaption);
             }
         }
-        container.sort(new Object[] {"fieldCaption"}, new boolean[] {true});
+        container.sort(new Object[] {FIELD_CAPTION}, new boolean[] {true});
     }
 
     protected abstract List<DTOCLASS> loadOptions();
@@ -102,6 +103,12 @@ public abstract class WrapperComponent<DTOCLASS> extends CustomComponent impleme
     public void attach() {
         super.attach();
         setFieldValues();
+    }
+    
+    @Override
+    public void detach() {
+        super.detach();
+        container.removeAllItems();
     }
 
     /**
@@ -275,7 +282,7 @@ public abstract class WrapperComponent<DTOCLASS> extends CustomComponent impleme
     /**
      * @param captionFormatter the captionFormatter to set
      */
-    public void setCaptionFormatter(CaptionFormatter captionFormatter) {
+    public void setCaptionFormatter(CaptionFormatter<DTOCLASS> captionFormatter) {
         this.captionFormatter = captionFormatter;
     }
 
@@ -288,11 +295,11 @@ public abstract class WrapperComponent<DTOCLASS> extends CustomComponent impleme
         container.sort(propertyId, ascending);
     }
 
-    public FieldValueFormatter getFieldValueFormatter() {
+    public FieldValueFormatter<DTOCLASS> getFieldValueFormatter() {
         return fieldValueFormatter;
     }
 
-    public void setFieldValueFormatter(FieldValueFormatter fieldValueFormatter) {
+    public void setFieldValueFormatter(FieldValueFormatter<DTOCLASS> fieldValueFormatter) {
         this.fieldValueFormatter = fieldValueFormatter;
     }
 
