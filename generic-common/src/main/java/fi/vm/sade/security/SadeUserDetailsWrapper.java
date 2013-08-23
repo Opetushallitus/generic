@@ -28,6 +28,11 @@ public class SadeUserDetailsWrapper implements UserDetails  {
     private UserDetails details;
     private String lang;
 
+    @Override
+    public String toString() {
+        return getUsername();
+    }
+
     public SadeUserDetailsWrapper(UserDetails details) {
           this.details = details;
     }
