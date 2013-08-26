@@ -41,7 +41,8 @@ public class OphRichTextArea extends TinyMCETextField {
             + "theme_advanced_buttons1 : 'formatselect,bold,italic,underline,strikethrough,numlist,bullist,|,undo,redo,|,link,table,|,pastetext,pasteword,selectall,|,removeformat', "
             + "theme_advanced_buttons2 : '', "
             + "theme_advanced_buttons3 : '', "
-            + "theme_advanced_statusbar_location : ''}";
+            + "theme_advanced_statusbar_location : '', " 
+            + "entity_encoding: 'raw'}";
 
     private static final String _readOnlyConfig = "{theme : 'advanced', mode : 'textareas', readonly : true}";
 
@@ -56,6 +57,7 @@ public class OphRichTextArea extends TinyMCETextField {
         super.setConfig(_config);
         super.setWidth("600px");
         super.setHeight("250px");
+        
     }
 
     /**
