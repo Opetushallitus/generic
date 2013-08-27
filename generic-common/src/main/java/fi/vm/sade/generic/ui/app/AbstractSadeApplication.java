@@ -219,8 +219,8 @@ public abstract class AbstractSadeApplication extends Application implements Htt
         log.debug("onRequestStart()");
 
         // NO SUPER
-        User user = new UserLiferayImpl(request);
-        UserFeature.set(user);
+//        User user = new UserLiferayImpl(request);
+//        UserFeature.set(user);
 
         //setLocale(user.getLang());
         String lang = null;
@@ -235,30 +235,30 @@ public abstract class AbstractSadeApplication extends Application implements Htt
             userLocale = LocaleUtils.toLocale(DEFAULT_LOCALE);
         }
         setUserLocale(userLocale);
-        // TODO "user to MDC" should be moved to correct filter when somone finds the correct location, preferably same for front/backend...
-        {
-            // Add user principal (OID) to MDC for logging if available
-            if (SecurityContextHolder.getContext().getAuthentication() != null) {
-                if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof UserDetails) {
-                	UserDetails ud = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-                    MDC.put(MDC_USER, ud.getUsername());
-                } else {
-                	MDC.put(MDC_USER, "" + SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-                }
-            } else {
-                MDC.put(MDC_USER, "-");
-            }
-        }
+//        // TODO "user to MDC" should be moved to correct filter when somone finds the correct location, preferably same for front/backend...
+//        {
+//            // Add user principal (OID) to MDC for logging if available
+//            if (SecurityContextHolder.getContext().getAuthentication() != null) {
+//                if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof UserDetails) {
+//                	UserDetails ud = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//                    MDC.put(MDC_USER, ud.getUsername());
+//                } else {
+//                	MDC.put(MDC_USER, "" + SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+//                }
+//            } else {
+//                MDC.put(MDC_USER, "-");
+//            }
+//        }
     }
 
     @Override
     public void onRequestEnd(HttpServletRequest request, HttpServletResponse response) {
-        log.debug("onRequestEnd()");
+        //log.debug("onRequestEnd()");
 
         // NO SUPER
-        UserFeature.remove();
+//        UserFeature.remove();
 
-        MDC.remove(MDC_USER);
+//        MDC.remove(MDC_USER);
     }
 
     /**
