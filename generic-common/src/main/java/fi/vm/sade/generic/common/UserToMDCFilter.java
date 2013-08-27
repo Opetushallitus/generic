@@ -17,7 +17,6 @@ public class UserToMDCFilter implements javax.servlet.Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
             FilterChain chain) throws IOException, ServletException {
-        System.out.println("zz");
         try {
 
             if (SecurityContextHolder.getContext() != null && SecurityContextHolder.getContext().getAuthentication()!=null) {
@@ -44,6 +43,5 @@ public class UserToMDCFilter implements javax.servlet.Filter {
 
     @Override
     public void init(FilterConfig arg0) throws ServletException {
-        System.out.println("\n\n\n\nMDC.init");
     }
 }
