@@ -42,7 +42,9 @@ public class OphRichTextArea extends TinyMCETextField {
             + "theme_advanced_buttons2 : '', "
             + "theme_advanced_buttons3 : '', "
             + "theme_advanced_statusbar_location : '', " 
-            + "entity_encoding: 'raw'}";
+            + "entity_encoding: 'raw'," 
+            + "apply_source_formatting : false, "
+            + "remove_linebreaks : true}";
 
     private static final String _readOnlyConfig = "{theme : 'advanced', mode : 'textareas', readonly : true}";
 
