@@ -202,7 +202,7 @@ public abstract class AbstractSadeApplication extends Application implements Htt
 
             // Shows the error in AbstractComponent
             if (owner instanceof AbstractComponent) {
-                ((AbstractComponent) owner).setComponentError(new UserError(I18N.getMessage("unexpectedError") + "\n" + I18N.getMessage("unexpectedErrorCode",stamp)));
+                ((AbstractComponent) owner).setComponentError(new UserError(I18N.getMessage("unexpectedError",stamp)));
             }
 
         }
