@@ -1,9 +1,10 @@
 package fi.vm.sade.generic.ui.portlet.security;
 
 import fi.vm.sade.security.SimpleCache;
-import org.apache.cxf.jaxrs.ext.RequestHandler;
-import org.apache.cxf.jaxrs.model.ClassResourceInfo;
+import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;
+import org.apache.cxf.phase.AbstractPhaseInterceptor;
+import org.apache.cxf.phase.Phase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +13,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import javax.ws.rs.core.Response;
 import java.net.HttpURLConnection;
 import java.util.Collection;
 import java.util.Map;
@@ -22,7 +22,7 @@ import java.util.Map;
  * Date: 3.9.2013
  * Time: 9.58
  */
-public class SecurityTicketOutInterceptorRest implements RequestHandler {
+public class SecurityTicketOutInterceptorRest extends AbstractPhaseInterceptor<Message> {
     private final static Logger log = LoggerFactory.getLogger(SecurityTicketOutInterceptorRest.class);
 
     public static final int MAX_TICKET_CACHE_SIZE = 10000;
@@ -33,8 +33,12 @@ public class SecurityTicketOutInterceptorRest implements RequestHandler {
     @Value("${auth.mode:cas}")
     private String authMode;
 
+    public SecurityTicketOutInterceptorRest() {
+        super(Phase.PRE_PROTOCOL);
+    }
+
     @Override
-    public Response handleRequest(Message message, ClassResourceInfo classResourceInfo) {
+    public void handleMessage(Message message) throws Fault {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null && "dev".equals(authMode)) {
@@ -44,20 +48,31 @@ public class SecurityTicketOutInterceptorRest implements RequestHandler {
             ((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", user);
             ((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_authorities", authorities);
             log.info("DEV Proxy ticket! user: " + user + ", authorities: " + authorities);
-            return null;
+            return;
         } else if (authentication instanceof CasAuthenticationToken) {
             String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
             CasAuthenticationToken casAuthenticationToken = (CasAuthenticationToken) authentication;
             String proxyTicket = getCachedProxyTicket(casTargetService, casAuthenticationToken, true);
             ((HttpURLConnection) message.get("http.connection")).setRequestProperty("CasSecurityTicket", proxyTicket);
-            return null;
+            return;
         }
 
         //((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", authentication.getName());
         //((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_authorities", ticketHeader.ticket);
         log.warn("Could not attach security ticket to SOAP message, authMode: " + authMode + ", authentication: " + authentication);
-        return null;
     }
+
+    @Override
+    public void handleFault(Message message) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication instanceof CasAuthenticationToken) {
+            String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
+            String cachedProxyTicket = getCachedProxyTicket(casTargetService, (CasAuthenticationToken) authentication, false);
+            String msgProxyTicket = ((HttpURLConnection) message.get("http.connection")).getRequestProperty("CasSecurityTicket");
+            log.error("FAULT in soap call, authentication: " + authentication + ", msgProxyTicket: " + msgProxyTicket + ", cachedProxyTicket: " + cachedProxyTicket);
+        }
+    }
+
 
     private String getCachedProxyTicket(String casTargetService, CasAuthenticationToken casAuthenticationToken, boolean createIfNotCached) {
         String cacheKey = casAuthenticationToken.hashCode() + "_" + casTargetService;
