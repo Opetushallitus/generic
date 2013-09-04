@@ -16,6 +16,7 @@
 package fi.vm.sade.vaadin.ui;
 
 
+import com.vaadin.data.Container;
 import com.vaadin.ui.TreeTable;
 import fi.vm.sade.vaadin.Oph;
 import fi.vm.sade.vaadin.util.UiBaseUtil;
@@ -36,6 +37,11 @@ public abstract class OphAbstractTreeTable extends TreeTable {
         super();
 
         init(width, height);
+    }
+
+    public OphAbstractTreeTable(Container container) {
+        super(null, container);
+        init(null, null);
     }
 
     private void init(String width, String height) {
