@@ -3,6 +3,7 @@ package fi.vm.sade.generic.ui.app;
 import com.vaadin.terminal.Terminal.ErrorListener;
 import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
 import com.vaadin.ui.Window;
+import fi.vm.sade.generic.common.I18N;
 import fi.vm.sade.generic.ui.feature.UserFeature;
 import fi.vm.sade.generic.ui.portlet.security.User;
 import org.dellroad.stuff.vaadin.SpringContextApplication;
@@ -81,8 +82,8 @@ public abstract class AbstractSpringContextApplication extends SpringContextAppl
     @Override
     protected void doOnRequestStart(HttpServletRequest request, HttpServletResponse response) {
         User user = new UserLiferayImpl(request);
-        setLocale(user.getLang());
         UserFeature.set(user);
+        I18N.setLocale(user.getLang());
     }
 
     @Override

@@ -18,6 +18,8 @@ package fi.vm.sade.generic.ui.app;
 
 import fi.vm.sade.generic.ui.portlet.security.AccessRight;
 import fi.vm.sade.generic.ui.portlet.security.User;
+import fi.vm.sade.security.SadeUserDetailsWrapper;
+import org.apache.commons.lang.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.TestingAuthenticationToken;
@@ -39,6 +41,8 @@ import java.util.*;
 public class UserLiferayImpl implements User {
 
     private static final long serialVersionUID = 1L;
+
+    public static final String DEFAULT_LOCALE = "fi_FI";
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -70,6 +74,7 @@ public class UserLiferayImpl implements User {
                     authorities));
             initSupportForOldAuthzFromSpringAuthentication();
         }
+
     }
 
     @Deprecated
@@ -220,7 +225,20 @@ public class UserLiferayImpl implements User {
 
     @Override
     public Locale getLang() {
-        return servletRequest.getLocale();
+
+        String lang = null;
+        if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof SadeUserDetailsWrapper) {
+            lang =  ((SadeUserDetailsWrapper)SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getLang();
+        }
+        Locale userLocale = null;
+        if (lang != null) {
+            userLocale = LocaleUtils.toLocale(lang);
+
+        }  else {
+            userLocale = LocaleUtils.toLocale(DEFAULT_LOCALE);
+        }
+
+        return userLocale;
     }
 
     @Override
