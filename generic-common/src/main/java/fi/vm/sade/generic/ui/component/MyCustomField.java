@@ -43,6 +43,11 @@ public class MyCustomField extends CustomField {
     protected CustomLayout layout;
     private Class type;
 
+    public MyCustomField(Class type) {
+        super();
+        this.type = type;
+    }
+
     public MyCustomField(Class type, CustomLayout layout) {
         super();
         this.type = type;
@@ -50,6 +55,11 @@ public class MyCustomField extends CustomField {
         setCompositionRoot(layout);
     }
 
+    protected void setLayout(CustomLayout layout) {
+		this.layout = layout;
+        setCompositionRoot(layout);
+	}    
+        
     protected void initFields() {
         for (String fieldKey : fields.keySet()) {
             Field field = fields.get(fieldKey);

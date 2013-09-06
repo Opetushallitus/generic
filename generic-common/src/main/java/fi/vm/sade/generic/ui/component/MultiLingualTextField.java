@@ -17,12 +17,16 @@
 
 package fi.vm.sade.generic.ui.component;
 
+import java.util.Locale;
+
 import com.vaadin.data.Property;
 import com.vaadin.data.Validator;
 import com.vaadin.data.util.NestedMethodProperty;
 import com.vaadin.ui.TextField;
+
 import fi.vm.sade.generic.common.validation.MultiLingualText;
 import fi.vm.sade.generic.ui.CustomVaadinUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,23 +45,41 @@ public class MultiLingualTextField extends MyCustomField {
     private static final Logger LOG = LoggerFactory.getLogger(MultiLingualTextField.class);
 
     public static String LAYOUTS_MULTILINGUALTEXTFIELD = "layouts/MultiLingualTextField.html";
-
+    public static String LAYOUTS_MULTILINGUALTEXTFIELD_SV = "layouts/MultiLingualTextField_sv.html";
+    
     private TextField textFi = addChildField(MultiLingualText.PROPERTY_TEXT_FI, new TextField());
     private TextField textSv = addChildField(MultiLingualText.PROPERTY_TEXT_SV, new TextField());
     private TextField textEn = addChildField(MultiLingualText.PROPERTY_TEXT_EN, new TextField());
 
     private MultiLingualText mlText;
-
+    
     public MultiLingualTextField() {
-        super(null, CustomVaadinUtils.getCustomLayout(LAYOUTS_MULTILINGUALTEXTFIELD));//UiUtils.getCustomLayout(CustomLayouts.LAYOUTS_MULTILINGUALTEXTFIELD));
+        super(null, CustomVaadinUtils.getCustomLayout(LAYOUTS_MULTILINGUALTEXTFIELD));
+        
+        initField();
+    }
 
-        configure(textFi);
+
+    public MultiLingualTextField(Locale locale) {
+        super(null);
+
+        if (locale != null && locale.getLanguage().equals("sv")) {
+        	setLayout(CustomVaadinUtils.getCustomLayout(LAYOUTS_MULTILINGUALTEXTFIELD_SV));	
+        } else {
+        	setLayout(CustomVaadinUtils.getCustomLayout(LAYOUTS_MULTILINGUALTEXTFIELD));
+        }
+        
+        initField();
+    }
+	
+    private void initField() {
+		configure(textFi);
         configure(textSv);
         configure(textEn);
 
         initFields();
-    }
-
+	}
+    
     private void configure(TextField textField) {
         textField.setWidth("100%");
         textField.setNullRepresentation("");
