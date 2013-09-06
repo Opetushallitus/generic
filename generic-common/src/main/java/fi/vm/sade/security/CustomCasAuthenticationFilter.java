@@ -15,32 +15,29 @@
 
 package fi.vm.sade.security;
 
-import java.io.IOException;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.jasig.cas.client.proxy.ProxyGrantingTicketStorage;
 import org.jasig.cas.client.util.CommonUtils;
-import org.jasig.cas.client.validation.AssertionImpl;
-import org.jasig.cas.client.validation.TicketValidator;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.event.InteractiveAuthenticationSuccessEvent;
 import org.springframework.security.cas.ServiceProperties;
-import org.springframework.security.cas.authentication.CasAssertionAuthenticationToken;
-import org.springframework.security.cas.web.authentication.ServiceAuthenticationDetails;
-import org.springframework.security.cas.web.authentication.ServiceAuthenticationDetailsSource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.ldap.userdetails.LdapUserDetails;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.util.Assert;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * Extends spring CasAuthenticationFilter so that it can obtain ticket also from http header in addition to http parameter. Changes tagged with 'oph'.
@@ -226,34 +223,15 @@ public class CustomCasAuthenticationFilter extends AbstractAuthenticationProcess
             eventPublisher.publishEvent(new InteractiveAuthenticationSuccessEvent(authResult, this.getClass()));
         }
 
+        // OPH ARK-108 käyttäjänimi logitukseen - set
+        usernameToThreadname(true);
+
         chain.doFilter(request, response);
     }
 
     @Override
     public Authentication attemptAuthentication(final HttpServletRequest request, final HttpServletResponse response)
             throws AuthenticationException, IOException {
-
-        // oph start
-        String casTicketHeader = request.getHeader(CAS_SECURITY_TICKET);
-//        System.out.println("CustomCasAuthenticationFilter.attemptAuthentication, casTicketHeader: "+casTicketHeader);
-
-        if (casTicketHeader != null) {
-            // - filtterit menee ihan sotkuun jos tää on - this.setContinueChainBeforeSuccessfulAuthentication(true); // autentikointipyyntö on tässä tapauksessa myös servicekutsu - eikä casfilterin oma proxyticket? tsekkaus toimi?
-
-            // TODO: oldDeprecatedSecurity_REMOVE - deprecated: jos ei ole käytetty cassia, luotetaan että on autentikoitu väylässä - poista myöhemmin kun cas kokonaan käytössä!
-            /* tehty urlrewritessa
-            if ("oldDeprecatedSecurity_REMOVE".equals(casTicketHeader)) {
-                //return new PreAuthenticatedAuthenticationToken("oldDeprecatedSecurity_REMOVE", "oldDeprecatedSecurity_REMOVE");
-                CasAssertionAuthenticationToken authentication = new CasAssertionAuthenticationToken(new AssertionImpl("oldDeprecatedSecurity_REMOVE"), "oldDeprecatedSecurity_REMOVE");
-                authentication.setAuthenticated(true);
-                return authentication;
-            }
-            */
-
-        } else {
-            //this.setContinueChainBeforeSuccessfulAuthentication(false); // oletuskeissi, suora kutsu eikä backend servicekutsu
-        }
-        // oph end
 
         // if the request is a proxy request process it and return null to indicate the request has been processed
         if(proxyReceptorRequest(request)) {
@@ -300,30 +278,15 @@ public class CustomCasAuthenticationFilter extends AbstractAuthenticationProcess
      */
     @Override
     protected boolean requiresAuthentication(final HttpServletRequest request, final HttpServletResponse response) {
-
-        // oph start
-        String casTicketHeader = request.getHeader(CAS_SECURITY_TICKET);
-//        System.out.println("CustomCasAuthenticationFilter.requiresAuthentication, casTicketHeader: "+casTicketHeader);
-        if (casTicketHeader != null) {
-
-            // TODO: oldDeprecatedSecurity_REMOVE - deprecated: jos ei ole käytetty cassia, luotetaan että on autentikoitu väylässä - poista myöhemmin kun cas kokonaan käytössä!
-            /* tehty urlrewritessa
-            if ("oldDeprecatedSecurity_REMOVE".equals(casTicketHeader)) {
-                SecurityContextHolder.getContext().setAuthentication(new CasAssertionAuthenticationToken(new AssertionImpl("oldDeprecatedSecurity_REMOVE"), "oldDeprecatedSecurity_REMOVE"));
-                return false; // true jos attemptauth customoitu
-                //return true;
-            }
-            */
-
-            return true; // todo: vois ottaa tästä pois koska huomioitu jo proxyticketrequest():ssa
-        }
-        // oph end
-
         final boolean serviceTicketRequest = serviceTicketRequest(request, response);
         final boolean result = serviceTicketRequest || proxyReceptorRequest(request) || (proxyTicketRequest(serviceTicketRequest, request));
         if(logger.isDebugEnabled()) {
             logger.debug("requiresAuthentication = "+result);
         }
+
+        // OPH ARK-108 käyttäjänimi logitukseen - set
+        usernameToThreadname(true);
+
         return result;
     }
 
@@ -459,5 +422,36 @@ public class CustomCasAuthenticationFilter extends AbstractAuthenticationProcess
                 proxyFailureHandler.onAuthenticationFailure(request, response, exception);
             }
         }
+    }
+
+    @Override
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
+        try {
+            super.doFilter(req, res, chain);
+        } finally {
+            // OPH ARK-108 käyttäjänimi logitukseen - unset after processing request
+            usernameToThreadname(false);
+        }
+    }
+
+    private void usernameToThreadname(boolean set) { // OPH ARK-108 käyttäjänimi logitukseen
+        // first remove old username from threadname
+        Thread.currentThread().setName(Thread.currentThread().getName().replaceAll("_U\\[.*\\]", ""));
+
+        // set new username to threadname
+        if (set) {
+            String uname = authenticated() ? getUsername() : "anonymous";
+            Thread.currentThread().setName(Thread.currentThread().getName()+"_U["+uname+"]");
+        }
+    }
+
+    private String getUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails) {
+            LdapUserDetails ud = (LdapUserDetails) principal;
+            return ud.getDn().substring(4, ud.getDn().indexOf(",")); // dn uid party
+        }
+        return principal.toString();
     }
 }
