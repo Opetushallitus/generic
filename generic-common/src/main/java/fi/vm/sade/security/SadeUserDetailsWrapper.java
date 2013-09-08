@@ -84,4 +84,8 @@ public class SadeUserDetailsWrapper implements UserDetails  {
     public void setLang(String lang) {
         this.lang = lang;
     }
+
+    public UserDetails getDetails() {
+        return details;
+    }
 }

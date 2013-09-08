@@ -448,10 +448,19 @@ public class CustomCasAuthenticationFilter extends AbstractAuthenticationProcess
     private String getUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Object principal = authentication.getPrincipal();
-        if (principal instanceof UserDetails) {
+        if (principal instanceof LdapUserDetails) {
             LdapUserDetails ud = (LdapUserDetails) principal;
             return ud.getDn().substring(4, ud.getDn().indexOf(",")); // dn uid party
+        } else if (principal instanceof SadeUserDetailsWrapper) {
+            SadeUserDetailsWrapper wrapper = (SadeUserDetailsWrapper) principal;
+            if (wrapper.getDetails() instanceof LdapUserDetails) {
+                LdapUserDetails ud = (LdapUserDetails) wrapper.getDetails();
+                return ud.getDn().substring(4, ud.getDn().indexOf(",")); // dn uid party
+            } else {
+                return wrapper.getUsername();
+            }
         }
+
         return principal.toString();
     }
 }
