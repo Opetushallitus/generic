@@ -39,4 +39,8 @@ public class OphRowMenuBar extends MenuBar {
     public MenuItem addMenuCommand(String caption, Command command) {
     	return file.addItem(caption, command);
     }
+    
+    public void clear() {
+        file.removeChildren();
+    }
 }
