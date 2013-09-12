@@ -20,14 +20,14 @@
     <groupId>fi.vm.sade.generic</groupId>
     <artifactId>generic-events</artifactId>
     <packaging>jar</packaging>
-    <version>6.1-SNAPSHOT</version>
+    <version>6.1</version>
     <name>Generic :: Events</name>
     <url>http://maven.apache.org</url>
 
     <parent>
         <artifactId>generic</artifactId>
         <groupId>fi.vm.sade.generic</groupId>
-        <version>6.1-SNAPSHOT</version>
+        <version>6.1</version>
         <relativePath>..</relativePath>
     </parent>
 

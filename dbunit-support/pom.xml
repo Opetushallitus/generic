@@ -6,12 +6,12 @@
     <parent>
         <artifactId>generic</artifactId>
         <groupId>fi.vm.sade.generic</groupId>
-        <version>6.1-SNAPSHOT</version>
+        <version>6.1</version>
 		<relativePath>..</relativePath>
     </parent>
     <artifactId>dbunit-support</artifactId>
     <name>Generic :: DBUnit Support Utilities</name>
-    <version>6.1-SNAPSHOT</version>
+    <version>6.1</version>
 
     <dependencies>
         <dependency>
