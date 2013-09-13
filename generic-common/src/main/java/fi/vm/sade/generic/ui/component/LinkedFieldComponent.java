@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.data.util.ObjectProperty;
@@ -37,7 +36,7 @@ public class LinkedFieldComponent extends VerticalLayout {
     private Label primaryLabel;
     private Label titleLabel;
     private boolean cannotBeEmpty;
-    
+
     private void addField(GridLayout fieldLayout, Label label, AbstractField field) {
         int row = fieldLayout.getRows();
         fieldLayout.insertRow(row);
@@ -45,31 +44,31 @@ public class LinkedFieldComponent extends VerticalLayout {
         fieldLayout.setComponentAlignment(label, Alignment.MIDDLE_LEFT);
         label.setSizeUndefined();
 
-        fieldLayout.addComponent(field, 1, row);
+        fieldLayout.addComponent(field, 1, row, 2, row);
         fieldLayout.setComponentAlignment(field, Alignment.TOP_LEFT);
 
         field.setWidth("100%");
-        
+
         if (cannotBeEmpty && field == primaryField) {
-	        Label star = new Label("*");
-	        star.setStyleName("v-required-field-indicator");
-	        star.setSizeUndefined();
-	        fieldLayout.addComponent(star, 2, row);
-	        fieldLayout.setComponentAlignment(star, Alignment.TOP_LEFT);	        
-        }   
+            Label star = new Label("*");
+            star.setStyleName("v-required-field-indicator");
+            star.setSizeUndefined();
+            fieldLayout.addComponent(star, 2, row);
+            fieldLayout.setComponentAlignment(star, Alignment.TOP_LEFT);
+        }
 
     }
 
     public LinkedFieldComponent(String linkedText, AbstractField... fields) {
         this.linkedText = linkedText;
-        if(fields == null || fields.length == 0) {
+        if (fields == null || fields.length == 0) {
             throw new RuntimeException("Linked fields are not given.");
         }
         this.primaryField = fields[0];
         this.primaryLabel = extractCaptions(fields[0]);
         this.otherFields = new HashMap<AbstractField, Label>();
-        for(int i = 0; i < fields.length; i++) {
-            if(i == 0) {
+        for (int i = 0; i < fields.length; i++) {
+            if (i == 0) {
                 continue;
             }
             AbstractField field = fields[i];
@@ -104,21 +103,20 @@ public class LinkedFieldComponent extends VerticalLayout {
         fieldLayout.setSpacing(true);
 
         titleLabel = new Label();
-        fieldLayout.addComponent(titleLabel, 0, 0);
-        
+        fieldLayout.addComponent(titleLabel, 0, 0, 1, 0); // span over two
+                                                          // columns to give
+                                                          // more space to title
+
         linked = new CheckBox(linkedText);
         linked.addListener(new LinkedCheckBoxValueChangeListener());
         linked.setImmediate(true);
-        fieldLayout.addComponent(linked, 1, 0);
+        fieldLayout.addComponent(linked, 2, 0);
         fieldLayout.setComponentAlignment(linked, Alignment.BOTTOM_RIGHT);
 
-        fieldLayout.addComponent(new Label(" "), 2, 0); 
-   
-        
+        // fieldLayout.addComponent(new Label(" "), 2, 0);
+
         addField(fieldLayout, this.primaryLabel, primaryField);
-        
-     
-        
+
         primaryField.setImmediate(true);
 
         if (primaryField instanceof AbstractTextField) {
@@ -147,7 +145,7 @@ public class LinkedFieldComponent extends VerticalLayout {
                 if (linked.booleanValue()) {
                     e.getKey().setValue(primaryField.getValue());
                 } else {
-                	e.getKey().setValue(null);
+                    e.getKey().setValue(null);
                 }
                 e.getKey().setEnabled(!linked.booleanValue());
                 e.getValue().setEnabled(!linked.booleanValue());
@@ -200,7 +198,7 @@ public class LinkedFieldComponent extends VerticalLayout {
 
     public void addCheckboxValueChangeListener(ValueChangeListener valueChangeListener) {
 
-        if(linked != null) {
+        if (linked != null) {
             linked.addListener(valueChangeListener);
         }
 
