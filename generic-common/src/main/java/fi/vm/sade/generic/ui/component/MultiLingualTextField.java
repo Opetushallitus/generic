@@ -63,7 +63,7 @@ public class MultiLingualTextField extends MyCustomField {
     public MultiLingualTextField(Locale locale) {
         super(null);
 
-        if (locale != null && locale.getLanguage().equals("sv")) {
+        if (locale != null && locale.getLanguage().toLowerCase().equals("sv")) {
         	setLayout(CustomVaadinUtils.getCustomLayout(LAYOUTS_MULTILINGUALTEXTFIELD_SV));	
         } else {
         	setLayout(CustomVaadinUtils.getCustomLayout(LAYOUTS_MULTILINGUALTEXTFIELD));
