@@ -22,6 +22,7 @@ import fi.vm.sade.security.SadeUserDetailsWrapper;
 import org.apache.commons.lang.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -52,6 +53,9 @@ public class UserLiferayImpl implements User {
     private Set<String> organisations = new HashSet<String>();
     private Authentication authentication;
 
+    @Value("${auth.mode:cas}")
+    private String authMode;
+
     public UserLiferayImpl(HttpServletRequest request) {
         this.servletRequest = request;
 
@@ -65,7 +69,7 @@ public class UserLiferayImpl implements User {
 
         // else build mock user - TODO: cas todo, poistettava tämä! rethink
         // deviympäristön security/auth!
-        else {
+        else if ("dev".equals(authMode)) {
             Set<GrantedAuthority> authorities = buildMockAuthorities();
             // String mockUser = "admin@oph.fi";
             String mockUser = "1.2.246.562.24.00000000001";
@@ -84,7 +88,7 @@ public class UserLiferayImpl implements User {
         // String org = "1.2.246.562.10.10108401950"; // espoon kaupunki
         String org = "1.2.246.562.10.00000000001"; // root
         String apps[] = new String[] { "ANOMUSTENHALLINTA", "ORGANISAATIOHALLINTA", "HENKILONHALLINTA", "KOODISTO",
-                "KOOSTEROOLIENHALLINTA", "OID", "OMATTIEDOT", "ORGANISAATIOHALLINTA", "TARJONTA" };
+                "KOOSTEROOLIENHALLINTA", "OID", "OMATTIEDOT", "ORGANISAATIOHALLINTA", "TARJONTA", "SIJOITTELU", "VALINTAPERUSTEET", "VALINTOJENTOTEUTTAMINEN" };
         String roles[] = new String[] { "READ", "READ_UPDATE", "CRUD" };
         for (String app : apps) {
             for (String role : roles) {

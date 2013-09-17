@@ -1,5 +1,6 @@
 package fi.vm.sade.authentication.cas;
 
+import fi.vm.sade.generic.ui.app.UserLiferayImpl;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
@@ -11,6 +12,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
@@ -41,19 +43,17 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
 
     @Override
     public void handleMessage(Message message) throws Fault {
-        if ("dev".equals(authMode)) {
 
-            Set<GrantedAuthority> authorities = buildMockAuthorities();
-            // String mockUser = "admin@oph.fi";
+        if ("dev".equals(authMode)) {
+            Set<GrantedAuthority> authorities = UserLiferayImpl.buildMockAuthorities();
+
             String mockUser = "1.2.246.562.24.00000000001";
             logger.warn("building mock user: " + mockUser + ", authorities: " + authorities);
             Authentication authentication = new TestingAuthenticationToken(mockUser, mockUser, new ArrayList<GrantedAuthority>(
                     authorities));
-            //initSupportForOldAuthzFromSpringAuthentication();
 
             ((HttpURLConnection) message.get("http.connection")).setRequestProperty("CasSecurityTicket", "oldDeprecatedSecurity_REMOVE");
             String user = authentication.getName();
-            //String authorities = toString(authentication.getAuthorities());
             ((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", user);
             ((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_authorities", toString(authorities));
             logger.info("DEV Proxy ticket! user: "+ user + ", authorities: "+authorities);
@@ -93,24 +93,4 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
         return sb.toString();
     }
 
-    public static Set<GrantedAuthority> buildMockAuthorities() {
-        Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
-        // String org = "1.2.246.562.10.10108401950"; // espoon kaupunki
-        String org = "1.2.246.562.10.00000000001"; // root
-        String apps[] = new String[] { "ANOMUSTENHALLINTA", "ORGANISAATIOHALLINTA", "HENKILONHALLINTA", "KOODISTO",
-                "KOOSTEROOLIENHALLINTA", "OID", "OMATTIEDOT", "ORGANISAATIOHALLINTA", "TARJONTA", "SIJOITTELU", "VALINTOJENTOTEUTTAMINEN", "VALINTAPERUSTEET" };
-        String roles[] = new String[] { "READ", "READ_UPDATE", "CRUD" };
-        for (String app : apps) {
-            for (String role : roles) {
-                GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_APP_" + app + "_" + role); // sama
-                // rooli
-                // ilman
-                // oidia
-                GrantedAuthority authorityOid = new SimpleGrantedAuthority("ROLE_APP_" + app + "_" + role + "_" + org);
-                authorities.add(authority);
-                authorities.add(authorityOid);
-            }
-        }
-        return authorities;
-    }
 }
