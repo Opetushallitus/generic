@@ -1,8 +1,8 @@
 package fi.vm.sade.authentication.cas;
 
-import org.apache.cxf.binding.soap.SoapMessage;
-import org.apache.cxf.binding.soap.interceptor.AbstractSoapInterceptor;
 import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.message.Message;
+import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +11,6 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
@@ -24,7 +23,7 @@ import java.util.Set;
  *
  * @author Antti Salonen
  */
-public class CasApplicationAsAUserInterceptor extends AbstractSoapInterceptor {
+public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private static final Logger logger = LoggerFactory.getLogger(CasApplicationAsAUserInterceptor.class);
 
@@ -41,7 +40,7 @@ public class CasApplicationAsAUserInterceptor extends AbstractSoapInterceptor {
     }
 
     @Override
-    public void handleMessage(SoapMessage message) throws Fault {
+    public void handleMessage(Message message) throws Fault {
         if ("dev".equals(authMode)) {
 
             Set<GrantedAuthority> authorities = buildMockAuthorities();
