@@ -1,3 +1,5 @@
+.idea/
 target
 generic-events/activemq-data
 *~
+*.iml
