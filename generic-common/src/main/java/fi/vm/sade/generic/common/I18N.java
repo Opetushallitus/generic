@@ -70,6 +70,10 @@ public class I18N implements ApplicationContextAware {
         return messageSourceAccessor.getMessage(code, args, locale);
     }
 
+    public static String getMessage(String code, Locale locale) {
+        return messageSourceAccessor.getMessage(code, locale);
+    }
+
     public static void setLocale(Locale locale) {
         LOCALE_THREAD_LOCAL.set(locale);
     }
