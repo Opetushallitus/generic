@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public abstract class AbstractSecurityTicketOutInterceptor<T extends Message> extends AbstractPhaseInterceptor<T> {
 
-    private final static Logger log = LoggerFactory.getLogger(SecurityTicketOutInterceptor.class);
+    private final static Logger log = LoggerFactory.getLogger(AbstractSecurityTicketOutInterceptor.class);
 
     public static final int MAX_TICKET_CACHE_SIZE = 10000;
 

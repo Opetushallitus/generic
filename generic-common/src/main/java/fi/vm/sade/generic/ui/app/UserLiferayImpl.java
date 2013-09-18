@@ -88,7 +88,7 @@ public class UserLiferayImpl implements User {
         // String org = "1.2.246.562.10.10108401950"; // espoon kaupunki
         String org = "1.2.246.562.10.00000000001"; // root
         String apps[] = new String[] { "ANOMUSTENHALLINTA", "ORGANISAATIOHALLINTA", "HENKILONHALLINTA", "KOODISTO",
-                "KOOSTEROOLIENHALLINTA", "OID", "OMATTIEDOT", "ORGANISAATIOHALLINTA", "TARJONTA", "SIJOITTELU", "VALINTAPERUSTEET", "VALINTOJENTOTEUTTAMINEN" };
+                "KOOSTEROOLIENHALLINTA", "OID", "OMATTIEDOT", "ORGANISAATIOHALLINTA", "TARJONTA", "SIJOITTELU", "VALINTAPERUSTEET", "VALINTOJENTOTEUTTAMINEN", "HAKEMUS" };
         String roles[] = new String[] { "READ", "READ_UPDATE", "CRUD" };
         for (String app : apps) {
             for (String role : roles) {
