@@ -2,6 +2,7 @@ package fi.vm.sade.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,6 +28,9 @@ public class UrlRewriteFilter implements Filter {
 
     private final static Logger logger = LoggerFactory.getLogger(UrlRewriteFilter.class);
 
+    @Value("${auth.mode:cas}")
+    private String authMode;
+
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
     }
@@ -43,7 +47,12 @@ public class UrlRewriteFilter implements Filter {
                 String oldDeprecatedSecurity_REMOVE_username = request.getHeader("oldDeprecatedSecurity_REMOVE_username");
                 String oldDeprecatedSecurity_REMOVE_authorities = request.getHeader("oldDeprecatedSecurity_REMOVE_authorities");
                 //System.out.println("UrlRewriteFilter.doFilter, casTicketHeader: "+casTicketHeader+", oldDeprecatedSecurity_REMOVE_username: "+oldDeprecatedSecurity_REMOVE_username);
-                if ("oldDeprecatedSecurity_REMOVE".equals(casTicketHeader)) { // todo: tukee mock autentikointia, cas todo: pois tuotannosta yms
+                if (casTicketHeader != null) {
+                    /* tämän jälkeen ei ajeta casfiltteriä?!?!??!
+                    forward(request, servletResponse, "ticket", casTicketHeader);
+                    return;
+                    */
+                } else if ("oldDeprecatedSecurity_REMOVE".equals(casTicketHeader) && "dev".equals(authMode)) { // todo: tukee mock autentikointia, cas todo: pois tuotannosta yms
                     Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
                     if (oldDeprecatedSecurity_REMOVE_authorities != null) {
                         for (String authority : oldDeprecatedSecurity_REMOVE_authorities.split(",")) {
@@ -55,11 +64,6 @@ public class UrlRewriteFilter implements Filter {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     forward(request, servletResponse, "oldDeprecatedSecurity_REMOVE", "true"); // huom! forwardin jälkeen ei ajeta enää springin securityputkea
                     return;
-                } else if (casTicketHeader != null) {
-                    /* tämän jälkeen ei ajeta casfiltteriä?!?!??!
-                    forward(request, servletResponse, "ticket", casTicketHeader);
-                    return;
-                    */
                 }
 
             }
@@ -71,7 +75,7 @@ public class UrlRewriteFilter implements Filter {
     }
 
     private void forward(HttpServletRequest request, ServletResponse servletResponse, final String paramName, final String paramValue) throws ServletException, IOException {
-        String path = request.getRequestURI();
+        String path = request.getRequestURI()+"?"+request.getQueryString();
         if (path.startsWith(request.getContextPath())) {
             path = path.substring(request.getContextPath().length());
         }

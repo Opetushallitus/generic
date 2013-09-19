@@ -43,8 +43,13 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
 
     @Override
     public void handleMessage(Message message) throws Fault {
+        // authenticate against CAS REST API, and get a service ticket
+        String serviceTicket = CasClient.getTicket(webCasUrl + "/v1/tickets", appClientUsername, appClientPassword, targetService);
 
-        if ("dev".equals(authMode)) {
+        // put service ticket to SOAP message as a http header 'CasSecurityTicket'
+        ((HttpURLConnection)message.get("http.connection")).setRequestProperty("CasSecurityTicket", serviceTicket);
+
+        if (serviceTicket == null && "dev".equals(authMode)) {
             Set<GrantedAuthority> authorities = UserLiferayImpl.buildMockAuthorities();
 
             String mockUser = "1.2.246.562.24.00000000001";
@@ -59,12 +64,6 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
             logger.info("DEV Proxy ticket! user: "+ user + ", authorities: "+authorities);
             return;
         }
-
-        // authenticate against CAS REST API, and get a service ticket
-        String serviceTicket = CasClient.getTicket(webCasUrl + "/v1/tickets", appClientUsername, appClientPassword, targetService);
-
-        // put service ticket to SOAP message as a http header 'CasSecurityTicket'
-        ((HttpURLConnection)message.get("http.connection")).setRequestProperty("CasSecurityTicket", serviceTicket);
 
         logger.debug("CasApplicationAsAUserInterceptor.handleMessage added CasSecurityTicket={} -header", serviceTicket);
     }
