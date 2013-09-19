@@ -43,19 +43,21 @@ public abstract class AbstractSecurityTicketOutInterceptor<T extends Message> ex
     public void handleMessage(T message) throws Fault {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if(authentication != null && authentication instanceof CasAuthenticationToken) {
-            String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
-            CasAuthenticationToken casAuthenticationToken = (CasAuthenticationToken) authentication;
-            String proxyTicket = getCachedProxyTicket(casTargetService, casAuthenticationToken, true);
-            ((HttpURLConnection) message.get("http.connection")).setRequestProperty("CasSecurityTicket", proxyTicket);
-            return;
-        } else if (authentication != null && "dev".equals(authMode)) {
+        if (authentication != null && "dev".equals(authMode)) {
             ((HttpURLConnection) message.get("http.connection")).setRequestProperty("CasSecurityTicket", "oldDeprecatedSecurity_REMOVE");
             String user = authentication.getName();
             String authorities = toString(authentication.getAuthorities());
             ((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", user);
             ((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_authorities", authorities);
             log.info("DEV Proxy ticket! user: "+ user + ", authorities: "+authorities);
+            return;
+        }
+
+        else if(authentication instanceof CasAuthenticationToken) {
+            String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
+            CasAuthenticationToken casAuthenticationToken = (CasAuthenticationToken) authentication;
+            String proxyTicket = getCachedProxyTicket(casTargetService, casAuthenticationToken, true);
+            ((HttpURLConnection) message.get("http.connection")).setRequestProperty("CasSecurityTicket", proxyTicket);
             return;
         }
 
