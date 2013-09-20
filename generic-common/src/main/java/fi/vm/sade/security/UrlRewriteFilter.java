@@ -20,7 +20,7 @@ import java.util.Set;
  *
  * @author Antti Salonen
  */
-// todo: cas todo rethink
+// todo: cas todo rethink - tätä ei tarvita kuin auth.mode=dev yhteydessä kehitysympäristössä !!!
 public class UrlRewriteFilter implements Filter {
 
     public static final String ALREADY_PROCESSED = UrlRewriteFilter.class.getName()+"_alreadyProcessed";
