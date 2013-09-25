@@ -38,6 +38,9 @@ public final class CasClient {
             return null;
 
         final HttpClient client = new HttpClient();
+
+        LOG.info("getServiceTicket: " + server + "/" + ticketGrantingTicket);
+
         final PostMethod post = new PostMethod(server + "/" + ticketGrantingTicket);
         post.setRequestBody(new NameValuePair[]{new NameValuePair("service", service)});
 
@@ -46,6 +49,7 @@ public final class CasClient {
             final String response = post.getResponseBodyAsString();
             switch (post.getStatusCode()) {
                 case 200:
+                    LOG.info("serviceTicket found");
                     return response;
                 default:
                     LOG.warning("Invalid response code (" + post.getStatusCode() + ") from CAS server!");
@@ -68,6 +72,8 @@ public final class CasClient {
                 new NameValuePair("username", username),
                 new NameValuePair("password", password)});
 
+        LOG.info("getTicketGrantingTicket: " + server);
+
         try {
             client.executeMethod(post);
             final String response = post.getResponseBodyAsString();
@@ -75,6 +81,7 @@ public final class CasClient {
                 case 201: {
                     final Matcher matcher = Pattern.compile(".*action=\".*/(.*?)\".*").matcher(response);
                     if (matcher.matches()) {
+                        LOG.info("ticketGrantingTicket found");
                         return matcher.group(1);
                     }
                     LOG.warning("Successful ticket granting request, but no ticket found!");
