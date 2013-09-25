@@ -29,6 +29,8 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
 
     private static final Logger logger = LoggerFactory.getLogger(CasApplicationAsAUserInterceptor.class);
 
+    private String cacheTicket = null;
+
     private String webCasUrl;
     private String targetService;
     private String appClientUsername;
@@ -44,9 +46,15 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
     @Override
     public void handleMessage(Message message) throws Fault {
         // authenticate against CAS REST API, and get a service ticket
-        String serviceTicket = CasClient.getTicket(webCasUrl + "/v1/tickets", appClientUsername, appClientPassword, targetService);
 
-        if (serviceTicket == null && "dev".equals(authMode)) {
+        if(cacheTicket == null || cacheTicket.isEmpty()) {
+            logger.debug("CacheTicket null. Loading from: {} TargetService: {}", webCasUrl, targetService);
+            cacheTicket = CasClient.getTicket(webCasUrl + "/v1/tickets", appClientUsername, appClientPassword, targetService);
+        } else {
+            logger.debug("CacheTicket: {}", cacheTicket);
+        }
+
+        if (cacheTicket == null && "dev".equals(authMode)) {
             Set<GrantedAuthority> authorities = UserLiferayImpl.buildMockAuthorities();
 
             String mockUser = "1.2.246.562.24.00000000001";
@@ -63,9 +71,9 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
         }
 
         // put service ticket to SOAP message as a http header 'CasSecurityTicket'
-        ((HttpURLConnection)message.get("http.connection")).setRequestProperty("CasSecurityTicket", serviceTicket);
+        ((HttpURLConnection)message.get("http.connection")).setRequestProperty("CasSecurityTicket", cacheTicket);
 
-        logger.debug("CasApplicationAsAUserInterceptor.handleMessage added CasSecurityTicket={} -header", serviceTicket);
+        logger.debug("CasApplicationAsAUserInterceptor.handleMessage added CasSecurityTicket={} -header", cacheTicket);
     }
 
     public void setWebCasUrl(String webCasUrl) {
