@@ -5,7 +5,8 @@ import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.PostMethod;
 
 import java.io.IOException;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,7 +20,7 @@ import java.util.regex.Pattern;
  * @since 3.4.2
  */
 public final class CasClient {
-    private static final Logger LOG = Logger.getLogger(CasClient.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(CasClient.class.getName());
 
     private CasClient() {
         // static-only access
@@ -39,7 +40,7 @@ public final class CasClient {
 
         final HttpClient client = new HttpClient();
 
-        LOG.info("getServiceTicket: " + server + "/" + ticketGrantingTicket);
+        LOG.info("getServiceTicket: {} / {}", server , ticketGrantingTicket);
 
         final PostMethod post = new PostMethod(server + "/" + ticketGrantingTicket);
         post.setRequestBody(new NameValuePair[]{new NameValuePair("service", service)});
@@ -52,12 +53,12 @@ public final class CasClient {
                     LOG.info("serviceTicket found");
                     return response;
                 default:
-                    LOG.warning("Invalid response code (" + post.getStatusCode() + ") from CAS server!");
+                    LOG.warn("Invalid response code ({}) from CAS server!", post.getStatusCode());
                     LOG.info("Response (1k): " + response.substring(0, Math.min(1024, response.length())));
                     break;
             }
         } catch (final IOException e) {
-            LOG.warning(e.getMessage());
+            LOG.warn(e.getMessage());
         } finally {
             post.releaseConnection();
         }
@@ -72,7 +73,7 @@ public final class CasClient {
                 new NameValuePair("username", username),
                 new NameValuePair("password", password)});
 
-        LOG.info("getTicketGrantingTicket: " + server);
+        LOG.info("getTicketGrantingTicket: {}", server);
 
         try {
             client.executeMethod(post);
@@ -84,18 +85,18 @@ public final class CasClient {
                         LOG.info("ticketGrantingTicket found");
                         return matcher.group(1);
                     }
-                    LOG.warning("Successful ticket granting request, but no ticket found!");
-                    LOG.info("Response (1k): " + response.substring(0, Math.min(1024, response.length())));
+                    LOG.warn("Successful ticket granting request, but no ticket found!");
+                    LOG.info("Response (1k): {}", response.substring(0, Math.min(1024, response.length())));
                     break;
                 }
 
                 default:
-                    LOG.warning("Invalid response code (" + post.getStatusCode() + ") from CAS server!");
-                    LOG.info("Response (1k): " + response.substring(0, Math.min(1024, response.length())));
+                    LOG.warn("Invalid response code ({}) from CAS server!", post.getStatusCode());
+                    LOG.info("Response (1k): {}", response.substring(0, Math.min(1024, response.length())));
                     break;
             }
         } catch (final IOException e) {
-            LOG.warning(e.getMessage());
+            LOG.warn(e.getMessage());
         } finally {
             post.releaseConnection();
         }
