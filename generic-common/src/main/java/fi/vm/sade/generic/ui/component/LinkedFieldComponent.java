@@ -35,7 +35,6 @@ public class LinkedFieldComponent extends VerticalLayout {
     private String linkedText;
     private Label primaryLabel;
     private Label titleLabel;
-    private boolean cannotBeEmpty;
 
     private void addField(GridLayout fieldLayout, Label label, AbstractField field) {
         int row = fieldLayout.getRows();
@@ -49,15 +48,7 @@ public class LinkedFieldComponent extends VerticalLayout {
 
         field.setWidth("100%");
 
-        if (cannotBeEmpty && field == primaryField) {
-            Label star = new Label("*");
-            star.setStyleName("v-required-field-indicator");
-            star.setSizeUndefined();
-            fieldLayout.addComponent(star, 2, row);
-            fieldLayout.setComponentAlignment(star, Alignment.TOP_LEFT);
-        }
-
-    }
+}
 
     public LinkedFieldComponent(String linkedText, AbstractField... fields) {
         this.linkedText = linkedText;
@@ -84,12 +75,11 @@ public class LinkedFieldComponent extends VerticalLayout {
     }
 
     public LinkedFieldComponent(String linkedText, AbstractField primaryField, Label primaryFieldLabel,
-            Map<AbstractField, Label> otherFields, boolean cannotBeEmpty) {
+            Map<AbstractField, Label> otherFields) {
         this.linkedText = linkedText;
         this.primaryField = primaryField;
         this.primaryLabel = primaryFieldLabel;
         this.otherFields = otherFields;
-        this.cannotBeEmpty = cannotBeEmpty;
         initializeComponent();
     }
 
@@ -113,7 +103,6 @@ public class LinkedFieldComponent extends VerticalLayout {
         fieldLayout.addComponent(linked, 2, 0);
         fieldLayout.setComponentAlignment(linked, Alignment.BOTTOM_RIGHT);
 
-        // fieldLayout.addComponent(new Label(" "), 2, 0);
 
         addField(fieldLayout, this.primaryLabel, primaryField);
 
