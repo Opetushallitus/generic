@@ -4,14 +4,13 @@
     <parent>
         <artifactId>generic</artifactId>
         <groupId>fi.vm.sade.generic</groupId>
-        <version>6.2-SNAPSHOT</version>
+        <version>6.2</version>
         <relativePath>..</relativePath>
     </parent>
 
     <artifactId>generic-test-support</artifactId>
     <name>Generic :: Test Support</name>
     <packaging>jar</packaging>
-    <version>6.2-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -28,12 +27,12 @@
         <dependency>
             <groupId>fi.vm.sade.generic</groupId>
             <artifactId>generic-common</artifactId>
-            <version>6.2-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>fi.vm.sade.generic</groupId>
             <artifactId>dependencies-service</artifactId>
-            <version>6.2-SNAPSHOT</version>
+            <version>${project.version}</version>
             <type>pom</type>
         </dependency>
 
@@ -79,7 +78,7 @@
         <dependency>
             <groupId>fi.vm.sade.generic</groupId>
             <artifactId>dependencies-vaadin</artifactId>
-            <version>6.2-SNAPSHOT</version>
+            <version>${project.version}</version>
             <type>pom</type>
         </dependency>
 

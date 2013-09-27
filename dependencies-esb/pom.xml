@@ -4,15 +4,13 @@
     <parent>
         <artifactId>generic</artifactId>
         <groupId>fi.vm.sade.generic</groupId>
-        <version>6.2-SNAPSHOT</version>
+        <version>6.2</version>
         <relativePath>..</relativePath>
     </parent>
 
-    <groupId>fi.vm.sade.generic</groupId>
     <artifactId>dependencies-esb</artifactId>
     <name>${project.artifactId}</name>
     <packaging>pom</packaging>
-    <version>6.2-SNAPSHOT</version>
 
     <!--<dependencyManagement>-->
 
