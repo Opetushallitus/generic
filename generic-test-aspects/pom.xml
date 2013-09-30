@@ -4,12 +4,11 @@
 	<parent>
 		<artifactId>generic</artifactId>
 		<groupId>fi.vm.sade.generic</groupId>
-		<version>6.2-SNAPSHOT</version>
+		<version>6.3-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
 	<artifactId>generic-test-aspects</artifactId>
     <name>Generic :: Test Aspects</name>
-    <version>6.2-SNAPSHOT</version>
 
 	<dependencies>
 		<dependency>
