@@ -98,4 +98,10 @@ public class HttpTestResource {
         return calendar.getTime();
     }
 
+    @Path("/status500")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response status500() {
+        return Response.status(500).build();
+    }
 }

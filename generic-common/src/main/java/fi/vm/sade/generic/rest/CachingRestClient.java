@@ -102,6 +102,7 @@ public class CachingRestClient {
 
     /**
      * get REST Json resource as Java object of type resultType (deserialized with gson).
+     * Returns null if error occurred while querying resource.
      */
     public <T> T get(String url, Class<? extends T> resultType) throws IOException {
         InputStream is = null;
@@ -109,6 +110,8 @@ public class CachingRestClient {
             is = get(url);
             T t = gson.fromJson(new InputStreamReader(is, "utf-8"), resultType);
             return t;
+        } catch (JsonObjectException e) {
+            return null;
         } finally {
             if(is != null) {
                 is.close();
@@ -140,10 +143,16 @@ public class CachingRestClient {
             ticket = null;
         }
 
+        if(response.getStatusLine().getStatusCode() >= 500) {
+            logger.error("Error status trying to query REST resource: {}", httpget.getURI());
+            throw new JsonObjectException("Error status trying to query REST resource.");
+        }
+
         cacheStatus = localContext.get().getAttribute(CachingHttpClient.CACHE_RESPONSE_STATUS);
 //        logger.info("get done, url: {}, status: {}, cacheStatus: {}, headers: {}", new Object[]{url, response.getStatusLine(), null, response.getAllHeaders()});
 //        System.out.println("==> get done, url: "+url+", status: "+response.getStatusLine()+", cacheStatus: "+cacheStatus+", headers: "+ Arrays.asList(response.getAllHeaders()));
 //        System.out.println(IOUtils.toString(response.getEntity().getContent()));
+
         return response.getEntity().getContent();
     }
 

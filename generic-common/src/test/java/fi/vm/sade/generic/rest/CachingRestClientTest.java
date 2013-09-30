@@ -80,6 +80,11 @@ public class CachingRestClientTest {
         Assert.assertEquals(client.getCacheStatus(), CacheResponseStatus.CACHE_HIT);
     }
 
+    @Test(expected = JsonObjectException.class)
+    public void testErrorStatus() throws IOException {
+        get("/httptest/status500");
+    }
+
     // todo: spring restTemplate test
 
     /* todo: cxf client ei cacheta, saisko cachettamaan?
