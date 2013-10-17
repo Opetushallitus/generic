@@ -67,4 +67,9 @@ public class GenericDAOImpl implements GenericDAO {
     public <E extends BaseEntity> void detach(E entity) {
         entityManager.detach(entity);
     }
+
+    @Override
+    public void flush() {
+        entityManager.flush();
+    }
 }

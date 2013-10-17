@@ -67,4 +67,6 @@ public interface GenericDAO {
      * @param entity
      */
     <E extends BaseEntity> void detach(E entity);
+
+    void flush();
 }
