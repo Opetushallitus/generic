@@ -57,7 +57,11 @@ public abstract class AbstractSecurityTicketOutInterceptor<T extends Message> ex
             String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
             CasAuthenticationToken casAuthenticationToken = (CasAuthenticationToken) authentication;
             String proxyTicket = getCachedProxyTicket(casTargetService, casAuthenticationToken, true);
-            ((HttpURLConnection) message.get("http.connection")).setRequestProperty("CasSecurityTicket", proxyTicket);
+            if (proxyTicket == null) {
+                log.warn("got null proxyticket, cannot attach to request, casTargetService: "+casTargetService+", authentication: "+authentication);
+            } else {
+                ((HttpURLConnection) message.get("http.connection")).setRequestProperty("CasSecurityTicket", proxyTicket);
+            }
             return;
         }
 
