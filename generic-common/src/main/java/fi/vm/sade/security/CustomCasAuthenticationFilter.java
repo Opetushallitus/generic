@@ -244,7 +244,7 @@ public class CustomCasAuthenticationFilter extends AbstractAuthenticationProcess
         final String username = serviceTicketRequest ? CAS_STATEFUL_IDENTIFIER : CAS_STATELESS_IDENTIFIER;
         String password = obtainArtifact(request);
 
-        if (password == null || "".equals("")) {
+        if (password == null) {
             logger.debug("Failed to obtain an artifact (cas ticket)");
             password = "";
         }
@@ -265,7 +265,7 @@ public class CustomCasAuthenticationFilter extends AbstractAuthenticationProcess
 
         // oph start
         String casTicketHeader = request.getHeader(CAS_SECURITY_TICKET);
-        if (casTicketHeader != null && "".equals(casTicketHeader)) {
+        if (casTicketHeader != null) {
             return casTicketHeader;
         }
         // oph end
@@ -351,7 +351,7 @@ public class CustomCasAuthenticationFilter extends AbstractAuthenticationProcess
 
         // oph start - oldDeprecatedSecurity_REMOVE(?)
         String casTicketHeader = request.getHeader(CAS_SECURITY_TICKET);
-        if (casTicketHeader != null && !"".equals(casTicketHeader)) {
+        if (casTicketHeader != null) {
             return true;
         }
         // oph end
