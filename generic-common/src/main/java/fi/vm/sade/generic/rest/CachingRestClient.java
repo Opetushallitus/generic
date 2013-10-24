@@ -3,10 +3,14 @@ package fi.vm.sade.generic.rest;
 import com.google.gson.*;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import fi.vm.sade.authentication.cas.CasClient;
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.cache.CacheConfig;
 import org.apache.http.impl.client.cache.CachingHttpClient;
@@ -24,6 +28,7 @@ import java.lang.reflect.Type;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
@@ -126,21 +131,14 @@ public class CachingRestClient {
 //        logger.info("get... url: {}", url);
         final HttpGet httpget = new HttpGet(url);
 
-        if(webCasUrl != null && username != null && password != null && casService != null && ticket == null) {
-            ticket = CasClient.getTicket(webCasUrl + "/v1/tickets", username, password, casService);
-            URIBuilder builder = new URIBuilder(httpget.getURI()).addParameter("ticket", ticket);
-            try {
-                httpget.setURI(builder.build());
-            } catch (URISyntaxException e) {
-                logger.error("URI syntax incorrect." , e);
-            }
-        }
+        authenticate(httpget);
 
         final HttpResponse response = cachingClient.execute(httpget, localContext.get());
 
         if(response.getStatusLine().getStatusCode() == 401) {
             logger.warn("Wrong status code 401, clearing ticket.", response.getStatusLine().getStatusCode());
             ticket = null;
+            throw new IOException("got http 401 unauthorized, user: "+username+", url: "+url);
         }
 
         if(response.getStatusLine().getStatusCode() >= 500) {
@@ -154,6 +152,40 @@ public class CachingRestClient {
 //        System.out.println(IOUtils.toString(response.getEntity().getContent()));
 
         return response.getEntity().getContent();
+    }
+
+    private void authenticate(HttpRequestBase httpget) throws IOException {
+        if(webCasUrl != null && username != null && password != null && casService != null && ticket == null) {
+            ticket = CasClient.getTicket(webCasUrl + "/v1/tickets", username, password, casService);
+            if (ticket == null) {
+                throw new IOException("failed to get ticket, check credentials! user: "+username+", cas: "+webCasUrl+", service: "+casService);
+            }
+            URIBuilder builder = new URIBuilder(httpget.getURI()).addParameter("ticket", ticket);
+            try {
+                httpget.setURI(builder.build());
+            } catch (URISyntaxException e) {
+                logger.error("URI syntax incorrect." , e);
+            }
+        }
+    }
+
+    public String postForLocation(String url, String contentType, String content) throws IOException {
+        HttpResponse response = post(url, contentType, content);
+        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+            return response.getFirstHeader("Location").getValue();
+        } else {
+            throw new RuntimeException("post didn't result in http 201 created, status: "+response.getStatusLine()+", url: "+url);
+        }
+    }
+
+    public HttpResponse post(String url, String contentType, String content) throws IOException {
+        HttpPost httppost = new HttpPost(url);
+        httppost.setHeader("Content-Type", contentType);
+        httppost.setEntity(new StringEntity(content));
+        authenticate(httppost);
+        HttpResponse response = cachingClient.execute(httppost, localContext.get());
+        logger.debug("post, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{url, contentType, content, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});
+        return response;
     }
 
     public Object getCacheStatus() {
