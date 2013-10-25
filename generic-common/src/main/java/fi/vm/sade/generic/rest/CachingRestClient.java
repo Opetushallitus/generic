@@ -6,9 +6,7 @@ import fi.vm.sade.authentication.cas.CasClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -179,11 +177,18 @@ public class CachingRestClient {
     }
 
     public HttpResponse post(String url, String contentType, String content) throws IOException {
-        HttpPost httppost = new HttpPost(url);
-        httppost.setHeader("Content-Type", contentType);
-        httppost.setEntity(new StringEntity(content));
-        authenticate(httppost);
-        HttpResponse response = cachingClient.execute(httppost, localContext.get());
+        return execute(new HttpPost(url), url, contentType, content);
+    }
+
+    public HttpResponse put(String url, String contentType, String content) throws IOException {
+        return execute(new HttpPut(url), url, contentType, content);
+    }
+
+    public HttpResponse execute(HttpEntityEnclosingRequestBase httpmethod, String url, String contentType, String content) throws IOException {
+        httpmethod.setHeader("Content-Type", contentType);
+        httpmethod.setEntity(new StringEntity(content));
+        authenticate(httpmethod);
+        HttpResponse response = cachingClient.execute(httpmethod, localContext.get());
         logger.debug("post, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{url, contentType, content, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});
         return response;
     }
