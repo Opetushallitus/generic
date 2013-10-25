@@ -123,7 +123,24 @@ public class CachingRestClient {
 //        logger.info("get... url: {}", url);
         final HttpGet httpget = new HttpGet(url);
 
-        if(webCasUrl != null && username != null && password != null && casService != null && ticket == null) {
+        authenticate(httpget);
+
+        final HttpResponse response = cachingClient.execute(httpget, localContext.get());
+
+//        if(response.getStatusLine().getStatusCode() == 401) {
+//            logger.warn("Wrong status code 401, clearing ticket.", response.getStatusLine().getStatusCode());
+//            ticket = null;
+//        }
+
+        cacheStatus = localContext.get().getAttribute(CachingHttpClient.CACHE_RESPONSE_STATUS);
+//        logger.info("get done, url: {}, status: {}, cacheStatus: {}, headers: {}", new Object[]{url, response.getStatusLine(), null, response.getAllHeaders()});
+//        System.out.println("==> get done, url: "+url+", status: "+response.getStatusLine()+", cacheStatus: "+cacheStatus+", headers: "+ Arrays.asList(response.getAllHeaders()));
+//        System.out.println(IOUtils.toString(response.getEntity().getContent()));
+        return response.getEntity().getContent();
+    }
+
+    private void authenticate(HttpGet httpget) {
+        if(webCasUrl != null && username != null && password != null && casService != null) {
             ticket = CasClient.getTicket(webCasUrl + "/v1/tickets", username, password, casService);
             URIBuilder builder = new URIBuilder(httpget.getURI()).addParameter("ticket", ticket);
             try {
@@ -132,19 +149,6 @@ public class CachingRestClient {
                 logger.error("URI syntax incorrect." , e);
             }
         }
-
-        final HttpResponse response = cachingClient.execute(httpget, localContext.get());
-
-        if(response.getStatusLine().getStatusCode() == 401) {
-            logger.warn("Wrong status code 401, clearing ticket.", response.getStatusLine().getStatusCode());
-            ticket = null;
-        }
-
-        cacheStatus = localContext.get().getAttribute(CachingHttpClient.CACHE_RESPONSE_STATUS);
-//        logger.info("get done, url: {}, status: {}, cacheStatus: {}, headers: {}", new Object[]{url, response.getStatusLine(), null, response.getAllHeaders()});
-//        System.out.println("==> get done, url: "+url+", status: "+response.getStatusLine()+", cacheStatus: "+cacheStatus+", headers: "+ Arrays.asList(response.getAllHeaders()));
-//        System.out.println(IOUtils.toString(response.getEntity().getContent()));
-        return response.getEntity().getContent();
     }
 
     public Object getCacheStatus() {
