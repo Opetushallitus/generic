@@ -189,7 +189,7 @@ public class CachingRestClient {
         httpmethod.setEntity(new StringEntity(content));
         authenticate(httpmethod);
         HttpResponse response = cachingClient.execute(httpmethod, localContext.get());
-        logger.debug("post, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{url, contentType, content, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});
+        logger.debug("{}, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{httpmethod.getMethod(), url, contentType, content, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});
         return response;
     }
 
