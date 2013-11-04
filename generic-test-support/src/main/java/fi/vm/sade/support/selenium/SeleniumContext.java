@@ -19,6 +19,10 @@ public class SeleniumContext {
 
     static {
         SeleniumContext.ophServerUrl = TestUtils.getEnvOrSystemProperty(SeleniumContext.ophServerUrl, "OPH_SERVER_URL", "ophServerUrl");
+        String baseUrl = TestUtils.getEnvOrSystemProperty(SeleniumContext.ophServerUrl, "BASE_URL", "baseUrl");
+        if (baseUrl != null) {
+            SeleniumContext.baseUrl.set(baseUrl);
+        }
     }
 
     private SeleniumContext() {
@@ -82,7 +86,12 @@ public class SeleniumContext {
     }
 
     public static String getBaseUrl() {
-        return ophServerUrl + ":" + getPort();
+        String url = baseUrl.get();
+        if (url != null) {
+            return url;
+        } else {
+            return ophServerUrl + ":" + getPort();
+        }
     }
 
 }
