@@ -2,14 +2,16 @@ package fi.vm.sade.generic.rest;
 
 import org.apache.commons.codec.binary.Hex;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.EntityTag;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -21,6 +23,7 @@ public class HttpTestResource {
 
     public static int counter = 1;
     public static String someResource = "original value";
+    public static int authenticationCount = -999;
 
     @Path("/pingCached1sec")
     @GET
@@ -104,4 +107,57 @@ public class HttpTestResource {
     public Response status500() {
         return Response.status(500).build();
     }
+
+    @Path("/pingSecuredRedirect")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response pingSecuredRedirect(@Context HttpServletRequest request) throws URISyntaxException {
+        if (hasValidCasTicket(request)) {
+            return Response.ok("pong " + (counter++)).build();
+        }
+        return Response.temporaryRedirect(new URI("/httptest/cas")).build();
+    }
+
+    @Path("/pingSecuredRedirect")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response pingSecuredRedirectPost(@Context HttpServletRequest request) throws URISyntaxException {
+        return pingSecuredRedirect(request);
+    }
+
+    @Path("/pingSecured401Unauthorized")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response pingSecured401Unauthorized(@Context HttpServletRequest request) throws URISyntaxException {
+        if (hasValidCasTicket(request)) {
+            return Response.ok("pong " + (counter++)).build();
+        }
+        return Response.status(401).build();
+    }
+
+    private boolean hasValidCasTicket(HttpServletRequest request) {
+        String ticket = request.getParameter("ticket");
+        System.out.println("hasValidCasTicket, request: "+request.getRequestURL()+", ticket: "+ticket);
+        return ticket != null && !ticket.startsWith("invalid");
+    }
+
+    @Path("/cas")
+    @GET
+    public Response cas(@Context HttpServletRequest request) throws URISyntaxException {
+        String service = request.getParameter("service");
+        if (service != null) {
+            System.out.println("HttpTestResource.cas, service: "+service+", temp auth OK, sending back");
+            return Response.temporaryRedirect(new URI(service+"?ticket=TEMP_TGT")).build();
+        }
+        return Response.ok("this is cas").build();
+    }
+
+    @Path("/cas/v1/tickets")
+    @GET
+    public Response casTickets(@Context HttpServletRequest request) throws URISyntaxException {
+        System.out.println("cas tickets, params: "+ request.getParameterMap());
+        authenticationCount++;
+        return Response.ok("TEMP_CAS_TICKET_"+System.currentTimeMillis()).build();
+    }
+
 }

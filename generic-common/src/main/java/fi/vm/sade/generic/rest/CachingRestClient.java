@@ -4,12 +4,17 @@ import com.google.gson.*;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import fi.vm.sade.authentication.cas.CasClient;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.cxf.helpers.IOUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.cache.CacheConfig;
 import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
@@ -21,8 +26,8 @@ import org.slf4j.LoggerFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -39,11 +44,12 @@ import java.util.GregorianCalendar;
  */
 public class CachingRestClient {
 
+    public static final String WAS_REDIRECTED_TO_CAS = "redirected_to_cas";
     protected Logger logger = LoggerFactory.getLogger(getClass());
     private static ThreadLocal<DateFormat> df1 = new ThreadLocal<DateFormat>(){
         protected DateFormat initialValue() {
             return new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        };
+        }
     };
     private static ThreadLocal<DateFormat> df2 = new ThreadLocal<DateFormat>(){
         @Override
@@ -68,7 +74,7 @@ public class CachingRestClient {
     private String username;
     private String password;
     private String casService;
-    private String ticket;
+    protected String ticket;
 
     public CachingRestClient() {
         // multithread support + max connections
@@ -83,8 +89,20 @@ public class CachingRestClient {
 
         // init stuff
         final DefaultHttpClient actualClient = new DefaultHttpClient(connectionManager);
+        actualClient.setRedirectStrategy(new DefaultRedirectStrategy(){
+            // detect redirects to cas
+            @Override
+            public URI getLocationURI(HttpRequest request, HttpResponse response, HttpContext context) throws ProtocolException {
+                URI locationURI = super.getLocationURI(request, response, context);
+                String uri = locationURI.toString();
+                if (isCasUrl(uri)) {
+                    logger.debug("is cas redirect: " + uri);
+                    context.setAttribute(WAS_REDIRECTED_TO_CAS, "true");
+                }
+                return locationURI;
+            }
+        });
         cachingClient = new CachingHttpClient(actualClient, cacheConfig);
-
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(XMLGregorianCalendar.class, new JsonDeserializer<XMLGregorianCalendar>() {
 
@@ -103,15 +121,21 @@ public class CachingRestClient {
         gson = gsonBuilder.create();
     }
 
+    private boolean isCasUrl(String uri) {
+        return uri != null && (uri.endsWith("/cas") || uri.contains("/cas/") || uri.contains("/cas?"));
+    }
+
     /**
      * get REST Json resource as Java object of type resultType (deserialized with gson).
      * Returns null if error occurred while querying resource.
      */
     public <T> T get(String url, Class<? extends T> resultType) throws IOException {
         InputStream is = null;
+        String response = null;
         try {
             is = get(url);
-            T t = gson.fromJson(new InputStreamReader(is, "utf-8"), resultType);
+            response = IOUtils.toString(is);
+            T t = fromJson(resultType, response);
             return t;
         } catch (JsonObjectException e) {
             return null;
@@ -122,49 +146,53 @@ public class CachingRestClient {
         }
     }
 
+    private <T> T fromJson(Class<? extends T> resultType, String response) throws IOException {
+        try {
+            return gson.fromJson(response, resultType);
+        } catch (Exception e) {
+            throw new IOException("failed to convert response to json, response: "+response);
+        }
+    }
+
     /**
      * get REST Json resource as string.
      */
     public InputStream get(String url) throws IOException {
-//        logger.info("get... url: {}", url);
-        final HttpGet httpget = new HttpGet(url);
-
-        authenticate(httpget);
-
-        final HttpResponse response = cachingClient.execute(httpget, localContext.get());
-
-        if(response.getStatusLine().getStatusCode() == 401) {
-            logger.warn("Wrong status code 401, clearing ticket.", response.getStatusLine().getStatusCode());
-            ticket = null;
-            throw new IOException("got http 401 unauthorized, user: "+username+", url: "+url);
-        }
-
-        if(response.getStatusLine().getStatusCode() >= 500) {
-            logger.error("Error status trying to query REST resource: {}", httpget.getURI());
-            throw new JsonObjectException("Error status trying to query REST resource.");
-        }
-
-        cacheStatus = localContext.get().getAttribute(CachingHttpClient.CACHE_RESPONSE_STATUS);
-//        logger.info("get done, url: {}, status: {}, cacheStatus: {}, headers: {}", new Object[]{url, response.getStatusLine(), null, response.getAllHeaders()});
-//        System.out.println("==> get done, url: "+url+", status: "+response.getStatusLine()+", cacheStatus: "+cacheStatus+", headers: "+ Arrays.asList(response.getAllHeaders()));
-//        System.out.println(IOUtils.toString(response.getEntity().getContent()));
-
+        HttpGet req = new HttpGet(url);
+        HttpResponse response = execute(req, null, null);
         return response.getEntity().getContent();
     }
 
-    private void authenticate(HttpRequestBase httpget) throws IOException {
-        if(webCasUrl != null && username != null && password != null && casService != null && ticket == null) {
-            ticket = CasClient.getTicket(webCasUrl + "/v1/tickets", username, password, casService);
+    private boolean wasRedirectedToCas() {
+        return "true".equals(localContext.get().getAttribute("redirected_to_cas"));
+    }
+
+    protected boolean authenticate(HttpRequestBase req) throws IOException {
+        if(isAuthenticable() && ticket == null) {
+            ticket = obtainNewCasTicket();
             if (ticket == null) {
                 throw new IOException("failed to get ticket, check credentials! user: "+username+", cas: "+webCasUrl+", service: "+casService);
             }
-            URIBuilder builder = new URIBuilder(httpget.getURI()).addParameter("ticket", ticket);
+            if (req.getURI().toString().contains("ticket=")) {
+                throw new IOException("uri already has a ticket: "+req.getURI());
+            }
+            URIBuilder builder = new URIBuilder(req.getURI()).addParameter("ticket", ticket);
             try {
-                httpget.setURI(builder.build());
+                req.setURI(builder.build());
             } catch (URISyntaxException e) {
                 logger.error("URI syntax incorrect." , e);
             }
+            return true;
         }
+        return false;
+    }
+
+    private boolean isAuthenticable() {
+        return webCasUrl != null && username != null && password != null && casService != null;
+    }
+
+    protected String obtainNewCasTicket() throws IOException {
+        return CasClient.getTicket(webCasUrl + "/v1/tickets", username, password, casService);
     }
 
     public String postForLocation(String url, String contentType, String content) throws IOException {
@@ -177,20 +205,57 @@ public class CachingRestClient {
     }
 
     public HttpResponse post(String url, String contentType, String content) throws IOException {
-        return execute(new HttpPost(url), url, contentType, content);
+        return execute(new HttpPost(url), contentType, content);
     }
 
     public HttpResponse put(String url, String contentType, String content) throws IOException {
-        return execute(new HttpPut(url), url, contentType, content);
+        return execute(new HttpPut(url), contentType, content);
     }
 
-    public HttpResponse execute(HttpEntityEnclosingRequestBase httpmethod, String url, String contentType, String content) throws IOException {
-        httpmethod.setHeader("Content-Type", contentType);
-        httpmethod.setEntity(new StringEntity(content));
-        authenticate(httpmethod);
-        HttpResponse response = cachingClient.execute(httpmethod, localContext.get());
-        logger.debug("{}, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{httpmethod.getMethod(), url, contentType, content, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});
+    public HttpResponse execute(HttpRequestBase req, String contentType, String postOrPutContent) throws IOException {
+        // prepare
+        String url = req.getURI().toString();
+        if (contentType != null) {
+            req.setHeader("Content-Type", contentType);
+        }
+        if (postOrPutContent != null && req instanceof HttpEntityEnclosingRequestBase) {
+            ((HttpEntityEnclosingRequestBase)req).setEntity(new StringEntity(postOrPutContent));
+        }
+
+        // authenticated if needed
+        boolean wasJustAuthenticated = authenticate(req);
+
+        // do actual request
+        final HttpResponse response = cachingClient.execute(req, localContext.get());
+
+        // authentication: was redirected to cas OR http 401 -> get ticket and retry once (but do it only once, hence '!wasJustAuthenticated')
+        logger.debug("url: "+url+", isauth: " + isAuthenticable() + ", isredir: "+isRedirectToCas(response)+" wasredir: " + wasRedirectedToCas() + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated);
+        if (isAuthenticable() && (isRedirectToCas(response) || wasRedirectedToCas() || response.getStatusLine().getStatusCode() == 401) && !wasJustAuthenticated) {
+            logger.warn("warn! got redirect to cas or 401 unauthorized, re-getting ticket and retrying request");
+            ticket = null;
+            return execute(req, contentType, postOrPutContent);
+        }
+
+        if(response.getStatusLine().getStatusCode() == 401) {
+            logger.warn("Wrong status code 401, clearing ticket.", response.getStatusLine().getStatusCode());
+            ticket = null;
+            throw new IOException("got http 401 unauthorized, user: "+username+", url: "+url);
+        }
+
+        if(response.getStatusLine().getStatusCode() >= 500) {
+            logger.error("Error status trying to query REST resource: {}", req.getURI());
+            throw new JsonObjectException("Error status trying to query REST resource.");
+        }
+
+        cacheStatus = localContext.get().getAttribute(CachingHttpClient.CACHE_RESPONSE_STATUS);
+
+        logger.debug("{}, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{req.getMethod(), url, contentType, postOrPutContent, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});
         return response;
+    }
+
+    private boolean isRedirectToCas(HttpResponse response) {
+        Header location = response.getFirstHeader("Location");
+        return location != null && isCasUrl(location.getValue());
     }
 
     public Object getCacheStatus() {

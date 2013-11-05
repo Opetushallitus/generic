@@ -17,13 +17,18 @@ import java.util.GregorianCalendar;
  */
 public class CachingRestClientTest {
 
-    CachingRestClient client = new CachingRestClient();
+    CachingRestClient client = new CachingRestClient(){
+        @Override
+        protected String obtainNewCasTicket() throws IOException {
+            return new CachingRestClient().get(getUrl("/httptest/cas/v1/tickets"), String.class);
+        }
+    };
 
     @Test
     public void testXmlGregorianCalendarParsing() throws Exception {
         Calendar now = new GregorianCalendar();
-        assertDay(now, client.get("http://localhost:" + JettyJersey.getPort() + "/httptest/xmlgregoriancalendar1", XMLGregorianCalendar.class));
-        assertDay(now, client.get("http://localhost:" + JettyJersey.getPort() + "/httptest/xmlgregoriancalendar2", XMLGregorianCalendar.class));
+        assertDay(now, client.get(getUrl("/httptest/xmlgregoriancalendar1"), XMLGregorianCalendar.class));
+        assertDay(now, client.get(getUrl("/httptest/xmlgregoriancalendar2"), XMLGregorianCalendar.class));
     }
 
     private void assertDay(Calendar now, XMLGregorianCalendar xmlGregorianCalendar) {
@@ -85,24 +90,48 @@ public class CachingRestClientTest {
         get("/httptest/status500");
     }
 
-    // todo: spring restTemplate test
-
-    /* todo: cxf client ei cacheta, saisko cachettamaan?
     @Test
-    public void testWithCxfClient() throws Exception {
-        List<Object> providers = new ArrayList<Object>();
-//        providers.add( new JacksonJaxbJsonProvider() ); http://fandry.blogspot.fi/2012/06/how-to-create-simple-cxf-based-jax-rs.html
-        WebClient client = WebClient.create("http://localhost:"+JettyJersey.port+"/httptest", providers).accept("text/plain").type("text/plain").path("/pingCached1sec");
-        System.out.println(client.get(String.class));
-        System.out.println(client.get(String.class));
+    public void testAuthenticationWithRedirect() throws Exception {
+        // lue suojattu resurssi joka redirectaa "casiin" - client hoitaa autentikoinnin sisäisesti
+        initClientAuthentication();
+        Assert.assertEquals("pong 1", get("/httptest/pingSecuredRedirect"));
+        Assert.assertEquals(1, HttpTestResource.authenticationCount);
+
+        // invalidoi tiketti tai restarttaa cas tai kohdepalvelu välissä, ja yritä uudestaan - huom oikesti ei tartte tehdä koska tässä ei ole sessioita mutta restclientilla on kyllä tila
+        Assert.assertEquals("pong 2", get("/httptest/pingSecuredRedirect"));
+        Assert.assertEquals(2, HttpTestResource.authenticationCount);
     }
-    */
+
+    @Test
+    public void testAuthenticationWithRedirectAndPost() throws Exception {
+        // lue suojattu resurssi joka redirectaa "casiin" - client hoitaa autentikoinnin sisäisesti
+        initClientAuthentication();
+        Assert.assertEquals("pong 1", IOUtils.toString(client.post(getUrl("/httptest/pingSecuredRedirect"), "application/json", "post content").getEntity().getContent()));
+        Assert.assertEquals(1, HttpTestResource.authenticationCount);
+
+        // invalidoi tiketti tai restarttaa cas tai kohdepalvelu välissä, ja yritä uudestaan - huom oikesti ei tartte tehdä koska tässä ei ole sessioita mutta restclientilla on kyllä tila
+        Assert.assertEquals("pong 2", IOUtils.toString(client.post(getUrl("/httptest/pingSecuredRedirect"), "application/json", "post content").getEntity().getContent()));
+        Assert.assertEquals(2, HttpTestResource.authenticationCount);
+    }
+
+    @Test
+    public void testAuthenticationWith401Unauthorized() throws Exception {
+        // lue suojattu resurssi joka palauttaa ensin 401 unauthorized - client hoitaa autentikoinnin sisäisesti
+        initClientAuthentication();
+        Assert.assertEquals("pong 1", get("/httptest/pingSecured401Unauthorized"));
+        Assert.assertEquals(1, HttpTestResource.authenticationCount);
+
+        // invalidoi tiketti tai restarttaa cas tai kohdepalvelu välissä, ja yritä uudestaan - huom oikesti ei tartte tehdä koska tässä ei ole sessioita mutta restclientilla on kyllä tila
+        Assert.assertEquals("pong 2", get("/httptest/pingSecured401Unauthorized"));
+        Assert.assertEquals(2, HttpTestResource.authenticationCount);
+    }
 
     @Before
     public void start() throws Exception {
         JettyJersey.startServer("fi.vm.sade.generic.rest", null);
         HttpTestResource.counter = 1;
         HttpTestResource.someResource = "original value";
+        HttpTestResource.authenticationCount = 0;
     }
 
     @After
@@ -110,8 +139,23 @@ public class CachingRestClientTest {
         JettyJersey.stopServer();
     }
 
+    private void initClientAuthentication() {
+        client.setCasService(getUrl("/httptest"));
+        client.setWebCasUrl(getUrl("/httptest/cas"));
+        client.setUsername("test");
+        client.setPassword("test");
+    }
+
+//    private void invalidateTicket() {
+//        client.ticket = "invalid_"+client.ticket;
+//    }
+
     private String get(String url) throws IOException {
-        return IOUtils.toString(client.get("http://localhost:"+JettyJersey.getPort()+url));
+        return IOUtils.toString(client.get(getUrl(url)));
+    }
+
+    private String getUrl(String url) {
+        return "http://localhost:"+ JettyJersey.getPort()+url;
     }
 
 }
