@@ -234,19 +234,19 @@ public class CachingRestClient implements HealthChecker {
         logger.debug("url: "+url+", isauth: " + isAuthenticable() + ", isredir: "+isRedirectToCas(response)+" wasredir: " + wasRedirectedToCas() + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated);
         if (isAuthenticable() && (isRedirectToCas(response) || wasRedirectedToCas() || response.getStatusLine().getStatusCode() == 401) && !wasJustAuthenticated) {
             logger.warn("warn! got redirect to cas or 401 unauthorized, re-getting ticket and retrying request");
-            ticket = null;
+            ticket = null; // will force to get new ticket next time
             return execute(req, contentType, postOrPutContent);
         }
 
         if(response.getStatusLine().getStatusCode() == 401) {
             logger.warn("Wrong status code 401, clearing ticket.", response.getStatusLine().getStatusCode());
-            ticket = null;
+            ticket = null; // will force to get new ticket next time
             throw new IOException("got http 401 unauthorized, user: "+username+", url: "+url);
         }
 
         if(response.getStatusLine().getStatusCode() >= 500) {
-            logger.error("Error status trying to query REST resource: {}", req.getURI());
-            throw new JsonObjectException("Error status trying to query REST resource.");
+            logger.error("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
+            throw new IOException("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
         }
 
         cacheStatus = localContext.get().getAttribute(CachingHttpClient.CACHE_RESPONSE_STATUS);
