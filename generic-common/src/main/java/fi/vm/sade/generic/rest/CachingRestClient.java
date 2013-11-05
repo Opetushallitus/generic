@@ -3,6 +3,7 @@ package fi.vm.sade.generic.rest;
 import com.google.gson.*;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import fi.vm.sade.authentication.cas.CasClient;
+import fi.vm.sade.generic.healthcheck.HealthChecker;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.http.Header;
@@ -34,6 +35,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.LinkedHashMap;
 
 /**
  * Simple http client, that allows doing GETs to REST-resources so that http cache headers are respected.
@@ -42,7 +44,7 @@ import java.util.GregorianCalendar;
  *
  * @author Antti Salonen
  */
-public class CachingRestClient {
+public class CachingRestClient implements HealthChecker {
 
     public static final String WAS_REDIRECTED_TO_CAS = "redirected_to_cas";
     protected Logger logger = LoggerFactory.getLogger(getClass());
@@ -327,4 +329,22 @@ public class CachingRestClient {
         this.ticket = null;
         this.casService = casService;
     }
+
+    /** Check health of this rest client */
+    @Override
+    public Object checkHealth() throws Throwable {
+        if (isAuthenticable()) {
+            // call target service's buildversion url which requires authentication
+            final String url = casService.replace("/j_spring_cas_security_check", "") + "/buildversion.txt?auth";
+            final HttpResponse result = execute(new HttpGet(url), null, null);
+            return new LinkedHashMap(){{
+                put("url", url);
+                put("user", username);
+                put("status", result.getStatusLine().getStatusCode() == 200 ? "OK" : result.getStatusLine());
+            }};
+        } else {
+            return "nothing to check - anonymous access";
+        }
+    }
+
 }
