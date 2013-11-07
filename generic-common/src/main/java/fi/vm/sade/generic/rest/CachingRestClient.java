@@ -4,8 +4,9 @@ import com.google.gson.*;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import fi.vm.sade.authentication.cas.CasClient;
 import fi.vm.sade.generic.healthcheck.HealthChecker;
+import fi.vm.sade.generic.ui.portlet.security.ProxyAuthenticator;
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.cxf.helpers.IOUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -23,6 +24,7 @@ import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.IOException;
@@ -41,6 +43,10 @@ import java.util.LinkedHashMap;
  * Simple http client, that allows doing GETs to REST-resources so that http cache headers are respected.
  * Just a lightweight wrapper on top of apache commons-http and commons-http-cache.
  * Use get -method to do requests.
+ *
+ * Service-as-a-user authentication: set webCasUrl/casService/username/password
+ *
+ * Proxy authentication: set useProxyAuthentication=true + casService
  *
  * @author Antti Salonen
  */
@@ -76,7 +82,11 @@ public class CachingRestClient implements HealthChecker {
     private String username;
     private String password;
     private String casService;
-    protected String ticket;
+    protected String serviceAsAUserTicket;
+    private ProxyAuthenticator proxyAuthenticator;
+    private boolean useProxyAuthentication = false;
+    @Value("${auth.mode:cas}")
+    private String proxyAuthMode;
 
     public CachingRestClient() {
         // multithread support + max connections
@@ -120,6 +130,12 @@ public class CachingRestClient implements HealthChecker {
             }
 
         });
+        gsonBuilder.registerTypeAdapter(Date.class, new JsonDeserializer<Date>() {
+            @Override
+            public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws com.google.gson.JsonParseException {
+                return new Date(json.getAsJsonPrimitive().getAsLong());
+            }
+        });
         gson = gsonBuilder.create();
     }
 
@@ -139,8 +155,6 @@ public class CachingRestClient implements HealthChecker {
             response = IOUtils.toString(is);
             T t = fromJson(resultType, response);
             return t;
-        } catch (JsonObjectException e) {
-            return null;
         } finally {
             if(is != null) {
                 is.close();
@@ -148,11 +162,15 @@ public class CachingRestClient implements HealthChecker {
         }
     }
 
+    public String getAsString(String url) throws IOException {
+        return get(url, String.class);
+    }
+
     private <T> T fromJson(Class<? extends T> resultType, String response) throws IOException {
         try {
             return gson.fromJson(response, resultType);
-        } catch (Exception e) {
-            throw new IOException("failed to convert response to json, response: "+response);
+        } catch (JsonSyntaxException e) {
+            throw new IOException("failed to parse object from (json) response, type: "+resultType.getSimpleName()+", reason: "+e.getCause()+", response:\n"+response);
         }
     }
 
@@ -169,32 +187,55 @@ public class CachingRestClient implements HealthChecker {
         return "true".equals(localContext.get().getAttribute("redirected_to_cas"));
     }
 
-    protected boolean authenticate(HttpRequestBase req) throws IOException {
-        if(isAuthenticable() && ticket == null) {
-            ticket = obtainNewCasTicket();
-            if (ticket == null) {
+    protected boolean authenticate(final HttpRequestBase req) throws IOException {
+
+        if(useServiceAsAUserAuthentication() && serviceAsAUserTicket == null) {
+            serviceAsAUserTicket = obtainNewCasServiceAsAUserTicket();
+            if (serviceAsAUserTicket == null) {
                 throw new IOException("failed to get ticket, check credentials! user: "+username+", cas: "+webCasUrl+", service: "+casService);
             }
             if (req.getURI().toString().contains("ticket=")) {
                 throw new IOException("uri already has a ticket: "+req.getURI());
             }
-            URIBuilder builder = new URIBuilder(req.getURI()).addParameter("ticket", ticket);
-            try {
-                req.setURI(builder.build());
-            } catch (URISyntaxException e) {
-                logger.error("URI syntax incorrect." , e);
-            }
+            addRequestParameter(req, "ticket", serviceAsAUserTicket);
             return true;
         }
+
+        else if (useProxyAuthentication) {
+            if (proxyAuthenticator == null) {
+                proxyAuthenticator = new ProxyAuthenticator();
+            }
+            proxyAuthenticator.proxyAuthenticate(casService, proxyAuthMode, new ProxyAuthenticator.Callback() {
+                @Override
+                public void setRequestHeader(String key, String value) {
+                    req.addHeader(key, value);
+                }
+            });
+            return true;
+        }
+
         return false;
     }
 
-    private boolean isAuthenticable() {
+    private void addRequestParameter(HttpRequestBase req, String key, String value) {
+        URIBuilder builder = new URIBuilder(req.getURI()).addParameter(key, value);
+        try {
+            req.setURI(builder.build());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private boolean useServiceAsAUserAuthentication() {
         return webCasUrl != null && username != null && password != null && casService != null;
     }
 
-    protected String obtainNewCasTicket() throws IOException {
+    protected String obtainNewCasServiceAsAUserTicket() throws IOException {
         return CasClient.getTicket(webCasUrl + "/v1/tickets", username, password, casService);
+    }
+
+    public String postForLocation(String url, String content) throws IOException {
+        return postForLocation(url, "application/json", content);
     }
 
     public String postForLocation(String url, String contentType, String content) throws IOException {
@@ -214,6 +255,10 @@ public class CachingRestClient implements HealthChecker {
         return execute(new HttpPut(url), contentType, content);
     }
 
+    public HttpResponse delete(String url) throws IOException {
+        return execute(new HttpDelete(url), null, null);
+    }
+
     public HttpResponse execute(HttpRequestBase req, String contentType, String postOrPutContent) throws IOException {
         // prepare
         String url = req.getURI().toString();
@@ -231,16 +276,16 @@ public class CachingRestClient implements HealthChecker {
         final HttpResponse response = cachingClient.execute(req, localContext.get());
 
         // authentication: was redirected to cas OR http 401 -> get ticket and retry once (but do it only once, hence '!wasJustAuthenticated')
-        logger.debug("url: "+url+", isauth: " + isAuthenticable() + ", isredir: "+isRedirectToCas(response)+" wasredir: " + wasRedirectedToCas() + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated);
-        if (isAuthenticable() && (isRedirectToCas(response) || wasRedirectedToCas() || response.getStatusLine().getStatusCode() == 401) && !wasJustAuthenticated) {
+        logger.debug("url: "+ req.getURI()+", method: "+req.getMethod()+", serviceauth: " + useServiceAsAUserAuthentication() + ", proxyauth: "+useProxyAuthentication+", isredir: "+isRedirectToCas(response)+", wasredir: " + wasRedirectedToCas() + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated);
+        if (useServiceAsAUserAuthentication() && (isRedirectToCas(response) || wasRedirectedToCas() || response.getStatusLine().getStatusCode() == 401) && !wasJustAuthenticated) {
             logger.warn("warn! got redirect to cas or 401 unauthorized, re-getting ticket and retrying request");
-            ticket = null; // will force to get new ticket next time
+            clearTicket(); // will force to get new ticket next time
             return execute(req, contentType, postOrPutContent);
         }
 
         if(response.getStatusLine().getStatusCode() == 401) {
             logger.warn("Wrong status code 401, clearing ticket.", response.getStatusLine().getStatusCode());
-            ticket = null; // will force to get new ticket next time
+            clearTicket();
             throw new IOException("got http 401 unauthorized, user: "+username+", url: "+url);
         }
 
@@ -253,6 +298,14 @@ public class CachingRestClient implements HealthChecker {
 
         logger.debug("{}, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{req.getMethod(), url, contentType, postOrPutContent, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});
         return response;
+    }
+
+    /** will force to get new ticket next time */
+    private void clearTicket() {
+        serviceAsAUserTicket = null;
+        if (useProxyAuthentication && proxyAuthenticator != null) {
+            proxyAuthenticator.clearTicket(casService);
+        }
     }
 
     private boolean isRedirectToCas(HttpResponse response) {
@@ -299,7 +352,7 @@ public class CachingRestClient implements HealthChecker {
     }
 
     public void setWebCasUrl(String webCasUrl) {
-        this.ticket = null;
+        clearTicket();
         this.webCasUrl = webCasUrl;
     }
 
@@ -308,7 +361,7 @@ public class CachingRestClient implements HealthChecker {
     }
 
     public void setUsername(String username) {
-        this.ticket = null;
+        clearTicket();
         this.username = username;
     }
 
@@ -317,7 +370,7 @@ public class CachingRestClient implements HealthChecker {
     }
 
     public void setPassword(String password) {
-        this.ticket = null;
+        clearTicket();
         this.password = password;
     }
 
@@ -326,25 +379,40 @@ public class CachingRestClient implements HealthChecker {
     }
 
     public void setCasService(String casService) {
-        this.ticket = null;
+        clearTicket();
         this.casService = casService;
     }
 
     /** Check health of this rest client */
     @Override
     public Object checkHealth() throws Throwable {
-        if (isAuthenticable()) {
-            // call target service's buildversion url which requires authentication
-            final String url = casService.replace("/j_spring_cas_security_check", "") + "/buildversion.txt?auth";
+        if (casService != null) {
+            // call target service's buildversion url (if we have credentials try the secured url)
+            final String url = casService.replace("/j_spring_cas_security_check", "") + "/buildversion.txt" + (useServiceAsAUserAuthentication() ? "?auth" : "");
             final HttpResponse result = execute(new HttpGet(url), null, null);
             return new LinkedHashMap(){{
                 put("url", url);
-                put("user", username);
+                put("user", useServiceAsAUserAuthentication() ? username : useProxyAuthentication ? "proxy" : "anonymous");
                 put("status", result.getStatusLine().getStatusCode() == 200 ? "OK" : result.getStatusLine());
             }};
         } else {
-            return "nothing to check - anonymous access";
+            return "nothing to check";
         }
     }
 
+    public boolean isUseProxyAuthentication() {
+        return useProxyAuthentication;
+    }
+
+    public void setUseProxyAuthentication(boolean useProxyAuthentication) {
+        this.useProxyAuthentication = useProxyAuthentication;
+    }
+
+    public ProxyAuthenticator getProxyAuthenticator() {
+        return proxyAuthenticator;
+    }
+
+    public void setProxyAuthenticator(ProxyAuthenticator proxyAuthenticator) {
+        this.proxyAuthenticator = proxyAuthenticator;
+    }
 }

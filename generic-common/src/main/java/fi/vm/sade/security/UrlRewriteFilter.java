@@ -51,7 +51,7 @@ public class UrlRewriteFilter implements Filter {
                         }
                     }
                     PreAuthenticatedAuthenticationToken authentication = new PreAuthenticatedAuthenticationToken(oldDeprecatedSecurity_REMOVE_username, oldDeprecatedSecurity_REMOVE_username, authorities);
-                    logger.debug("\nMOCK service call, request: {}, authentication: {}", request.getRequestURL().append("?").append(request.getQueryString()), authentication);
+                    logger.warn("MOCK service call, request: {}, authentication: {}", request.getRequestURL().append("?").append(request.getQueryString()), authentication);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     forward(request, servletResponse, "oldDeprecatedSecurity_REMOVE", "true"); // huom! forwardin jälkeen ei ajeta enää springin securityputkea
                     return;

@@ -137,6 +137,7 @@ public class HttpTestResource {
 
     private boolean hasValidCasTicket(HttpServletRequest request) {
         String ticket = request.getParameter("ticket");
+        if (ticket == null) ticket = request.getHeader("CasSecurityTicket"); // proxyticket
         System.out.println("hasValidCasTicket, request: "+request.getRequestURL()+", ticket: "+ticket);
         return ticket != null && !ticket.startsWith("invalid");
     }
