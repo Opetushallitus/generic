@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -164,6 +165,21 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
                         List<Map<String, Object>> list = jdbcTemplate.queryForList("SELECT * FROM data_status ORDER BY muutoshetki");
                         result.put("data_status", list);
                     }
+
+                    //
+                    // Get count information from database tables
+                    //
+                    List<Map<String, Object>> countList = new ArrayList<Map<String, Object>>();
+                    rs = dbMetaData.getTables(null, null, "%" ,new String[] {"TABLE"});
+                    while(rs.next()) {
+                        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+                        String tableName = rs.getString("TABLE_NAME");
+                        countList.add(jdbcTemplate.queryForMap("SELECT '" + tableName + "' AS table, COUNT(*) AS count FROM " + tableName));
+                    }
+                    if (countList.size() != 0) {
+                        result.put("counts", countList);
+                    }
+
                     return result;
                 } else {
                     return "N/A";
