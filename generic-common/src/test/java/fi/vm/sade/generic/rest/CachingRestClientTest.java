@@ -1,16 +1,24 @@
 package fi.vm.sade.generic.rest;
 
+import fi.vm.sade.generic.ui.portlet.security.ProxyAuthenticator;
 import junit.framework.Assert;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.http.client.cache.CacheResponseStatus;
+import org.jasig.cas.client.validation.AssertionImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.security.cas.authentication.CasAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.List;
 
 /**
  * @author Antti Salonen
@@ -19,7 +27,7 @@ public class CachingRestClientTest {
 
     CachingRestClient client = new CachingRestClient(){
         @Override
-        protected String obtainNewCasTicket() throws IOException {
+        protected String obtainNewCasServiceAsAUserTicket() throws IOException {
             return new CachingRestClient().get(getUrl("/httptest/cas/v1/tickets"), String.class);
         }
     };
@@ -85,15 +93,16 @@ public class CachingRestClientTest {
         Assert.assertEquals(client.getCacheStatus(), CacheResponseStatus.CACHE_HIT);
     }
 
-    @Test(expected = JsonObjectException.class)
+    @Test(expected = IOException.class)
     public void testErrorStatus() throws IOException {
         get("/httptest/status500");
     }
 
     @Test
     public void testAuthenticationWithRedirect() throws Exception {
-        // lue suojattu resurssi joka redirectaa "casiin" - client hoitaa autentikoinnin sisäisesti
         initClientAuthentication();
+
+        // lue suojattu resurssi joka redirectaa "casiin" - client hoitaa autentikoinnin sisäisesti
         Assert.assertEquals("pong 1", get("/httptest/pingSecuredRedirect"));
         Assert.assertEquals(1, HttpTestResource.authenticationCount);
 
@@ -104,8 +113,9 @@ public class CachingRestClientTest {
 
     @Test
     public void testAuthenticationWithRedirectAndPost() throws Exception {
-        // lue suojattu resurssi joka redirectaa "casiin" - client hoitaa autentikoinnin sisäisesti
         initClientAuthentication();
+
+        // lue suojattu resurssi joka redirectaa "casiin" - client hoitaa autentikoinnin sisäisesti
         Assert.assertEquals("pong 1", IOUtils.toString(client.post(getUrl("/httptest/pingSecuredRedirect"), "application/json", "post content").getEntity().getContent()));
         Assert.assertEquals(1, HttpTestResource.authenticationCount);
 
@@ -116,14 +126,41 @@ public class CachingRestClientTest {
 
     @Test
     public void testAuthenticationWith401Unauthorized() throws Exception {
-        // lue suojattu resurssi joka palauttaa ensin 401 unauthorized - client hoitaa autentikoinnin sisäisesti
         initClientAuthentication();
+
+        // lue suojattu resurssi joka palauttaa ensin 401 unauthorized - client hoitaa autentikoinnin sisäisesti
         Assert.assertEquals("pong 1", get("/httptest/pingSecured401Unauthorized"));
         Assert.assertEquals(1, HttpTestResource.authenticationCount);
 
         // invalidoi tiketti tai restarttaa cas tai kohdepalvelu välissä, ja yritä uudestaan - huom oikesti ei tartte tehdä koska tässä ei ole sessioita mutta restclientilla on kyllä tila
         Assert.assertEquals("pong 2", get("/httptest/pingSecured401Unauthorized"));
         Assert.assertEquals(2, HttpTestResource.authenticationCount);
+    }
+
+    @Test
+    public void testProxyAuthentication() throws Exception {
+        // prepare & mock stuff
+        final int[] proxyTicketCounter = {0};
+        List<SimpleGrantedAuthority> roles = Arrays.asList(new SimpleGrantedAuthority("testrole"));
+        SecurityContextHolder.getContext().setAuthentication(new CasAuthenticationToken("testkey", "testprincipal", "testcred", roles, new User("testuser", "testpass", roles), new AssertionImpl("testassertion")));
+        client.setCasService(getUrl("/httptest"));
+        client.setUseProxyAuthentication(true);
+        client.setProxyAuthenticator(new ProxyAuthenticator() {
+            @Override
+            protected String obtainNewCasProxyTicket(String casTargetService, CasAuthenticationToken casAuthenticationToken) {
+                return casAuthenticationToken.getUserDetails().getUsername() + "_" + (++proxyTicketCounter[0]);
+            }
+        });
+
+        // lue suojattu resurssi joka palauttaa ensin 401 unauthorized - client hoitaa autentikoinnin sisäisesti
+        Assert.assertEquals("pong 1", get("/httptest/pingSecured401Unauthorized"));
+        Assert.assertEquals(1, proxyTicketCounter[0]);
+
+        // invalidoi tiketti tai restarttaa cas tai kohdepalvelu välissä, ja yritä uudestaan - huom oikesti ei tartte tehdä koska tässä ei ole sessioita mutta restclientilla on kyllä tila
+        // eikun proxyauth tapauksessa se pitääkin oikeasti tehdä koska AbstractSecurityTicketOutInterceptor käytössä
+        client.getProxyAuthenticator().clearTicket(getUrl("/httptest")); // tuleepahan tuokin nyt testattua sit samalla
+        Assert.assertEquals("pong 2", get("/httptest/pingSecured401Unauthorized"));
+        Assert.assertEquals(2, proxyTicketCounter[0]);
     }
 
     @Before
