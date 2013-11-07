@@ -163,7 +163,7 @@ public class CachingRestClient implements HealthChecker {
     }
 
     public String getAsString(String url) throws IOException {
-        return get(url, String.class);
+        return IOUtils.toString(get(url));
     }
 
     private <T> T fromJson(Class<? extends T> resultType, String response) throws IOException {
