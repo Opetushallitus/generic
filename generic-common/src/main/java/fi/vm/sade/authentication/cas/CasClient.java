@@ -5,6 +5,8 @@ import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.PostMethod;
 
 import java.io.IOException;
+
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.regex.Matcher;
@@ -26,6 +28,7 @@ public final class CasClient {
         // static-only access
     }
 
+    /** get cas service ticket, throws runtime exception if fails */
     public static String getTicket(final String server, final String username, final String password, final String service) {
         notNull(server, "server must not be null");
         notNull(username, "username must not be null");
@@ -49,21 +52,19 @@ public final class CasClient {
             client.executeMethod(post);
             final String response = post.getResponseBodyAsString();
             switch (post.getStatusCode()) {
-                case 200:
+                case HttpStatus.SC_OK:
                     LOG.info("serviceTicket found");
                     return response;
                 default:
                     LOG.warn("Invalid response code ({}) from CAS server!", post.getStatusCode());
                     LOG.info("Response (1k): " + response.substring(0, Math.min(1024, response.length())));
-                    break;
+                    throw new RuntimeException("failed to get CAS service ticket, response code: "+post.getStatusCode()+", server: "+server+", tgt: "+ticketGrantingTicket+", service: "+service);
             }
         } catch (final IOException e) {
-            LOG.warn(e.getMessage());
+            throw new RuntimeException("failed to get CAS service ticket, server: "+server+", tgt: "+ticketGrantingTicket+", service: "+service+", cause: "+e, e);
         } finally {
             post.releaseConnection();
         }
-
-        return null;
     }
 
     public static String getTicketGrantingTicket(final String server, final String username, final String password) {

@@ -39,6 +39,9 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 
+import static org.apache.commons.httpclient.HttpStatus.SC_INTERNAL_SERVER_ERROR;
+import static org.apache.commons.httpclient.HttpStatus.SC_UNAUTHORIZED;
+
 /**
  * Simple http client, that allows doing GETs to REST-resources so that http cache headers are respected.
  * Just a lightweight wrapper on top of apache commons-http and commons-http-cache.
@@ -184,18 +187,15 @@ public class CachingRestClient implements HealthChecker {
     }
 
     private boolean wasRedirectedToCas() {
-        return "true".equals(localContext.get().getAttribute("redirected_to_cas"));
+        return "true".equals(localContext.get().getAttribute(WAS_REDIRECTED_TO_CAS));
     }
 
     protected boolean authenticate(final HttpRequestBase req) throws IOException {
 
         if(useServiceAsAUserAuthentication() && serviceAsAUserTicket == null) {
             serviceAsAUserTicket = obtainNewCasServiceAsAUserTicket();
-            if (serviceAsAUserTicket == null) {
-                throw new IOException("failed to get ticket, check credentials! user: "+username+", cas: "+webCasUrl+", service: "+casService);
-            }
-            if (req.getURI().toString().contains("ticket=")) {
-                throw new IOException("uri already has a ticket: "+req.getURI());
+            if (req.getURI().toString().contains("ticket=")) { // this shouldn't happen, but have had similar problems before
+                throw new RuntimeException("uri already has a ticket: "+req.getURI());
             }
             addRequestParameter(req, "ticket", serviceAsAUserTicket);
             return true;
@@ -283,13 +283,13 @@ public class CachingRestClient implements HealthChecker {
             return execute(req, contentType, postOrPutContent);
         }
 
-        if(response.getStatusLine().getStatusCode() == 401) {
-            logger.warn("Wrong status code 401, clearing ticket.", response.getStatusLine().getStatusCode());
+        if(response.getStatusLine().getStatusCode() == SC_UNAUTHORIZED) {
+            logger.warn("Wrong status code "+SC_UNAUTHORIZED+", clearing ticket.", response.getStatusLine().getStatusCode());
             clearTicket();
-            throw new IOException("got http 401 unauthorized, user: "+username+", url: "+url);
+            throw new IOException("got http "+SC_UNAUTHORIZED+" unauthorized, user: "+username+", url: "+url);
         }
 
-        if(response.getStatusLine().getStatusCode() >= 500) {
+        if(response.getStatusLine().getStatusCode() >= SC_INTERNAL_SERVER_ERROR) {
             logger.error("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
             throw new IOException("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
         }
