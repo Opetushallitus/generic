@@ -201,7 +201,7 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
                     while(rs.next()) {
                         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
                         String tableName = rs.getString("TABLE_NAME");
-                        countList.add(jdbcTemplate.queryForMap("SELECT '" + tableName + "' AS table, COUNT(*) AS count FROM " + tableName));
+                        countList.add(jdbcTemplate.queryForMap("SELECT '" + tableName + "' AS tablename, COUNT(*) AS countresult FROM " + tableName));
                     }
                     if (countList.size() != 0) {
                         result.put("counts", countList);
