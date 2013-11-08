@@ -26,25 +26,52 @@ import java.util.Map;
 
 /**
  * Health check servlet, joka on tietoinen springistä, ja mm:
+ * ==========================================================
  *
  * - ajaa healthcheckit kaikille spring beaneille jotka toteuttavat HealthChecker -rajapinnan
  * - ajaa healthcheckit tietokannalle (kaivaa spring datasourcen)
  * - kertoo kannan data_status -taulun sisällön
  * - ajaa itsensä myös sovelluksen startissa ja kirjoittaa logiin jos ongelmia
  *
- * Käyttöönotto:
  *
- * - Mäppää tämä (tai tästä peritty) luokka urliin /healthcheck
+ * Käyttöönotto:
+ * =============
+ *
+ * 1. Mäppää tämä (tai tästä peritty) luokka urliin /healthcheck
+ *
+ *      @WebServlet(urlPatterns = "/healthcheck", loadOnStartup = 9)
+ *      public class HealthCheckServlet extends SpringAwareHealthCheckServlet { }
+ *
+ *      TAI
+ *
+ *      <servlet>
+ *          <servlet-name>healthcheck</servlet-name>
+ *          <servlet-class>fi.vm.sade.generic.healthcheck.SpringAwareHealthCheckServlet</servlet-class>
+ *      </servlet>
+ *      <servlet-mapping>
+ *          <servlet-name>healthcheck</servlet-name>
+ *          <url-pattern>/healthcheck</url-pattern>
+ *      </servlet-mapping>
+ *
+ *      HUOM:
+ *      - Vaatii gson -dependencyn toimiakseen (vaihtoehtoisesti voinee ylikirjoittaa toJson -metodin)
+ *
+ * 2. Lisää tarvittaessa springin app contexiin uusia beaneja, jotka toteuttaa HealthChecker -interfacen
+ *
  *
  * Kustomointi jos tarvetta, esim:
+ * ===============================
  *
  * - Ylikirjoita registerHealthCheckers -metodi jos haluat lisätä muita checkereitä
  * - Toteuta afterHealthCheck -metodi, jos haluat tehdä jotain spesifiä kaikkien tarkastuksien jälkeen
  * - Huom, pääset käsiksi spring app ctx:iin, ctx -muuttujan kautta mikäli tarvetta
  *
+ *
  * Speksi:
+ * =======
  *
  * - https://liitu.hard.ware.fi/confluence/display/PROG/Healthcheck+url
+ *
  *
  * TODO: sisäinen cachetus esim 10 sekunniksi
  *
