@@ -87,6 +87,12 @@
             <artifactId>phantomjsdriver</artifactId>
             <version>1.0.4</version>
         </dependency>
+        <!-- parempi kuin com.github.detro.ghostdriver koska hoitaa myös binääririippuvuudet? - ei tunnu toimivan -->
+        <!--<dependency>-->
+            <!--<groupId>org.jboss.arquillian.extension</groupId>-->
+            <!--<artifactId>arquillian-phantom-driver</artifactId>-->
+            <!--<version>1.1.0.Final</version>-->
+        <!--</dependency>-->
 
     </dependencies>
 </project>

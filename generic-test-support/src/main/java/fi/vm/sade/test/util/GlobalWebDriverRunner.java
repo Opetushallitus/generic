@@ -1,7 +1,6 @@
 package fi.vm.sade.test.util;
 
 import fi.vm.sade.support.selenium.SeleniumContext;
-import fi.vm.sade.support.selenium.SeleniumUtils;
 import fi.vm.sade.support.selenium.TestUtils;
 import org.junit.runner.Result;
 import org.junit.runner.notification.RunListener;
@@ -75,48 +74,53 @@ public class GlobalWebDriverRunner extends SpringJUnit4ClassRunner {
     }
 
     public static WebDriver createDriverChrome() {
-        // set chromedriver binary depending on os
+        // NOTE: vaatii driverit am polkuihin
+
+        // driver binary path depending on os
+        String binpath;
         if (System.getProperty("os.name").toLowerCase().contains("win")) {
-            System.setProperty("webdriver.chrome.driver", "chromedriver/chromedriver_win32/chromedriver.exe");
+            binpath = "chromedriver/chromedriver_win32/chromedriver.exe";
         } else if (System.getProperty("os.name").toLowerCase().contains("mac")) {
-            System.setProperty("webdriver.chrome.driver", "chromedriver/chromedriver_mac32/chromedriver");
+            binpath = "chromedriver/chromedriver_mac32/chromedriver";
         } else {
             if (System.getProperty("os.arch").contains("64")) {
-                System.setProperty("webdriver.chrome.driver", "chromedriver/chromedriver_linux64/chromedriver");
+                binpath = "chromedriver/chromedriver_linux64/chromedriver";
             } else {
-                System.setProperty("webdriver.chrome.driver", "chromedriver/chromedriver_linux32/chromedriver");
+                binpath = "chromedriver/chromedriver_linux32/chromedriver";
             }
         }
+        System.setProperty("webdriver.chrome.driver", binpath);
 
         // prepare chromedriver
         String[] switches = {"--ignore-certificate-errors"};
         DesiredCapabilities dc = DesiredCapabilities.chrome();
         dc.setCapability("chrome.switches", Arrays.asList(switches));
-        LOG.info("creating chromedriver: " + System.getProperty("webdriver.chrome.driver"));
+        LOG.info("creating chromedriver, binary: " + binpath);
         return new ChromeDriver(dc);
     }
 
     public static WebDriver createDriverPhantomJS() {
-        // NOTE: vaatii driverit tuolta: http://phantomjs.org/download.html
-
-        // set driver binary depending on os
+        // NOTE: vaatii driverit tuolta: http://phantomjs.org/download.html - ei vaadikaan jos arquilian toimii - mutta ei tunnu toimivan
+        // driver binary path depending on os
+        String binpath;
         if (System.getProperty("os.name").toLowerCase().contains("win")) {
-            System.setProperty("webdriver.chrome.driver", "phantomjs/phantomjs-1.9.2-windows/phantomjs.exe");
+            binpath = "phantomjs/phantomjs-1.9.2-windows/phantomjs.exe";
         } else if (System.getProperty("os.name").toLowerCase().contains("mac")) {
-            System.setProperty("webdriver.chrome.driver", "phantomjs/phantomjs-1.9.2-macosx/bin/phantomjs");
+            binpath = "phantomjs/phantomjs-1.9.2-macosx/bin/phantomjs";
         } else {
             if (System.getProperty("os.arch").contains("64")) {
-                System.setProperty("webdriver.chrome.driver", "phantomjs/phantomjs-1.9.2-linux-x86_64/bin/phantomjs");
+                binpath = "phantomjs/phantomjs-1.9.2-linux-x86_64/bin/phantomjs";
             } else {
-                System.setProperty("webdriver.chrome.driver", "phantomjs/phantomjs-1.9.2-linux-i686/bin/phantomjs");
+                binpath = "phantomjs/phantomjs-1.9.2-linux-i686/bin/phantomjs";
             }
         }
 
         // prepare driver
         DesiredCapabilities caps = new DesiredCapabilities();
-        caps.setCapability(PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY, "phantomjs/phantomjs-1.9.2-windows/phantomjs.exe");
-        caps.setCapability(PhantomJSDriverService.PHANTOMJS_CLI_ARGS, new String[]{"--ignore-ssl-errors=yes"/*, "--load-images=no"*/});
+        caps.setCapability(PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY, binpath);
+        caps.setCapability(PhantomJSDriverService.PHANTOMJS_CLI_ARGS, new String[]{"--ignore-ssl-errors=yes"});
         PhantomJSDriver driver = new PhantomJSDriver(caps);
+        LOG.info("created phantomjs driver, binary: "+binpath);
         return driver;
     }
 
