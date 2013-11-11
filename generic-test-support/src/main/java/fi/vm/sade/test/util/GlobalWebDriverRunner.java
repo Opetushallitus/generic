@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.io.File;
 import java.util.Arrays;
 
 /**
@@ -90,6 +91,7 @@ public class GlobalWebDriverRunner extends SpringJUnit4ClassRunner {
             }
         }
         System.setProperty("webdriver.chrome.driver", binpath);
+        new File(binpath).setExecutable(true);
 
         // prepare chromedriver
         String[] switches = {"--ignore-certificate-errors"};
@@ -114,6 +116,7 @@ public class GlobalWebDriverRunner extends SpringJUnit4ClassRunner {
                 binpath = "phantomjs/phantomjs-1.9.2-linux-i686/bin/phantomjs";
             }
         }
+        new File(binpath).setExecutable(true);
 
         // prepare driver
         DesiredCapabilities caps = new DesiredCapabilities();
