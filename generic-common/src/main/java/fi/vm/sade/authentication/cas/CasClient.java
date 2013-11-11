@@ -38,12 +38,9 @@ public final class CasClient {
     }
 
     private static String getServiceTicket(final String server, final String ticketGrantingTicket, final String service) {
-        if (ticketGrantingTicket == null)
-            return null;
-
         final HttpClient client = new HttpClient();
 
-        LOG.info("getServiceTicket: {} / {}", server , ticketGrantingTicket);
+        LOG.debug("getServiceTicket: {} / {}", server , ticketGrantingTicket);
 
         final PostMethod post = new PostMethod(server + "/" + ticketGrantingTicket);
         post.setRequestBody(new NameValuePair[]{new NameValuePair("service", service)});
@@ -74,8 +71,6 @@ public final class CasClient {
                 new NameValuePair("username", username),
                 new NameValuePair("password", password)});
 
-        LOG.info("getTicketGrantingTicket: {}", server);
-
         try {
             client.executeMethod(post);
             final String response = post.getResponseBodyAsString();
@@ -83,26 +78,18 @@ public final class CasClient {
                 case 201: {
                     final Matcher matcher = Pattern.compile(".*action=\".*/(.*?)\".*").matcher(response);
                     if (matcher.matches()) {
-                        LOG.info("ticketGrantingTicket found");
                         return matcher.group(1);
                     }
-                    LOG.warn("Successful ticket granting request, but no ticket found!");
-                    LOG.info("Response (1k): {}", response.substring(0, Math.min(1024, response.length())));
-                    break;
+                    throw new RuntimeException("Successful ticket granting request, but no ticket found! server: "+server+", user: "+username+", response: "+response.substring(0, Math.min(1024, response.length())));
                 }
-
                 default:
-                    LOG.warn("Invalid response code ({}) from CAS server!", post.getStatusCode());
-                    LOG.info("Response (1k): {}", response.substring(0, Math.min(1024, response.length())));
-                    break;
+                    throw new RuntimeException("Invalid response code from CAS server: "+post.getStatusCode()+", server: "+server+", user: "+username+", response: "+response.substring(0, Math.min(1024, response.length())));
             }
         } catch (final IOException e) {
-            LOG.warn(e.getMessage());
+            throw new RuntimeException("error getting TGT, server: "+server+", user: "+username+", exception: "+e, e);
         } finally {
             post.releaseConnection();
         }
-
-        return null;
     }
 
     private static void notNull(final Object object, final String message) {

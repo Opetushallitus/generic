@@ -25,6 +25,8 @@ import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.IOException;
@@ -276,7 +278,7 @@ public class CachingRestClient implements HealthChecker {
         final HttpResponse response = cachingClient.execute(req, localContext.get());
 
         // authentication: was redirected to cas OR http 401 -> get ticket and retry once (but do it only once, hence '!wasJustAuthenticated')
-        logger.debug("url: "+ req.getURI()+", method: "+req.getMethod()+", serviceauth: " + useServiceAsAUserAuthentication() + ", proxyauth: "+useProxyAuthentication+", isredir: "+isRedirectToCas(response)+", wasredir: " + wasRedirectedToCas() + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated);
+        logger.debug("url: "+ req.getURI()+", method: "+req.getMethod()+", serviceauth: " + useServiceAsAUserAuthentication() + ", proxyauth: "+useProxyAuthentication+", currentuser: "+getCurrentUser()+", isredir: "+isRedirectToCas(response)+", wasredir: " + wasRedirectedToCas() + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated);
         if (useServiceAsAUserAuthentication() && (isRedirectToCas(response) || wasRedirectedToCas() || response.getStatusLine().getStatusCode() == 401) && !wasJustAuthenticated) {
             logger.warn("warn! got redirect to cas or 401 unauthorized, re-getting ticket and retrying request");
             clearTicket(); // will force to get new ticket next time
@@ -298,6 +300,11 @@ public class CachingRestClient implements HealthChecker {
 
         logger.debug("{}, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{req.getMethod(), url, contentType, postOrPutContent, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});
         return response;
+    }
+
+    private String getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext() != null ? SecurityContextHolder.getContext().getAuthentication() : null;
+        return authentication != null ? authentication.getName() : null;
     }
 
     /** will force to get new ticket next time */

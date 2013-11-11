@@ -125,7 +125,8 @@ public abstract class AbstractEmbedVaadinTest<COMPONENT extends Component> exten
 
         // start embed vaadin, set port+baseurl, navigate to first page with browser
         server = builder.wait(false).start();
-        SeleniumContext.setHttpPort(server.getConfig().getPort());
+        //SeleniumContext.setHttpPort(server.getConfig().getPort());
+        SeleniumContext.setBaseUrl("http://localhost:"+server.getConfig().getPort());
         if (driver != null) {
             driver.get(SeleniumContext.getBaseUrl());
         }

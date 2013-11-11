@@ -116,13 +116,15 @@ public class SeleniumUtils {
     }
 
     public static WebElement waitForElement(final By by) {
-        return waitFor("element not found in time: " + by, new ExpectedCondition<WebElement>() {
+        return waitForElement(TIME_OUT_IN_SECONDS, by);
+    }
 
+    public static WebElement waitForElement(int timeoutSec, final By by) {
+        return waitFor("element not found in time ("+timeoutSec+"s): " + by, timeoutSec, new ExpectedCondition<WebElement>() {
             @Override
             public WebElement apply(@Nullable WebDriver webDriver) {
                 return getDriver().findElement(by);
             }
-
         });
     }
 
@@ -401,8 +403,12 @@ public class SeleniumUtils {
     }
 
     public static <T> T waitFor(String errorMsg, ExpectedCondition<T> expectedCondition) {
+        return waitFor(errorMsg, TIME_OUT_IN_SECONDS, expectedCondition);
+    }
+
+    public static <T> T waitFor(String errorMsg, int timeoutSec, ExpectedCondition<T> expectedCondition) {
         try {
-            T result = new WebDriverWait(getDriver(), TIME_OUT_IN_SECONDS).until(expectedCondition);
+            T result = new WebDriverWait(getDriver(), timeoutSec).until(expectedCondition);
             return result;
         } catch (Throwable e) {
             if (e instanceof StaleElementReferenceException) {

@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
  * Superclass for selenium GUI tests, features:
  *
  *  - selenium start at test setup
- *  - uses single browser window for all tests (via GlobalWebDriverRunner)
+ *  - can use single browser window for all tests (via GlobalWebDriverRunner)
  *  - spring integration (via GlobalWebDriverRunner which inherits SpringJUnit4ClassRunner)
  *  - firefox window can be reused event between selenium sessions with 'reuseFirefox'-system property or 'REUSE_FIREFOX'-env param
  *  - supports producing test reports optionally with screenshots and video recording
@@ -75,7 +75,7 @@ public abstract class SeleniumTestCaseSupport {
 
     @After
     public void tearDown() throws Exception {
-        //driver.quit(); don't quit here will be quit by GlobalWebDriverRunner after whole testsuite has ran
+        //driver.quit(); don't quit here, GlobalWebDriverRunner handles - muuten lopun screenshottia ei saada otettua
     }
 
     public abstract void initPageObjects();
