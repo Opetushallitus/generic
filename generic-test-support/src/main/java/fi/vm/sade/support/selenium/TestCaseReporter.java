@@ -69,6 +69,7 @@ public class TestCaseReporter extends TestWatcher {
     }
 
     public void STEP(String description, WebDriver driver, Logger log, boolean takeScreenshots) {
+        description = driver != null ? description+"\n"+driver.getCurrentUrl() : description;
         log.info("STEP description: " + description.replaceAll("\n", ""));
         previousStep = description;
 

@@ -1,6 +1,7 @@
 package fi.vm.sade.test.util;
 
 import fi.vm.sade.support.selenium.SeleniumContext;
+import fi.vm.sade.support.selenium.SeleniumUtils;
 import fi.vm.sade.support.selenium.TestUtils;
 import org.junit.runner.Result;
 import org.junit.runner.notification.RunListener;
@@ -11,6 +12,8 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
+import org.openqa.selenium.phantomjs.PhantomJSDriver;
+import org.openqa.selenium.phantomjs.PhantomJSDriverService;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +56,11 @@ public class GlobalWebDriverRunner extends SpringJUnit4ClassRunner {
             LOG.info("reusing driver: "+globalDriver);
         }
 
+        // if phantomJS
+        else if ("phantomjs".equals(TestUtils.getEnvOrSystemProperty(null, "BROWSER", "browser"))) {
+            globalDriver = createDriverPhantomJS();
+        }
+
         // if chrome
         else if ("chrome".equals(TestUtils.getEnvOrSystemProperty(null, "BROWSER", "browser"))) {
             globalDriver = createDriverChrome();
@@ -88,6 +96,30 @@ public class GlobalWebDriverRunner extends SpringJUnit4ClassRunner {
         return new ChromeDriver(dc);
     }
 
+    public static WebDriver createDriverPhantomJS() {
+        // NOTE: vaatii driverit tuolta: http://phantomjs.org/download.html
+
+        // set driver binary depending on os
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            System.setProperty("webdriver.chrome.driver", "phantomjs/phantomjs-1.9.2-windows/phantomjs.exe");
+        } else if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+            System.setProperty("webdriver.chrome.driver", "phantomjs/phantomjs-1.9.2-macosx/bin/phantomjs");
+        } else {
+            if (System.getProperty("os.arch").contains("64")) {
+                System.setProperty("webdriver.chrome.driver", "phantomjs/phantomjs-1.9.2-linux-x86_64/bin/phantomjs");
+            } else {
+                System.setProperty("webdriver.chrome.driver", "phantomjs/phantomjs-1.9.2-linux-i686/bin/phantomjs");
+            }
+        }
+
+        // prepare driver
+        DesiredCapabilities caps = new DesiredCapabilities();
+        caps.setCapability(PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY, "phantomjs/phantomjs-1.9.2-windows/phantomjs.exe");
+        caps.setCapability(PhantomJSDriverService.PHANTOMJS_CLI_ARGS, new String[]{"--ignore-ssl-errors=yes"/*, "--load-images=no"*/});
+        PhantomJSDriver driver = new PhantomJSDriver(caps);
+        return driver;
+    }
+
     public static WebDriver createDriverFirefoxOrHtmlUnit() {
         // otherwise create global driver
         WebDriver driver;
@@ -95,7 +127,7 @@ public class GlobalWebDriverRunner extends SpringJUnit4ClassRunner {
             FirefoxProfile profile = new FirefoxProfile();
             profile.setAcceptUntrustedCertificates(true);
             profile.setAssumeUntrustedCertificateIssuer(false);
-            /* disable reuse
+            /* disable reuse - todo: jos käyttöön niin driver.manage().deleteAllCookies();
             if (reuseFirefox()) {
                 LOG.info("reuseFirefox=true");
                 globalDriver = new ReusableFirefoxDriver(profile);
