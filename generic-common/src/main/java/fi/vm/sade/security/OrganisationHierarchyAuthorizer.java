@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -153,6 +154,35 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
                 return new ArrayList<String>();
             }
         });
+    }
+
+    /**
+     * Filtteröidään käyttäjän rooleista ne, joihin käyttäjällä on haluttu oikeus, ja palautetaan kohdeorganisaatiot
+     * Esim:
+     *
+     * // mille organisaatiolle käyttäjällä on vähintään read-oikeus koodistoon
+     * String koodistoTargetOrganisaatioOid = getOrganisaatioTheUserHasPermissionTo("ROLE_APP_KOODISTO_READ", "ROLE_APP_KOODISTO_READ_UPDATE", "ROLE_APP_KOODISTO_CRUD");
+     *
+     * @param permissionCandidates
+     * @return
+     */
+    public static String getOrganisaatioTheUserHasPermissionTo(String... permissionCandidates) {
+        List<String> whatRoles = Arrays.asList(permissionCandidates);
+        Collection<? extends GrantedAuthority> roles = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+        Set<String> orgs = new HashSet<String>();
+        for (GrantedAuthority role : roles) {
+            int x = role.getAuthority().lastIndexOf("_");
+            if (x != -1) {
+                String rolePart = role.getAuthority().substring(0, x);
+                if (whatRoles.contains(rolePart)) {
+                    String orgPart = role.getAuthority().substring(x+1);
+                    orgs.add(orgPart);
+                }
+            }
+        }
+        if (orgs.isEmpty()) throw new NotAuthorizedException("user does not have role "+whatRoles+" to any organisaatios");
+        if (orgs.size() > 1) throw new RuntimeException("user has role "+whatRoles+" to more than 1 organisaatios: "+orgs); // ei tuetä tämmöistä keissiä ainakaan vielä
+        return orgs.iterator().next();
     }
 
 }
