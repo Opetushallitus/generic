@@ -263,7 +263,15 @@ public class CachingRestClient implements HealthChecker {
 
     public HttpResponse execute(HttpRequestBase req, String contentType, String postOrPutContent) throws IOException {
         // prepare
+        if (req.getURI().toString().startsWith("/") && casService != null) { // if relative url
+            try {
+                req.setURI(new URIBuilder(casService.replace("/j_spring_cas_security_check", "") + req.getURI().toString()).build());
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }
         String url = req.getURI().toString();
+        if (req.getURI().getHost() == null) throw new NullPointerException("CcachingRestClient.execute ERROR! host is null, req.uri: "+url);
         if (contentType != null) {
             req.setHeader("Content-Type", contentType);
         }
@@ -401,6 +409,7 @@ public class CachingRestClient implements HealthChecker {
                 put("url", url);
                 put("user", useServiceAsAUserAuthentication() ? username : useProxyAuthentication ? "proxy" : "anonymous");
                 put("status", result.getStatusLine().getStatusCode() == 200 ? "OK" : result.getStatusLine());
+                // todo: kuormitusdata
             }};
         } else {
             return "nothing to check";
