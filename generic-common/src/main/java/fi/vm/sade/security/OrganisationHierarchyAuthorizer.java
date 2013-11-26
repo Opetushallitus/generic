@@ -168,7 +168,8 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
      */
     public static String getOrganisaatioTheUserHasPermissionTo(String... permissionCandidates) {
         List<String> whatRoles = Arrays.asList(permissionCandidates);
-        Collection<? extends GrantedAuthority> roles = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Collection<? extends GrantedAuthority> roles = authentication.getAuthorities();
         Set<String> orgs = new HashSet<String>();
         for (GrantedAuthority role : roles) {
             int x = role.getAuthority().lastIndexOf("_");
@@ -180,8 +181,13 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
                 }
             }
         }
-        if (orgs.isEmpty()) throw new NotAuthorizedException("user does not have role "+whatRoles+" to any organisaatios");
-        if (orgs.size() > 1) throw new RuntimeException("user has role "+whatRoles+" to more than 1 organisaatios: "+orgs); // ei tuetä tämmöistä keissiä ainakaan vielä
+        if (orgs.isEmpty()) {
+            LOGGER.warn("user "+authentication.getName()+" does not have role "+whatRoles+" to any organisaatios");
+            return null;
+        }
+        if (orgs.size() > 1) {
+            throw new RuntimeException("user has role "+whatRoles+" to more than 1 organisaatios: "+orgs); // ei tuetä tämmöistä keissiä ainakaan vielä
+        }
         return orgs.iterator().next();
     }
 
