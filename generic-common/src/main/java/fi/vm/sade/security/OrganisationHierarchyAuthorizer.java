@@ -172,12 +172,15 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
         Collection<? extends GrantedAuthority> roles = authentication.getAuthorities();
         Set<String> orgs = new HashSet<String>();
         for (GrantedAuthority role : roles) {
-            int x = role.getAuthority().lastIndexOf("_");
-            if (x != -1) {
-                String rolePart = role.getAuthority().substring(0, x);
-                if (whatRoles.contains(rolePart)) {
-                    String orgPart = role.getAuthority().substring(x+1);
-                    orgs.add(orgPart);
+            String r = role.getAuthority();
+            if (!r.endsWith("READ") && !r.endsWith("READ_UPDATE") && !r.endsWith("CRUD")) {
+                int x = r.lastIndexOf("_");
+                if (x != -1) {
+                    String rolePart = r.substring(0, x);
+                    if (whatRoles.contains(rolePart)) {
+                        String orgPart = r.substring(x + 1);
+                        orgs.add(orgPart);
+                    }
                 }
             }
         }
@@ -186,7 +189,7 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
             return null;
         }
         if (orgs.size() > 1) {
-            throw new RuntimeException("user has role "+whatRoles+" to more than 1 organisaatios: "+orgs); // ei tuetä tämmöistä keissiä ainakaan vielä
+            throw new RuntimeException("not supported: user has role "+whatRoles+" to more than 1 organisaatios: "+orgs); // ei tuetä tämmöistä keissiä ainakaan vielä
         }
         return orgs.iterator().next();
     }

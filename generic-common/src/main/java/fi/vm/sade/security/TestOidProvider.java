@@ -5,12 +5,13 @@ import java.util.*;
 /**
  * Testeissä oikeuksien tarkastukseen käytetty organisaatiorakenne:
  *
- *  org1
- *      org1.1
- *          org1.1.1
- *          org1.1.2
- *  org2
- *      org2.1
+ *  1.2.246.562.10.00000000001 (oikea oph root)
+ *      org1
+ *          org1.1
+ *              org1.1.1
+ *              org1.1.2
+ *      org2
+ *          org2.1
  *
  * Tämä luokka siis pätkii oidit pisteiden kohdalta,
  * ja osaa palauttaa esim "xxx1.1.1" ===> "[xxx1.1.1, xxx1.1, xxx1]"
@@ -27,6 +28,7 @@ public class TestOidProvider extends OidProvider {
         if (oid.contains(".")) { // parents
             oidpath.addAll(getSelfAndParentOids(oid.substring(0, oid.lastIndexOf("."))));
         }
+        if (oidpath.isEmpty()) oidpath.add("1.2.246.562.10.00000000001"); // root
         oidpath.add(oid); // self
         return oidpath;
     }
