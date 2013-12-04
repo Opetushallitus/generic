@@ -301,7 +301,7 @@ public class CachingRestClient implements HealthChecker {
 
         if(response.getStatusLine().getStatusCode() >= SC_INTERNAL_SERVER_ERROR) {
             logger.error("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
-            throw new IOException("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
+            throw new IOException("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI()+", error content:\n"+IOUtils.toString(response.getEntity().getContent()));
         }
 
         cacheStatus = localContext.get().getAttribute(CachingHttpClient.CACHE_RESPONSE_STATUS);
