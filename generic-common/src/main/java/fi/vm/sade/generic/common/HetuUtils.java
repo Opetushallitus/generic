@@ -3,6 +3,7 @@ package fi.vm.sade.generic.common;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -97,32 +98,29 @@ public final class HetuUtils {
 
         final String localHetu = hetu.toUpperCase().trim();
 
-        // validate form
-        if (!localHetu.matches("\\d{6}[+-AB]\\d{3}[A-Z0-9]")) {
-            return false;
-        }
+        return isHetuFormatValid(localHetu) && isBirthDateValid(localHetu) && isChecksumCharacterValid(localHetu);
+    }
 
-        final char separator = localHetu.charAt(6);
+    public static boolean isHetuFormatValid(final String hetu) {
+        return hetu.matches("\\d{6}[+-AB]\\d{3}[0123456789ABCDEFHJKLMNPRSTUVWXY]");
+    }
 
+    public static boolean isBirthDateValid(final String hetu)  {
         try {
-            // validate birth date
             final String fullLengthBirthDate = String.format("%d%s-%s-%s",
-                    invertedSeparators.get(separator),
-                    StringUtils.substring(localHetu, 4, 6),
-                    StringUtils.substring(localHetu, 2, 4),
-                    StringUtils.substring(localHetu, 0, 2));
+                    invertedSeparators.get(hetu.charAt(6)),
+                    StringUtils.substring(hetu, 4, 6),
+                    StringUtils.substring(hetu, 2, 4),
+                    StringUtils.substring(hetu, 0, 2));
             new SimpleDateFormat("yyyy-MM-dd").parse(fullLengthBirthDate);
-
-            // validate checksum character
-            final char checksumCharacter = getChecksumCharacter(hetu).charValue();
-            if (checksumCharacter != hetu.charAt(10)) {
-                return false;
-            }
-        } catch (final Exception e) {
+            return true;
+        } catch (final ParseException e) {
             return false;
         }
+    }
 
-        return true;
+    public static boolean isChecksumCharacterValid(final String hetu) {
+        return getChecksumCharacter(hetu).charValue() == hetu.charAt(10);
     }
 
     /**
