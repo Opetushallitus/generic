@@ -1,6 +1,7 @@
 package fi.vm.sade.generic.common;
 
 import junit.framework.Assert;
+import static junit.framework.Assert.*;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -562,4 +563,42 @@ public class HetuUtilsTest {
         }
     }
     */
+
+    @Test
+    public void testMaskHetu() {
+        assertEquals("281193*****", HetuUtils.maskHetu("281193-9630"));
+    }
+
+    @Test
+    public void testMaskNullHetu() {
+        assertNull(HetuUtils.maskHetu(null));
+    }
+
+    @Test
+    public void testMaskShortHetu() {
+        assertEquals("121212", HetuUtils.maskHetu("121212"));
+    }
+
+    @Test
+    public void testMaskFullHetu() {
+        assertEquals("***********", HetuUtils.maskHetuFull("281193-9630"));
+    }
+
+    @Test
+    public void testMaskFullShortHetu() {
+        assertEquals("******", HetuUtils.maskHetuFull("281193"));
+    }
+
+    @Test
+    public void testMaskFullNullHetu() {
+        assertEquals(null, HetuUtils.maskHetuFull(null));
+    }
+
+    @Test
+    public void testMaskUnexpectedLengthHetus() {
+        assertEquals("*", HetuUtils.maskHetuFull("A"));
+        assertEquals("A", HetuUtils.maskHetu("A"));
+        assertEquals("**********************", HetuUtils.maskHetuFull("ABCDEFGHIJKLMNOPQRSTUV"));
+        assertEquals("ABCDEF****************", HetuUtils.maskHetu("ABCDEFGHIJKLMNOPQRSTUV"));
+    }
 }

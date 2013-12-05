@@ -1,5 +1,6 @@
 package fi.vm.sade.generic.common;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.text.SimpleDateFormat;
@@ -16,10 +17,9 @@ public final class HetuUtils {
         separators.put(20, 'A');
         separators.put(21, 'B');
 
-        invertedSeparators.put('+', 18);
-        invertedSeparators.put('-', 19);
-        invertedSeparators.put('A', 20);
-        invertedSeparators.put('B', 21);
+        @SuppressWarnings("unchecked")
+        final Map<Character, Integer> inverted = MapUtils.invertMap(separators);
+        invertedSeparators = inverted;
     }
 
     private HetuUtils() {
@@ -153,5 +153,31 @@ public final class HetuUtils {
         final long checkNumber = Long.parseLong(String.format("%s%s", StringUtils.substring(partialHetu, 0, 6),
                 StringUtils.substring(partialHetu, 7, 10)));
         return CHECKSUM_CHARACTERS.charAt((int)(checkNumber % CHECKSUM_CHARACTERS.length()));
+    }
+
+    public static String maskHetu(final String hetu) {
+        if (hetu == null)
+            return null;
+
+        if (hetu.length() > 6) {
+            return maskHetuInternal(hetu, false);
+        }
+
+        return hetu;
+    }
+
+    public static String maskHetuFull(final String hetu) {
+        if (hetu == null)
+            return null;
+
+        return maskHetuInternal(hetu, true);
+    }
+
+    private static String maskHetuInternal(final String hetu, final boolean maskAllChars) {
+        final StringBuilder masked = new StringBuilder(maskAllChars ? "" : hetu.substring(0,6));
+        for (int i = (maskAllChars ? 0 : 6); i < hetu.length(); i++) {
+            masked.append('*');
+        }
+        return masked.toString();
     }
 }
