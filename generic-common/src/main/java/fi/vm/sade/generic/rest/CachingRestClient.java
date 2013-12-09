@@ -42,6 +42,7 @@ import java.util.GregorianCalendar;
 import java.util.LinkedHashMap;
 
 import static org.apache.commons.httpclient.HttpStatus.SC_INTERNAL_SERVER_ERROR;
+import static org.apache.commons.httpclient.HttpStatus.SC_NOT_FOUND;
 import static org.apache.commons.httpclient.HttpStatus.SC_UNAUTHORIZED;
 
 /**
@@ -300,6 +301,11 @@ public class CachingRestClient implements HealthChecker {
         }
 
         if(response.getStatusLine().getStatusCode() >= SC_INTERNAL_SERVER_ERROR) {
+            logger.error("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
+            throw new IOException("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI()+", error content:\n"+IOUtils.toString(response.getEntity().getContent()));
+        }
+
+        if(response.getStatusLine().getStatusCode() >= SC_NOT_FOUND) {
             logger.error("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
             throw new IOException("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI()+", error content:\n"+IOUtils.toString(response.getEntity().getContent()));
         }
