@@ -156,14 +156,14 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
     }
 
     protected void doHealthChecker(StringBuffer errorString, LinkedHashMap<String, Object> result, String checkerName, HealthChecker healthChecker) {
+        Object res = null;
         try {
-            Object res = healthChecker.checkHealth();
+            res = healthChecker.checkHealth();
 
             // if check ok, put the response into healtcheck results check
             log.debug("healthcheck called healthchecker ok: " + checkerName + ", result: " + res);
             if (res == null || (res instanceof Collection && ((Collection) res).isEmpty())) res = OK;
             if (res instanceof Map) res = new LinkedHashMap((Map)res); // gson ei tykkää sisäkkäisistä normimäpeistä :-o
-            ((Map)result.get("checks")).put(checkerName, res);
 
         } catch (Throwable e) {
             log.warn("error in healthchecker '" + checkerName + "': " + e, e);
@@ -172,9 +172,12 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
             if (e instanceof InvocationTargetException) {
                 e = ((InvocationTargetException) e).getTargetException();
             }
-            result.put(checkerName, "ERROR: " + e.getMessage());
+            res = "ERROR: " + e.getMessage();
             errorString.append(checkerName).append("=").append(e.getMessage()).append(", ");
         }
+
+        // put checker result in healthcheck result
+        ((Map<String,Object>)result.get("checks")).put(checkerName, res);
     }
 
     protected void addDatabaseChecker(Map<String, HealthChecker> checkers) {

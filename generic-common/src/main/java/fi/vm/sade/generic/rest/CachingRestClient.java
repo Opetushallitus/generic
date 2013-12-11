@@ -36,10 +36,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 import static org.apache.commons.httpclient.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 import static org.apache.commons.httpclient.HttpStatus.SC_NOT_FOUND;
@@ -93,6 +90,7 @@ public class CachingRestClient implements HealthChecker {
     private boolean useProxyAuthentication = false;
     @Value("${auth.mode:cas}")
     private String proxyAuthMode;
+    private String requiredVersionRegex;
 
     public CachingRestClient() {
         // multithread support + max connections
@@ -409,14 +407,28 @@ public class CachingRestClient implements HealthChecker {
     public Object checkHealth() throws Throwable {
         if (casService != null) {
             // call target service's buildversion url (if we have credentials try the secured url)
-            final String url = casService.replace("/j_spring_cas_security_check", "") + "/buildversion.txt" + (useServiceAsAUserAuthentication() ? "?auth" : "");
-            final HttpResponse result = execute(new HttpGet(url), null, null);
-            return new LinkedHashMap(){{
-                put("url", url);
+            final String buildversionUrl = casService.replace("/j_spring_cas_security_check", "") + "/buildversion.txt" + (useServiceAsAUserAuthentication() ? "?auth" : "");
+            final HttpResponse result = execute(new HttpGet(buildversionUrl), null, null);
+
+            LinkedHashMap<String,Object> map = new LinkedHashMap<String,Object>() {{
+                put("url", buildversionUrl);
                 put("user", useServiceAsAUserAuthentication() ? username : useProxyAuthentication ? "proxy" : "anonymous");
                 put("status", result.getStatusLine().getStatusCode() == 200 ? "OK" : result.getStatusLine());
-                // todo: kuormitusdata
+                // todo: kuormitusdata?
             }};
+
+            // mikäli kohdepalvelu ok, mutta halutaan varmistaa vielä sen versio
+            if (result.getStatusLine().getStatusCode() == 200 && requiredVersionRegex != null) {
+                Properties buildversionProps = new Properties();
+                buildversionProps.load(result.getEntity().getContent());
+                String version = buildversionProps.getProperty("version");
+                if (!version.matches(requiredVersionRegex)) {
+                    throw new Exception("wrong version: "+version+", required: "+ requiredVersionRegex+", service: "+casService);
+                }
+                map.put("version", version);
+            }
+
+            return map;
         } else {
             return "nothing to check";
         }
@@ -436,5 +448,13 @@ public class CachingRestClient implements HealthChecker {
 
     public void setProxyAuthenticator(ProxyAuthenticator proxyAuthenticator) {
         this.proxyAuthenticator = proxyAuthenticator;
+    }
+
+    public String getRequiredVersionRegex() {
+        return requiredVersionRegex;
+    }
+
+    public void setRequiredVersionRegex(String requiredVersionRegex) {
+        this.requiredVersionRegex = requiredVersionRegex;
     }
 }
