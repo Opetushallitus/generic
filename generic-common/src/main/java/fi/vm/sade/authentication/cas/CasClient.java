@@ -3,12 +3,14 @@ package fi.vm.sade.authentication.cas;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,22 +26,33 @@ import java.util.regex.Pattern;
 public final class CasClient {
     private static final Logger LOG = LoggerFactory.getLogger(CasClient.class.getName());
 
+    public static final String CAS_URL_SUFFIX = "/v1/tickets";
+    public static final String SERVICE_URL_SUFFIX = "/j_spring_cas_security_check";
+        
     private CasClient() {
         // static-only access
     }
 
     /** get cas service ticket, throws runtime exception if fails */
     public static String getTicket(final String server, final String username, final String password, final String service) {
-        notNull(server, "server must not be null");
+    	notNull(server, "server must not be null");
         notNull(username, "username must not be null");
         notNull(password, "password must not be null");
         notNull(service, "service must not be null");
         return getServiceTicket(server, getTicketGrantingTicket(server, username, password), service);
     }
 
-    private static String getServiceTicket(final String server, final String ticketGrantingTicket, final String service) {
+    private static String getServiceTicket(String server, final String ticketGrantingTicket, String service) {
         final HttpClient client = new HttpClient();
 
+        if(!StringUtils.endsWith(server, CAS_URL_SUFFIX)){
+        	server += CAS_URL_SUFFIX;
+        }
+        
+        if(!StringUtils.endsWith(service, SERVICE_URL_SUFFIX)){
+        	service += SERVICE_URL_SUFFIX;
+        }
+        
         LOG.debug("getServiceTicket: {} / {}", server , ticketGrantingTicket);
 
         final PostMethod post = new PostMethod(server + "/" + ticketGrantingTicket);

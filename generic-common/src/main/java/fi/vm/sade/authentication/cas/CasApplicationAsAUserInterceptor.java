@@ -44,7 +44,7 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
     @Override
     public void handleMessage(Message message) throws Fault {
         // authenticate against CAS REST API, and get a service ticket
-        String serviceTicket = CasClient.getTicket(webCasUrl + "/v1/tickets", appClientUsername, appClientPassword, targetService);
+        String serviceTicket = CasClient.getTicket(webCasUrl, appClientUsername, appClientPassword, targetService);
 
         if (serviceTicket == null && "dev".equals(authMode)) {
             Set<GrantedAuthority> authorities = UserLiferayImpl.buildMockAuthorities();
