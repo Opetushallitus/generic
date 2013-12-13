@@ -16,7 +16,6 @@
 	<modules>
 
         <!-- dependency aggregation modules -->
-        <module>dependencies-esb</module>
         <module>dependencies-service</module>
         <module>dependencies-vaadin</module>
 
