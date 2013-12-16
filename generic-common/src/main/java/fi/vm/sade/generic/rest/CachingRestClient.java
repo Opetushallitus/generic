@@ -56,7 +56,7 @@ import static org.apache.commons.httpclient.HttpStatus.SC_UNAUTHORIZED;
 public class CachingRestClient implements HealthChecker {
 
     public static final String WAS_REDIRECTED_TO_CAS = "redirected_to_cas";
-    protected Logger logger = LoggerFactory.getLogger(getClass());
+    protected static Logger logger = LoggerFactory.getLogger(CachingRestClient.class);
     private static ThreadLocal<DateFormat> df1 = new ThreadLocal<DateFormat>(){
         protected DateFormat initialValue() {
             return new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -295,17 +295,17 @@ public class CachingRestClient implements HealthChecker {
         if(response.getStatusLine().getStatusCode() == SC_UNAUTHORIZED) {
             logger.warn("Wrong status code "+SC_UNAUTHORIZED+", clearing ticket.", response.getStatusLine().getStatusCode());
             clearTicket();
-            throw new IOException("got http "+SC_UNAUTHORIZED+" unauthorized, user: "+username+", url: "+url);
+            throw new HttpException(req, response);
         }
 
         if(response.getStatusLine().getStatusCode() >= SC_INTERNAL_SERVER_ERROR) {
             logger.error("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
-            throw new IOException("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI()+", error content:\n"+IOUtils.toString(response.getEntity().getContent()));
+            throw new HttpException(req, response);
         }
 
         if(response.getStatusLine().getStatusCode() >= SC_NOT_FOUND) {
             logger.error("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
-            throw new IOException("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI()+", error content:\n"+IOUtils.toString(response.getEntity().getContent()));
+            throw new HttpException(req, response);
         }
 
         cacheStatus = localContext.get().getAttribute(CachingHttpClient.CACHE_RESPONSE_STATUS);
@@ -456,5 +456,35 @@ public class CachingRestClient implements HealthChecker {
 
     public void setRequiredVersionRegex(String requiredVersionRegex) {
         this.requiredVersionRegex = requiredVersionRegex;
+    }
+
+    public static class HttpException extends IOException {
+
+        private int statusCode;
+        private String statusMsg;
+        private String errorContent;
+
+        public HttpException(HttpRequestBase req, HttpResponse response) {
+            super("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
+            this.statusCode = response.getStatusLine().getStatusCode();
+            this.statusMsg = response.getStatusLine().getReasonPhrase();
+            try {
+                this.errorContent = IOUtils.toString(response.getEntity().getContent());
+            } catch (IOException e) {
+                CachingRestClient.logger.error("error reading errorContent: "+e, e);
+            }
+        }
+
+        public int getStatusCode() {
+            return statusCode;
+        }
+
+        public String getStatusMsg() {
+            return statusMsg;
+        }
+
+        public String getErrorContent() {
+            return errorContent;
+        }
     }
 }
