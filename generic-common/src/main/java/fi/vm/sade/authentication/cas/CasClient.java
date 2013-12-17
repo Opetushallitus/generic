@@ -59,7 +59,7 @@ public final class CasClient {
         try {
             client.executeMethod(post);
             
-            printDebugResponse(post, client);
+            printTraceResponse(post, client);
             
             final String response = post.getResponseBodyAsString();
             switch (post.getStatusCode()) {
@@ -122,11 +122,12 @@ public final class CasClient {
         try {
             client.executeMethod(post);
             
-            printDebugResponse(post, client);
+            printTraceResponse(post, client);
             
             // final String response = post.getResponseBodyAsString();
             switch (post.getStatusCode()) {
-                case 201: {
+                
+            	case HttpStatus.SC_CREATED: {// 201
                 	Header locationHeader = post.getResponseHeader("Location");
                 	
                 	logger.debug("locationHeader: "+locationHeader);
@@ -146,7 +147,7 @@ public final class CasClient {
                     //}
                     throw new RuntimeException("Successful ticket granting request, but no ticket found! server: "+server+", user: "+username);
                 }
-                default:
+            	default:
                     throw new RuntimeException("Invalid response code from CAS server: "+post.getStatusCode()+", server: "+server+", user: "+username);
             }
         } catch (final IOException e) {
@@ -177,9 +178,9 @@ public final class CasClient {
     	return url;
     }
     
-    private static void printDebugResponse(final HttpMethodBase method, final HttpClient client) throws IOException{	
+    private static void printTraceResponse(final HttpMethodBase method, final HttpClient client) throws IOException{	
 		
-    	if(!logger.isDebugEnabled()) return;
+    	if(!logger.isTraceEnabled()) return;
     	
 		String responseTxt = method.getResponseBodyAsString();
 				
