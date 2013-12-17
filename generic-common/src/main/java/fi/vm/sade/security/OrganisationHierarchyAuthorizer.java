@@ -167,8 +167,12 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
      * @return
      */
     public static String getOrganisaatioTheUserHasPermissionTo(String... permissionCandidates) {
-        List<String> whatRoles = Arrays.asList(permissionCandidates);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return getOrganisaatioTheUserHasPermissionTo(authentication, permissionCandidates);
+    }
+
+    public static String getOrganisaatioTheUserHasPermissionTo(Authentication authentication, String... permissionCandidates) {
+        List<String> whatRoles = Arrays.asList(permissionCandidates);
         Collection<? extends GrantedAuthority> roles = authentication.getAuthorities();
         Set<String> orgs = new HashSet<String>();
         for (GrantedAuthority role : roles) {
