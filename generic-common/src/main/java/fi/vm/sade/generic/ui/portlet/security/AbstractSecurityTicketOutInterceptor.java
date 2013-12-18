@@ -41,6 +41,9 @@ public class AbstractSecurityTicketOutInterceptor<T extends Message> extends Abs
             public void setRequestHeader(String key, String value) {
                 ((HttpURLConnection) message.get("http.connection")).setRequestProperty(key, value);
             }
+            @Override
+            public void gotNewTicket(Authentication authentication, String proxyTicket) {
+            }
         });
     }
 
@@ -49,7 +52,7 @@ public class AbstractSecurityTicketOutInterceptor<T extends Message> extends Abs
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication instanceof CasAuthenticationToken) {
             String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
-            String cachedProxyTicket = proxyAuthenticator.getCachedProxyTicket(casTargetService, (CasAuthenticationToken) authentication, false);
+            String cachedProxyTicket = proxyAuthenticator.getCachedProxyTicket(casTargetService, authentication, false, null);
             String msgProxyTicket = ((HttpURLConnection) message.get("http.connection")).getRequestProperty("CasSecurityTicket");
             log.error("FAULT in soap call, authentication: " + authentication + ", msgProxyTicket: " + msgProxyTicket + ", cachedProxyTicket: " + cachedProxyTicket);
         }

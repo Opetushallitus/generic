@@ -9,15 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -36,6 +34,7 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
 
     @Value("${auth.mode:cas}")
     private String authMode;
+    private TicketCachePolicy ticketCachePolicy = new DefaultTicketCachePolicy();
 
     public CasApplicationAsAUserInterceptor() {
         super(Phase.PRE_PROTOCOL);
@@ -43,9 +42,9 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
 
     @Override
     public void handleMessage(Message message) throws Fault {
-        // authenticate against CAS REST API, and get a service ticket
-        String serviceTicket = CasClient.getTicket(webCasUrl, appClientUsername, appClientPassword, targetService);
+        String serviceTicket = getCachedTicket(message);
 
+        HttpURLConnection httpConnection = (HttpURLConnection) message.get("http.connection");
         if (serviceTicket == null && "dev".equals(authMode)) {
             Set<GrantedAuthority> authorities = UserLiferayImpl.buildMockAuthorities();
 
@@ -54,18 +53,32 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
             Authentication authentication = new TestingAuthenticationToken(mockUser, mockUser, new ArrayList<GrantedAuthority>(
                     authorities));
 
-            ((HttpURLConnection) message.get("http.connection")).setRequestProperty("CasSecurityTicket", "oldDeprecatedSecurity_REMOVE");
+            httpConnection.setRequestProperty("CasSecurityTicket", "oldDeprecatedSecurity_REMOVE");
             String user = authentication.getName();
-            ((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", user);
-            ((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_authorities", toString(authorities));
+            httpConnection.setRequestProperty("oldDeprecatedSecurity_REMOVE_username", user);
+            httpConnection.setRequestProperty("oldDeprecatedSecurity_REMOVE_authorities", toString(authorities));
             logger.info("DEV Proxy ticket! user: "+ user + ", authorities: "+authorities);
             return;
         }
 
         // put service ticket to SOAP message as a http header 'CasSecurityTicket'
-        ((HttpURLConnection)message.get("http.connection")).setRequestProperty("CasSecurityTicket", serviceTicket);
+        httpConnection.setRequestProperty("CasSecurityTicket", serviceTicket);
 
         logger.debug("CasApplicationAsAUserInterceptor.handleMessage added CasSecurityTicket={} -header", serviceTicket);
+    }
+
+    private String getCachedTicket(Message message) {
+        // get from cache
+        String cachedTicket = ticketCachePolicy.getTicketFromCache(message, targetService, new UsernamePasswordAuthenticationToken(appClientUsername, null)); // pw not needed here
+
+        if (cachedTicket == null) {
+            // authenticate against CAS REST API, and get a service ticket
+            cachedTicket = CasClient.getTicket(webCasUrl, appClientUsername, appClientPassword, targetService);
+
+            // put to cache
+            ticketCachePolicy.putTicketToCache(message, targetService, new UsernamePasswordAuthenticationToken(appClientUsername, null), cachedTicket); // pw not needed here
+        }
+        return cachedTicket;
     }
 
     public void setWebCasUrl(String webCasUrl) {
@@ -85,11 +98,14 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
     }
 
     private String toString(Collection<? extends GrantedAuthority> authorities) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (GrantedAuthority authority : authorities) {
             sb.append(authority.getAuthority()).append(",");
         }
         return sb.toString();
     }
 
+    public void setTicketCachePolicy(TicketCachePolicy ticketCachePolicy) {
+        this.ticketCachePolicy = ticketCachePolicy;
+    }
 }

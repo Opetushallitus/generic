@@ -114,8 +114,11 @@ public class CachingRestClient implements HealthChecker {
                 URI locationURI = super.getLocationURI(request, response, context);
                 String uri = locationURI.toString();
                 if (isCasUrl(uri)) {
-                    logger.debug("is cas redirect: " + uri);
+                    logger.debug("set redirected_to_cas=true, url: " + uri);
                     context.setAttribute(WAS_REDIRECTED_TO_CAS, "true");
+                } else { // when redirecting back to service _from_ cas
+                    logger.debug("set redirected_to_cas=false, url: " + uri);
+                    context.removeAttribute(WAS_REDIRECTED_TO_CAS);
                 }
                 return locationURI;
             }
@@ -195,6 +198,8 @@ public class CachingRestClient implements HealthChecker {
 
     protected boolean authenticate(final HttpRequestBase req) throws IOException {
 
+        // username / password authentication
+
         if(useServiceAsAUserAuthentication() && serviceAsAUserTicket == null) {
             serviceAsAUserTicket = obtainNewCasServiceAsAUserTicket();
             if (req.getURI().toString().contains("ticket=")) { // this shouldn't happen, but have had similar problems before
@@ -204,17 +209,24 @@ public class CachingRestClient implements HealthChecker {
             return true;
         }
 
+        // proxy authentication
+
         else if (useProxyAuthentication) {
             if (proxyAuthenticator == null) {
                 proxyAuthenticator = new ProxyAuthenticator();
             }
+            final boolean[] gotNewProxyTicket = {false};
             proxyAuthenticator.proxyAuthenticate(casService, proxyAuthMode, new ProxyAuthenticator.Callback() {
                 @Override
                 public void setRequestHeader(String key, String value) {
                     req.addHeader(key, value);
                 }
+                @Override
+                public void gotNewTicket(Authentication authentication, String proxyTicket) {
+                    gotNewProxyTicket[0] = true;
+                }
             });
-            return true;
+            return gotNewProxyTicket[0];
         }
 
         return false;
@@ -288,7 +300,7 @@ public class CachingRestClient implements HealthChecker {
 
         // authentication: was redirected to cas OR http 401 -> get ticket and retry once (but do it only once, hence '!wasJustAuthenticated')
         logger.debug("url: "+ req.getURI()+", method: "+req.getMethod()+", serviceauth: " + useServiceAsAUserAuthentication() + ", proxyauth: "+useProxyAuthentication+", currentuser: "+getCurrentUser()+", isredir: "+isRedirectToCas(response)+", wasredir: " + wasRedirectedToCas() + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated);
-        if (useServiceAsAUserAuthentication() && (isRedirectToCas(response) || wasRedirectedToCas() || response.getStatusLine().getStatusCode() == 401) && !wasJustAuthenticated) {
+        if (/*useServiceAsAUserAuthentication() &&*/ (isRedirectToCas(response) || wasRedirectedToCas() || response.getStatusLine().getStatusCode() == 401) && !wasJustAuthenticated) {
             logger.warn("warn! got redirect to cas or 401 unauthorized, re-getting ticket and retrying request");
             clearTicket(); // will force to get new ticket next time
             return execute(req, contentType, postOrPutContent);

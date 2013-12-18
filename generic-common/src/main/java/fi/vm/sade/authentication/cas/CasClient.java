@@ -43,8 +43,9 @@ public final class CasClient {
         notNull(username, "username must not be null");
         notNull(password, "password must not be null");
         notNull(service, "service must not be null");
-        
-        return getServiceTicket(server, getTicketGrantingTicket(server, username, password), service);
+
+        String ticketGrantingTicket = getTicketGrantingTicket(server, username, password);
+        return getServiceTicket(server, ticketGrantingTicket, service);
     }
 
     private static String getServiceTicket(final String server, final String ticketGrantingTicket, final String service) {

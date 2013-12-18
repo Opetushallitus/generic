@@ -7,11 +7,13 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -23,7 +25,6 @@ public class HttpTestResource {
 
     public static int counter = 1;
     public static String someResource = "original value";
-    public static int authenticationCount = -999;
 
     @Path("/pingCached1sec")
     @GET
@@ -108,17 +109,23 @@ public class HttpTestResource {
         return Response.status(500).build();
     }
 
-    @Path("/pingSecuredRedirect")
+    @Path("/pingSecuredRedirect/{sthing}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response pingSecuredRedirect(@Context HttpServletRequest request) throws URISyntaxException {
-        if (hasValidCasTicket(request)) {
-            return Response.ok("pong " + (counter++)).build();
+        System.out.println("HttpTestResource.pingSecuredRedirect, params: "+request.getParameterMap());
+        if (MockCasResource.isRequestAuthenticated(request)) {
+            String s = "pong " + (counter++);
+            System.out.println("HttpTestResource.pingSecuredRedirect, ok: "+s);
+            return Response.ok(s).build();
+        } else {
+            String url = "/mock_cas/cas?service=" + request.getRequestURL();
+            System.out.println("HttpTestResource.pingSecuredRedirect, redirect: "+url);
+            return Response.status(302).location(new URI(url)).build();
         }
-        return Response.temporaryRedirect(new URI("/httptest/cas")).build();
     }
 
-    @Path("/pingSecuredRedirect")
+    @Path("/pingSecuredRedirect/{sthing}")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     public Response pingSecuredRedirectPost(@Context HttpServletRequest request) throws URISyntaxException {
@@ -129,36 +136,19 @@ public class HttpTestResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response pingSecured401Unauthorized(@Context HttpServletRequest request) throws URISyntaxException {
-        if (hasValidCasTicket(request)) {
+        if (MockCasResource.isRequestAuthenticated(request)) {
             return Response.ok("pong " + (counter++)).build();
         }
-        return Response.status(401).build();
+        return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
-    private boolean hasValidCasTicket(HttpServletRequest request) {
-        String ticket = request.getParameter("ticket");
-        if (ticket == null) ticket = request.getHeader("CasSecurityTicket"); // proxyticket
-        System.out.println("hasValidCasTicket, request: "+request.getRequestURL()+", ticket: "+ticket);
-        return ticket != null && !ticket.startsWith("invalid");
-    }
-
-    @Path("/cas")
+    @Path("/testMethod")
     @GET
-    public Response cas(@Context HttpServletRequest request) throws URISyntaxException {
-        String service = request.getParameter("service");
-        if (service != null) {
-            System.out.println("HttpTestResource.cas, service: "+service+", temp auth OK, sending back");
-            return Response.temporaryRedirect(new URI(service+"?ticket=TEMP_TGT")).build();
+    public Response testMethod(@Context HttpServletRequest request) {
+        if (!MockCasResource.isRequestAuthenticated(request)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
         }
-        return Response.ok("this is cas").build();
-    }
-
-    @Path("/cas/v1/tickets")
-    @GET
-    public Response casTickets(@Context HttpServletRequest request) throws URISyntaxException {
-        System.out.println("cas tickets, params: "+ request.getParameterMap());
-        authenticationCount++;
-        return Response.ok("TEMP_CAS_TICKET_"+System.currentTimeMillis()).build();
+        return Response.ok("testResult").build();
     }
 
 }

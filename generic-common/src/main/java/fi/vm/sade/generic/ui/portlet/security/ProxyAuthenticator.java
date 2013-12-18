@@ -1,6 +1,7 @@
 package fi.vm.sade.generic.ui.portlet.security;
 
-import fi.vm.sade.security.SimpleCache;
+import fi.vm.sade.authentication.cas.DefaultTicketCachePolicy;
+import fi.vm.sade.authentication.cas.TicketCachePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.cas.authentication.CasAuthenticationToken;
@@ -16,32 +17,29 @@ import java.util.Map;
  */
 public class ProxyAuthenticator {
 
-    public static final int MAX_TICKET_CACHE_SIZE = 10000;
     private static final Logger log = LoggerFactory.getLogger(ProxyAuthenticator.class);
-    // simple in-memory cache is sufficient when we use user user auth as part of cache key
-    private static Map<String, String> ticketCache = SimpleCache.<String, String>buildCache(MAX_TICKET_CACHE_SIZE);
+    //private TicketCachePolicy ticketCachePolicy = new SimpleTicketCachePolicy();
+    private TicketCachePolicy ticketCachePolicy = new DefaultTicketCachePolicy();
 
     public void proxyAuthenticate(String casTargetService, String authMode, Callback callback) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        try {
 
-        if (authentication != null && "dev".equals(authMode)) {
-            proxyAuthenticateDev(callback, authentication);
-            return;
+            if (authentication != null && "dev".equals(authMode)) {
+                proxyAuthenticateDev(callback, authentication);
+            }
+
+            else {
+                proxyAuthenticateCas(casTargetService, callback, authentication);
+            }
+
+        } catch (Throwable e) {
+            throw new RuntimeException("Could not attach security ticket to SOAP message, authMode: "+ authMode +", authentication: " + authentication+", exception: "+e, e);
         }
-
-        else if(authentication instanceof CasAuthenticationToken) {
-            proxyAuthenticateCas(casTargetService, callback, authentication);
-            return;
-        }
-
-        //((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_username", authentication.getName());
-        //((HttpURLConnection) message.get("http.connection")).setRequestProperty("oldDeprecatedSecurity_REMOVE_authorities", ticketHeader.ticket);
-        log.warn("Could not attach security ticket to SOAP message, authMode: "+ authMode +", authentication: " + authentication);
     }
 
     protected void proxyAuthenticateCas(String casTargetService, Callback callback, Authentication authentication) {
-        CasAuthenticationToken casAuthenticationToken = (CasAuthenticationToken) authentication;
-        String proxyTicket = getCachedProxyTicket(casTargetService, casAuthenticationToken, true);
+        String proxyTicket = getCachedProxyTicket(casTargetService, authentication, true, callback);
         if (proxyTicket == null) {
             log.warn("got null proxyticket, cannot attach to request, casTargetService: "+casTargetService+", authentication: "+authentication);
         } else {
@@ -59,35 +57,32 @@ public class ProxyAuthenticator {
         log.warn("DEV Proxy ticket! user: "+ user + ", authorities: "+authorities);
     }
 
-    public String getCachedProxyTicket(String casTargetService, CasAuthenticationToken casAuthenticationToken, boolean createIfNotCached) {
-        String cacheKey = casAuthenticationToken.hashCode() + "_" + casTargetService;
-        String proxyTicket = ticketCache.get(cacheKey);
+    public String getCachedProxyTicket(String targetService, Authentication authentication, boolean createIfNotCached, Callback callback) {
+        String proxyTicket = ticketCachePolicy.getTicketFromCache(null, targetService, authentication);
         boolean cached = proxyTicket != null;
         if (!cached && createIfNotCached) {
-            proxyTicket = obtainNewCasProxyTicket(casTargetService, casAuthenticationToken);
-            ticketCache.put(cacheKey, proxyTicket);
+            proxyTicket = obtainNewCasProxyTicket(targetService, authentication);
+            ticketCachePolicy.putTicketToCache(null, targetService, authentication, proxyTicket);
+            if (callback != null) {
+                callback.gotNewTicket(authentication, proxyTicket);
+            }
         }
-        log.info("CAS Proxy ticket, key: " + cacheKey + ", cached: " + cached + ", ticket: " + proxyTicket);
+        log.info("CAS Proxy ticket, user: "+authentication.getName()+", cached: " + cached + ", ticket: " + proxyTicket);
         return proxyTicket;
     }
 
     public void clearTicket(String casTargetService) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication instanceof CasAuthenticationToken) {
-            String cacheKey = authentication.hashCode() + "_" + casTargetService;
-            String prevValue = ticketCache.remove(cacheKey);
-            if (prevValue == null) {
-                log.warn("clearTicket done, but there was no ticket! auth: "+authentication);
-            }
-        }
+        ticketCachePolicy.putTicketToCache(null, casTargetService, authentication, null);
+        log.info("clearTicket done, user: " + authentication.getName());
     }
 
-    protected String obtainNewCasProxyTicket(String casTargetService, CasAuthenticationToken casAuthenticationToken) {
-        return casAuthenticationToken.getAssertion().getPrincipal().getProxyTicketFor(casTargetService);
+    protected String obtainNewCasProxyTicket(String casTargetService, Authentication casAuthenticationToken) {
+        return ((CasAuthenticationToken)casAuthenticationToken).getAssertion().getPrincipal().getProxyTicketFor(casTargetService);
     }
 
     private String toString(Collection<? extends GrantedAuthority> authorities) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (GrantedAuthority authority : authorities) {
             sb.append(authority.getAuthority()).append(",");
         }
@@ -96,5 +91,6 @@ public class ProxyAuthenticator {
 
     public static interface Callback {
         void setRequestHeader(String key, String value);
+        void gotNewTicket(Authentication authentication, String proxyTicket);
     }
 }
