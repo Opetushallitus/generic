@@ -34,6 +34,7 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -56,6 +57,7 @@ import static org.apache.commons.httpclient.HttpStatus.SC_UNAUTHORIZED;
 public class CachingRestClient implements HealthChecker {
 
     public static final String WAS_REDIRECTED_TO_CAS = "redirected_to_cas";
+    private static final Charset UTF8 = Charset.forName("UTF-8");
     protected static Logger logger = LoggerFactory.getLogger(CachingRestClient.class);
     private static ThreadLocal<DateFormat> df1 = new ThreadLocal<DateFormat>(){
         protected DateFormat initialValue() {
@@ -275,7 +277,7 @@ public class CachingRestClient implements HealthChecker {
             req.setHeader("Content-Type", contentType);
         }
         if (postOrPutContent != null && req instanceof HttpEntityEnclosingRequestBase) {
-            ((HttpEntityEnclosingRequestBase)req).setEntity(new StringEntity(postOrPutContent));
+            ((HttpEntityEnclosingRequestBase)req).setEntity(new StringEntity(postOrPutContent, UTF8));
         }
 
         // authenticated if needed
