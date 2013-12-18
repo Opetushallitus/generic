@@ -18,9 +18,6 @@ public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
 
     @Override
     protected String obtainArtifact(HttpServletRequest request) {
-
-        System.out.println("\n\n\nobtainArtifact\n\n\n");
-        
     	String casTicketHeader = request.getHeader(CAS_SECURITY_TICKET);
         if (casTicketHeader != null) {
             return casTicketHeader;
