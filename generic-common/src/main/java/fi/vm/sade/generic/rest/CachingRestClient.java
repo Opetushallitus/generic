@@ -17,6 +17,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
+import org.apache.http.impl.client.RedirectLocations;
 import org.apache.http.impl.client.cache.CacheConfig;
 import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
@@ -198,6 +199,8 @@ public class CachingRestClient implements HealthChecker {
 
     protected boolean authenticate(final HttpRequestBase req) throws IOException {
 
+        clearRedirects();
+
         // username / password authentication
 
         if(useServiceAsAUserAuthentication() && serviceAsAUserTicket == null) {
@@ -339,6 +342,11 @@ public class CachingRestClient implements HealthChecker {
         if (useProxyAuthentication && proxyAuthenticator != null) {
             proxyAuthenticator.clearTicket(casService);
         }
+    }
+
+    private void clearRedirects() {
+        // clear redirects, because cas auth could cause same auth redirections again after new login/ticket. this will prevent CircularRedirectException
+        localContext.get().setAttribute(DefaultRedirectStrategy.REDIRECT_LOCATIONS, new RedirectLocations());
     }
 
     private boolean isRedirectToCas(HttpResponse response) {

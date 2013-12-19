@@ -95,7 +95,7 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         initClientAuthentication();
 
         // alustava pyyntö -> CachingRestClient hankkii tiketin kutsua ennen, kutsu menee ok:sti
-        Assert.assertEquals("pong 1", get("/httptest/pingSecuredRedirect/asd1")); // asd? tarvitaan koska muuten apache http saattaa tulkita circular redirectiksi..
+        Assert.assertEquals("pong 1", get("/httptest/pingSecuredRedirect/asd1"));
         assertCas(0, 1, 1, 1, 1);
 
         // autentikoiduttu casiin, mutta ei kohdepalveluun vielä, joten kutsun suojattuun resurssiin pitäisi redirectoitua casiin
@@ -103,16 +103,16 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         TestParams.instance.failNextBackendAuthentication = true;
 
         // lue suojattu resurssi -> välillä käydään cassilla, joka ohjaa takaisin ticketin kanssa (koska ollaan jo casissa sisällä)
-        Assert.assertEquals("pong 2", get("/httptest/pingSecuredRedirect/asd2")); // asd? tarvitaan koska muuten apache http saattaa tulkita circular redirectiksi..
+        Assert.assertEquals("pong 2", get("/httptest/pingSecuredRedirect/asd1")); // asd? tarvitaan koska muuten apache http saattaa tulkita circular redirectiksi..
         assertCas(1, 1, 1, 3, 2);
 
         // kutsu uudestaan -> ei redirectiä koska nyt serviceenkin ollaan autentikoiduttu, ainoastaan request autentikoidaan backendissä
-        Assert.assertEquals("pong 3", get("/httptest/pingSecuredRedirect/asd3"));
+        Assert.assertEquals("pong 3", get("/httptest/pingSecuredRedirect/asd1"));
         assertCas(1, 1, 1, 4, 2);
 
         // invalidoi tiketti, cas sessio edelleen ok (simuloi ticket cachen tyhjäytymistä serverillä) -> redirectit resource->cas->resource tapahtuu uusiksi
         TestParams.instance.failNextBackendAuthentication = true;
-        Assert.assertEquals("pong 4", get("/httptest/pingSecuredRedirect/asd4"));
+        Assert.assertEquals("pong 4", get("/httptest/pingSecuredRedirect/asd1"));
         assertCas(2, 1, 1, 6, 3);
 
         // invalidoi tiketti ja cas sessio (simuloi cas/backend restarttia)
@@ -121,7 +121,7 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         // -> redirectejä ei tämän jälkeen tapahdu, mutta tgt+ticket luodaan casiin, ja validoidaan backend resurssilla
         TestParams.instance.failNextBackendAuthentication = true;
         TestParams.instance.userIsAlreadyAuthenticatedToCas = null;
-        Assert.assertEquals("pong 5", get("/httptest/pingSecuredRedirect/asd5"));
+        Assert.assertEquals("pong 5", get("/httptest/pingSecuredRedirect/asd1"));
         assertCas(2, 2, 2, 8, 4);
     }
 
