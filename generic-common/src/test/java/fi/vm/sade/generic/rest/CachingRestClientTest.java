@@ -2,7 +2,9 @@ package fi.vm.sade.generic.rest;
 
 import fi.vm.sade.generic.ui.portlet.security.ProxyAuthenticator;
 import junit.framework.Assert;
+import org.apache.commons.lang.StringUtils;
 import org.apache.cxf.helpers.IOUtils;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.cache.CacheResponseStatus;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -12,6 +14,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import javax.ws.rs.core.MediaType;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.IOException;
 import java.util.Arrays;
@@ -205,6 +208,24 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
 
     private String post(String url, String postContent) throws IOException {
         return IOUtils.toString(client.post(getUrl(url), "application/json", postContent).getEntity().getContent());
+    }
+
+    @Test
+    public void testPostUTF8Encoding() throws IOException {
+        final String json = "{\"test\":\"Möttönen\"}";
+        final HttpResponse response = client.post(getUrl("/httptest/special-character-resource"), MediaType.APPLICATION_JSON, json);
+        final String responseJson = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+        System.out.println("got response entity: " + responseJson);
+        Assert.assertTrue("response should contain \"Möttönen\"", StringUtils.contains(responseJson, "Möttönen"));
+    }
+
+    @Test
+    public void testPutUTF8Encoding() throws IOException {
+        final String json = "{\"test\":\"Möttönen\"}";
+        final HttpResponse response = client.put(getUrl("/httptest/special-character-resource"), MediaType.APPLICATION_JSON, json);
+        final String responseJson = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+        System.out.println("got response entity: " + responseJson);
+        Assert.assertTrue("response should contain \"Möttönen\"", StringUtils.contains(responseJson, "Möttönen"));
     }
 
 }

@@ -3,10 +3,7 @@ package fi.vm.sade.generic.rest;
 import org.apache.commons.codec.binary.Hex;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.MediaType;
@@ -149,6 +146,27 @@ public class HttpTestResource {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
         return Response.ok("testResult").build();
+    }
+
+    @Path("/special-character-resource")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response post(String json) {
+        return pingBackJson(json);
+    }
+
+    @Path("/special-character-resource")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response put(String json) {
+        return pingBackJson(json);
+    }
+
+    private Response pingBackJson(String json) {
+        System.out.println("got json: " + json);
+        return Response.ok(json).build();
     }
 
 }
