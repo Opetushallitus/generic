@@ -36,7 +36,7 @@ public class AbstractSecurityTicketOutInterceptor<T extends Message> extends Abs
     @Override
     public void handleMessage(final T message) throws Fault {
         String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
-        proxyAuthenticator.proxyAuthenticate(casTargetService, null, new ProxyAuthenticator.Callback() {
+        proxyAuthenticator.proxyAuthenticate(casTargetService, authMode, new ProxyAuthenticator.Callback() {
             @Override
             public void setRequestHeader(String key, String value) {
                 ((HttpURLConnection) message.get("http.connection")).setRequestProperty(key, value);
