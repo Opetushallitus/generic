@@ -19,6 +19,10 @@ public class JettyJersey {
         // randomize port
         port = (int) (6000 + 1000 * Math.random());
 
+        System.setProperty("cas_key", getUrl("testing"));
+        System.setProperty("cas_service", getUrl("/httptest"));
+        System.setProperty("web.url.cas", getUrl("/mock_cas/cas"));
+
         server = new Server(port);
         Context root = new Context(server, "/", Context.SESSIONS);
         ServletHolder servletHolder = new ServletHolder(ServletContainer.class);
@@ -40,5 +44,9 @@ public class JettyJersey {
 
     public static int getPort() {
         return port;
+    }
+
+    public static String getUrl(String url) {
+        return "http://localhost:"+ getPort()+url;
     }
 }

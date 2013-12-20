@@ -117,6 +117,7 @@ public class CachingRestClient implements HealthChecker {
                 if (isCasUrl(uri)) {
                     logger.debug("set redirected_to_cas=true, url: " + uri);
                     context.setAttribute(WAS_REDIRECTED_TO_CAS, "true");
+                    clearRedirects();
                 } else { // when redirecting back to service _from_ cas
                     logger.debug("set redirected_to_cas=false, url: " + uri);
                     context.removeAttribute(WAS_REDIRECTED_TO_CAS);
@@ -199,11 +200,15 @@ public class CachingRestClient implements HealthChecker {
 
     protected boolean authenticate(final HttpRequestBase req) throws IOException {
 
-        clearRedirects();
-
         // username / password authentication
 
         if(useServiceAsAUserAuthentication() && serviceAsAUserTicket == null) {
+
+            checkNotNull(username, "username");
+            checkNotNull(password, "password");
+            checkNotNull(webCasUrl, "webCasUrl");
+            checkNotNull(casService, "casService");
+
             serviceAsAUserTicket = obtainNewCasServiceAsAUserTicket();
             if (req.getURI().toString().contains("ticket=")) { // this shouldn't happen, but have had similar problems before
                 throw new RuntimeException("uri already has a ticket: "+req.getURI());
@@ -215,6 +220,10 @@ public class CachingRestClient implements HealthChecker {
         // proxy authentication
 
         else if (useProxyAuthentication) {
+
+            checkNotNull(webCasUrl, "webCasUrl");
+            checkNotNull(casService, "casService");
+
             if (proxyAuthenticator == null) {
                 proxyAuthenticator = new ProxyAuthenticator();
             }
@@ -224,6 +233,7 @@ public class CachingRestClient implements HealthChecker {
                 public void setRequestHeader(String key, String value) {
                     req.addHeader(key, value);
                 }
+
                 @Override
                 public void gotNewTicket(Authentication authentication, String proxyTicket) {
                     gotNewProxyTicket[0] = true;
@@ -233,6 +243,10 @@ public class CachingRestClient implements HealthChecker {
         }
 
         return false;
+    }
+
+    private void checkNotNull(String value, String name) {
+        if (value == null) throw new NullPointerException("CachingRestClient."+name+" is null, and guess what, it shouldn't!");
     }
 
     private void addRequestParameter(HttpRequestBase req, String key, String value) {
@@ -245,7 +259,7 @@ public class CachingRestClient implements HealthChecker {
     }
 
     private boolean useServiceAsAUserAuthentication() {
-        return webCasUrl != null && username != null && password != null && casService != null;
+        return username != null;
     }
 
     protected String obtainNewCasServiceAsAUserTicket() throws IOException {
@@ -347,6 +361,7 @@ public class CachingRestClient implements HealthChecker {
     private void clearRedirects() {
         // clear redirects, because cas auth could cause same auth redirections again after new login/ticket. this will prevent CircularRedirectException
         localContext.get().setAttribute(DefaultRedirectStrategy.REDIRECT_LOCATIONS, new RedirectLocations());
+        logger.info("cleared redirects");
     }
 
     private boolean isRedirectToCas(HttpResponse response) {

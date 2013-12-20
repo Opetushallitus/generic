@@ -22,6 +22,7 @@ public class RestWithCasTestSupport {
         SecurityContextHolder.clearContext();
         DefaultTicketCachePolicy.ticketThreadLocal.remove();
         client = new CachingRestClient();
+        client.setWebCasUrl("N/A");
     }
 
     @After
@@ -30,7 +31,7 @@ public class RestWithCasTestSupport {
     }
 
     protected String getUrl(String url) {
-        return "http://localhost:"+ JettyJersey.getPort()+url;
+        return JettyJersey.getUrl(url);
     }
 
     public void assertCas(int redirects, int tgtsCreated, int ticketsCreated, int requestAuthenticationCalled, int ticketsValidatedAgainstCasSuccessfully) {

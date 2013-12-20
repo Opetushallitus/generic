@@ -113,7 +113,7 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         Assert.assertEquals("pong 3", get("/httptest/pingSecuredRedirect/asd1"));
         assertCas(1, 1, 1, 4, 2);
 
-        // invalidoi tiketti, cas sessio edelleen ok (simuloi ticket cachen tyhjäytymistä serverillä) -> redirectit resource->cas->resource tapahtuu uusiksi
+        // invalidoi tiketti serverillä, cas sessio edelleen ok (simuloi ticket cachen tyhjäytymistä serverillä) -> redirectit resource->cas->resource tapahtuu uusiksi
         TestParams.instance.failNextBackendAuthentication = true;
         Assert.assertEquals("pong 4", get("/httptest/pingSecuredRedirect/asd1"));
         assertCas(2, 1, 1, 6, 3);
