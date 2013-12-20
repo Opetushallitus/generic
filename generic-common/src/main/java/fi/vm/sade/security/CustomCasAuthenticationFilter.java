@@ -1,9 +1,6 @@
 package fi.vm.sade.security;
 
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.cas.web.CasAuthenticationFilter;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -24,23 +21,14 @@ public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
             return casTicketHeader;
         }
 
-        // getParameter -kutsu saattaa hajottaa tietyt post-requestit!!!
-        // siksi ticket-paremeter validointi skipataan, jos a) post-request, ja b) sessio on jo autentikoitu, ja c) headerissa ei tikettiä
-        if ("POST".equals(request.getMethod()) && authenticated()) {
+        // getParameter -kutsu saattaa hajottaa tietyt post-requestit,
+        // siksi ticket-paremeter validointi skipataan, jos a) post-request, ja c) headerissa ei tikettiä
+        if ("POST".equals(request.getMethod())) {
             logger.info("skipping cas obtainArtifact because post and already authenticated");
             return null;
         }
 
         return super.obtainArtifact(request);
-    }
-
-    /**
-     * Determines if a user is already authenticated.
-     * @return
-     */
-    private boolean authenticated() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken);
     }
 
 }
