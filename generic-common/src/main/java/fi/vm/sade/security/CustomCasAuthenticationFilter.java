@@ -28,6 +28,7 @@ public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
         // getParameter -kutsu saattaa hajottaa tietyt post-requestit!!!
         // siksi ticket-paremeter validointi skipataan, jos a) post-request, ja b) sessio on jo autentikoitu, ja c) headerissa ei tikettiä
         if ("POST".equals(request.getMethod()) && authenticated()) {
+            logger.info("skipping cas obtainArtifact because post and already authenticated");
             return null;
         }
 
