@@ -54,7 +54,7 @@ public class ProxyAuthenticator {
         String authorities = toString(authentication.getAuthorities());
         callback.setRequestHeader("oldDeprecatedSecurity_REMOVE_username", user);
         callback.setRequestHeader("oldDeprecatedSecurity_REMOVE_authorities", authorities);
-        log.warn("DEV Proxy ticket! user: "+ user + ", authorities: "+authorities);
+        log.debug("DEV Proxy ticket! user: "+ user + ", authorities: "+authorities);
     }
 
     public String getCachedProxyTicket(String targetService, Authentication authentication, boolean createIfNotCached, Callback callback) {
