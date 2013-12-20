@@ -1,13 +1,15 @@
 package fi.vm.sade.security;
 
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.cas.web.CasAuthenticationFilter;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
-import org.springframework.security.cas.web.CasAuthenticationFilter;
-
 /**
- * Extends spring CasAuthenticationFilter so that it can obtain ticket also from http header in addition to http parameter. Changes tagged with 'oph'.
- * TODO: tata ei tarvittaisi mikali cxf (soap) kutsuihin saisi http 'ticket' -parametrin mukaan headerin sijaan, kts. haku 'cxf querystring' tms
- * TODO: oldDeprecatedSecurity_REMOVE - lisakustomointia tarvittu etta toimii vanhan autentikoinnin kanssa yhteen, siivoa myohemmin
+ * Extends spring CasAuthenticationFilter so that it can obtain ticket also from 'CasSecurityTicket' -http header in addition to http parameter
  *
  * @author Antti Salonen
  * @author Riku Karjalainen
@@ -23,6 +25,22 @@ public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
             return casTicketHeader;
         }
 
+        // getParameter -kutsu saattaa hajottaa tietyt post-requestit!!!
+        // siksi ticket-paremeter validointi skipataan, jos a) post-request, ja b) sessio on jo autentikoitu, ja c) headerissa ei tikettiä
+        if ("POST".equals(request.getMethod()) && authenticated()) {
+            return null;
+        }
+
         return super.obtainArtifact(request);
     }
+
+    /**
+     * Determines if a user is already authenticated.
+     * @return
+     */
+    private boolean authenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken);
+    }
+
 }
