@@ -95,8 +95,12 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
 
         // autowire
         ctx = WebApplicationContextUtils.getWebApplicationContext(getServletContext());
-        ctx.getAutowireCapableBeanFactory().autowireBean(this);
-        log.info("initial health check:\n" + toJson(doHealthCheck()));
+        if (ctx != null) {
+            ctx.getAutowireCapableBeanFactory().autowireBean(this);
+            log.info("initial health check:\n" + toJson(doHealthCheck()));
+        } else {
+            log.warn("spring ctx null in healthcheck servlet!");
+        }
     }
 
     @Override
