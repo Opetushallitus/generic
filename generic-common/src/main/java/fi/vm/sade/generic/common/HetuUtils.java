@@ -70,7 +70,7 @@ public final class HetuUtils {
         }
 
         final Random rand = new Random();
-        int identifier = rand.nextInt(998) + 1;
+        int identifier = rand.nextInt(99) + 900;
         if ((gender == 0 && identifier % 2 != 0) || (gender == 1 && identifier % 2 == 0)) {
             identifier++;
         }

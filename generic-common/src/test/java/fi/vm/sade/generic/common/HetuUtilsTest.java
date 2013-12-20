@@ -3,6 +3,7 @@ package fi.vm.sade.generic.common;
 import junit.framework.Assert;
 import static junit.framework.Assert.*;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,13 +14,14 @@ import java.util.Random;
 import java.util.Set;
 
 public class HetuUtilsTest {
-    private final Logger log = LoggerFactory.getLogger(HetuUtilsTest.class);
+    //private final Logger log = LoggerFactory.getLogger(HetuUtilsTest.class);
 
     @Test
     public void testGenerateHetu() {
-        for (int count = 0; count < 50; count++) {
+        for (int count = 0; count < 1000; count++) {
             final String hetu = HetuUtils.generateHetu();
-            log.info("Generated hetu [{}], validating...", hetu);
+            //log.info("Generated hetu [{}], validating...", hetu);
+            Assert.assertTrue("Identifier should start with 9", hetu.charAt(7) == '9');
             Assert.assertTrue(String.format("Hetu [%s] should be valid", hetu), HetuUtils.isHetuValid(hetu));
         }
     }
