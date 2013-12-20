@@ -5,7 +5,6 @@ import org.springframework.security.cas.web.CasAuthenticationFilter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
 /**
