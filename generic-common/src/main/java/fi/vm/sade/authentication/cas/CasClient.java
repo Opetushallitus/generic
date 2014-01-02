@@ -135,7 +135,7 @@ public final class CasClient {
                 	
                 	if(locationHeader!=null){
                 		String responseLocation = locationHeader.getValue();
-                		String ticket = responseLocation.substring(server.length());
+                		String ticket = StringUtils.substringAfterLast(responseLocation, "/");
                 	
                 		logger.debug("-> ticket: "+ticket);
                 		
