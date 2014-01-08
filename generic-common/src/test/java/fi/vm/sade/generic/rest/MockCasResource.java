@@ -22,16 +22,18 @@ public class MockCasResource {
 
         String ticket = request.getParameter("ticket");
         if (ticket == null) ticket = request.getHeader("CasSecurityTicket"); // jos ticket headerissa
-        System.out.println("isRequestAuthenticated, request: "+request.getRequestURL()+", ticket: "+ticket+", failNextBackendAuthentication: "+ TestParams.instance.failNextBackendAuthentication);
+        System.out.print("isRequestAuthenticated, request: " + request.getRequestURL() + ", ticket: " + ticket + ", failNextBackendAuthentication: " + TestParams.instance.failNextBackendAuthentication);
 
         if (TestParams.instance.failNextBackendAuthentication) {
             TestParams.instance.failNextBackendAuthentication = false;
             request.getSession().invalidate();
+            System.out.println(" --> false (failNextBackendAuthentication)");
             return false;
         }
 
         // jos sessio on jo autentikoitu, ei autentikoida cassia vasten vaan luotetaan sessioon
         if (request.getSession().getAttribute("authenticatedTicket") != null) {
+            System.out.println(" --> true (authenticatedTicket)");
             return true;
         }
 
@@ -42,6 +44,7 @@ public class MockCasResource {
         } else {
             request.getSession().invalidate();
         }
+        System.out.println(" --> "+ok);
         return ok;
     }
 
@@ -49,17 +52,17 @@ public class MockCasResource {
     @GET
     public Response casRedirectToServiceWithTicket(@Context HttpServletRequest request) throws URISyntaxException {
         String service = request.getParameter("service");
-        System.out.println("MockCasResource.casRedirectToServiceWithTicket, service: "+service);
 
         if (TestParams.instance.userIsAlreadyAuthenticatedToCas != null && service != null) {
             // käyttäjällä on jo autentikoitu sessio cassiin -> redirect to target service with ticket
             TestParams.instance.authRedirects++;
             String url = service + "?ticket=REDIRECTED_FROM_CAS_" + TestParams.instance.userIsAlreadyAuthenticatedToCas + "_" + System.currentTimeMillis();
+            System.out.println("MockCasResource.casRedirectToServiceWithTicket, service: "+service+" -> http 302 redir to: "+url);
             return Response.status(302).location(new URI(url)).build();
         }
 
         // mock cas auth+redirect toimii vain jos userIsAlreadyAuthenticatedToCas ja request.service annettu
-        //return Response.status(Response.Status.UNAUTHORIZED).build(); todo: cas taitaa palauttaa ihan http 200 login sivun tässä ?
+        System.out.println("MockCasResource.casRedirectToServiceWithTicket, service: "+service+", user not logged in -> http 200 show login page");
         return Response.ok("this is cas login page").build();
     }
 

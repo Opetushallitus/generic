@@ -122,12 +122,10 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         // -> resurssi redirectoi cassille, mutta cas ei ohjaa takaisin koska ei olla sisällä casissa
         // -> CachingRestClient havaitsee puuttuvan authin, ja osaa hakea uuden tiketin, ja tehdä pyynnön uusiksi
         // -> redirectejä ei tämän jälkeen tapahdu, mutta tgt+ticket luodaan casiin, ja validoidaan backend resurssilla
-        /* todo: ei toimi
         TestParams.instance.failNextBackendAuthentication = true;
         TestParams.instance.userIsAlreadyAuthenticatedToCas = null;
         Assert.assertEquals("pong 5", get("/httptest/pingSecuredRedirect/asd1"));
         assertCas(2, 2, 2, 8, 4);
-        */
     }
 
     @Test
