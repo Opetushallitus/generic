@@ -334,7 +334,7 @@ public class CachingRestClient implements HealthChecker {
         } finally {
             // after request, wrap response entity so it can be accessed later, and release the connection
             if (response != null) {
-                response.setEntity(new StringEntity(IOUtils.toString(response.getEntity().getContent()), "UTF-8"));
+                response.setEntity(new StringEntity(IOUtils.toString(response.getEntity().getContent(), "UTF-8"), "UTF-8"));
             }
             req.releaseConnection();
         }
