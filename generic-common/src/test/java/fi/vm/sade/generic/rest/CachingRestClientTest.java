@@ -95,7 +95,7 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
 
     @Test
     public void testAuthenticationWithGetRedirect() throws Exception {
-        initClientAuthentication();
+        initClientAuthentication("test");
 
         // alustava pyyntö -> CachingRestClient hankkii tiketin kutsua ennen, kutsu menee ok:sti
         Assert.assertEquals("pong 1", get("/httptest/pingSecuredRedirect/asd1"));
@@ -131,7 +131,7 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
     @Test
     @Ignore // ei oikeastaan halutakaan tukea postien cas redirectointia, aina ennen postia pitää tehdä get!
     public void testAuthenticationWithPostRedirect() throws Exception {
-        initClientAuthentication();
+        initClientAuthentication("test");
 
         // alustava pyyntö -> CachingRestClient hankkii tiketin kutsua ennen, kutsu menee ok:sti
         Assert.assertEquals("pong 1", post("/httptest/pingSecuredRedirect/asd1", "post content")); // asd? tarvitaan koska muuten apache http saattaa tulkita circular redirectiksi..
@@ -148,7 +148,7 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
 
     @Test
     public void testAuthenticationWith401Unauthorized() throws Exception {
-        initClientAuthentication();
+        initClientAuthentication("test");
 
         // lue suojattu resurssi joka palauttaisi 401 unauthorized, mikäli ei oltaisi autentikoiduttu -> client kuitenkin on yllä konffattu käyttämään palvelutunnuksia
         Assert.assertEquals("pong 1", get("/httptest/pingSecured401Unauthorized"));
@@ -158,6 +158,17 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         TestParams.instance.failNextBackendAuthentication = true;
         Assert.assertEquals("pong 2", get("/httptest/pingSecured401Unauthorized"));
         assertCas(0,2,2,3,2);
+    }
+
+    @Test
+    public void testIllegalUserWontGetStuckInRedirectLoopOrSthing() throws Exception {
+        initClientAuthentication("illegaluser");
+        try {
+            get("/httptest/pingSecured401Unauthorized");
+            Assert.fail("should fail");
+        } catch (CachingRestClient.HttpException e) {
+            Assert.assertEquals(401, e.getStatusCode());
+        }
     }
 
     @Test
@@ -195,11 +206,11 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         assertCas(0,0,0,4,2); // todo: wtf onnistuneita validointeja serverillä pitäisi olla +1 ???
     }
 
-    private void initClientAuthentication() {
+    private void initClientAuthentication(String username) {
         client.setCasService(getUrl("/httptest"));
         client.setWebCasUrl(getUrl("/mock_cas/cas"));
-        client.setUsername("test");
-        client.setPassword("test");
+        client.setUsername(username);
+        client.setPassword(username);
     }
 
     private String get(String url) throws IOException {

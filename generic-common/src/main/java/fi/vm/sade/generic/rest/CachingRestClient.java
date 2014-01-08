@@ -14,8 +14,6 @@ import org.apache.http.ProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.HttpEntityWrapper;
-import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
@@ -27,7 +25,6 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,9 +42,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import static org.apache.commons.httpclient.HttpStatus.SC_INTERNAL_SERVER_ERROR;
-import static org.apache.commons.httpclient.HttpStatus.SC_NOT_FOUND;
-import static org.apache.commons.httpclient.HttpStatus.SC_UNAUTHORIZED;
+import static org.apache.commons.httpclient.HttpStatus.*;
 
 /**
  * Simple http client, that allows doing GETs to REST-resources so that http cache headers are respected.
@@ -224,8 +219,8 @@ public class CachingRestClient implements HealthChecker {
                 checkNotNull(password, "password");
                 checkNotNull(webCasUrl, "webCasUrl");
                 checkNotNull(casService, "casService");
-
                 serviceAsAUserTicket = obtainNewCasServiceAsAUserTicket();
+                logger.debug("got new serviceAsAUser ticket: "+serviceAsAUserTicket);
             }
             // attach ticket
             addRequestParameter(req, "ticket", serviceAsAUserTicket);
@@ -248,9 +243,9 @@ public class CachingRestClient implements HealthChecker {
                 public void setRequestHeader(String key, String value) {
                     req.addHeader(key, value);
                 }
-
                 @Override
                 public void gotNewTicket(Authentication authentication, String proxyTicket) {
+                    logger.debug("got new proxy ticket: "+proxyTicket);
                     gotNewProxyTicket[0] = true;
                 }
             });
@@ -307,6 +302,10 @@ public class CachingRestClient implements HealthChecker {
     }
 
     public HttpResponse execute(HttpRequestBase req, String contentType, String postOrPutContent) throws IOException {
+        return execute(req, contentType, postOrPutContent, 0);
+    }
+
+    public HttpResponse execute(HttpRequestBase req, String contentType, String postOrPutContent, int retry) throws IOException {
         // prepare
         if (req.getURI().toString().startsWith("/") && casService != null) { // if relative url
             try {
@@ -316,7 +315,7 @@ public class CachingRestClient implements HealthChecker {
             }
         }
         String url = req.getURI().toString();
-        if (req.getURI().getHost() == null) throw new NullPointerException("CcachingRestClient.execute ERROR! host is null, req.uri: "+url);
+        if (req.getURI().getHost() == null) throw new NullPointerException("CachingRestClient.execute ERROR! host is null, req.uri: "+url);
         if (contentType != null) {
             req.setHeader("Content-Type", contentType);
         }
@@ -324,37 +323,45 @@ public class CachingRestClient implements HealthChecker {
             ((HttpEntityEnclosingRequestBase)req).setEntity(new StringEntity(postOrPutContent, UTF8));
         }
 
-        // authenticated if needed
+        // authenticate if needed
         boolean wasJustAuthenticated = authenticate(req);
 
         // do actual request
         HttpResponse response = null;
+        String responseString = null;
         try {
             response = cachingClient.execute(req, localContext.get());
         } finally {
             // after request, wrap response entity so it can be accessed later, and release the connection
             if (response != null) {
-                response.setEntity(new StringEntity(IOUtils.toString(response.getEntity().getContent(), "UTF-8"), "UTF-8"));
+                responseString = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+                response.setEntity(new StringEntity(responseString, "UTF-8"));
             }
             req.releaseConnection();
         }
 
-        // authentication: was redirected to cas OR http 401 -> get ticket and retry once (but do it only once, hence '!wasJustAuthenticated')
+        // debug logging
         boolean isRedirCas = isRedirectToCas(response);
         boolean isHttp401 = response.getStatusLine().getStatusCode() == SC_UNAUTHORIZED;
         boolean wasRedirCas = wasRedirectedToCas();
-        logger.debug("url: "+ req.getURI()+", method: "+req.getMethod()+", serviceauth: " + useServiceAsAUserAuthentication() + ", proxyauth: "+useProxyAuthentication+", currentuser: "+getCurrentUser()+", isredircas: "+ isRedirCas +", wasredircas: " + wasRedirCas + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated);
-        if (/*useServiceAsAUserAuthentication() &&*/ (isRedirCas || wasRedirCas || isHttp401) && !wasJustAuthenticated) {
-            logger.warn("warn! got redirect to cas or 401 unauthorized, re-getting ticket and retrying request");
-            clearTicket(); // will force to get new ticket next time
-            return execute(req, contentType, postOrPutContent);
+        if (logger.isDebugEnabled()) {
+            logger.debug("url: "+ req.getURI()+", method: "+req.getMethod()+", serviceauth: " + useServiceAsAUserAuthentication() + ", proxyauth: "+useProxyAuthentication+", currentuser: "+getCurrentUser()+", isredircas: "+ isRedirCas +", wasredircas: " + wasRedirCas + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated);
+            logger.debug("    responseString: "+responseString);
         }
 
-        if(isHttp401) {
-            logger.warn("Wrong status code "+SC_UNAUTHORIZED+", clearing ticket.", response.getStatusLine().getStatusCode());
-            clearTicket();
-//            throw new HttpException(req, response);
-            return execute(req, contentType, postOrPutContent);
+        // authentication: was redirected to cas OR http 401 -> get ticket and retry once (but do it only once, hence 'retry')
+        // todo: onko hyvä että aina koitetaan kerran uusiksi 401 virheen jälkeen? jos esim ticket vanhentunut, tuleeko sieltä edes 401 koskaan?
+        if (isRedirCas || wasRedirCas || isHttp401) {
+            if (retry == 0) {
+                logger.warn("warn! got redirect to cas or 401 unauthorized, re-getting ticket and retrying request");
+                clearTicket(); // will force to get new ticket on execute
+                logger.debug("set redirected_to_cas=false");
+                localContext.get().removeAttribute(WAS_REDIRECTED_TO_CAS);
+                return execute(req, contentType, postOrPutContent, 1);
+            } else { // if already retried, 401 unauthorized is for real!
+                logger.error("Error calling REST resource, got redirect to cas or 401 unauthorized, status: "+response.getStatusLine()+", url: "+req.getURI());
+                throw new HttpException(req, response);
+            }
         }
 
         if(response.getStatusLine().getStatusCode() >= SC_INTERNAL_SERVER_ERROR) {

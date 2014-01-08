@@ -15,14 +15,17 @@ import java.net.URISyntaxException;
 @Path("/mock_cas")
 public class MockCasResource {
 
-    public static final String CAS_USERNAME = "cas_username_attr";
-
     public static boolean isRequestAuthenticated(HttpServletRequest request) { // todo: tän voisi korvata casfiltterillä oikeastaan niin ois todellisempi
         TestParams.instance.isRequestAuthenticatedCount++;
 
         String ticket = request.getParameter("ticket");
         if (ticket == null) ticket = request.getHeader("CasSecurityTicket"); // jos ticket headerissa
         System.out.print("isRequestAuthenticated, request: " + request.getRequestURL() + ", ticket: " + ticket + ", failNextBackendAuthentication: " + TestParams.instance.failNextBackendAuthentication);
+
+        if (ticket.contains("illegaluser")) {
+            System.out.println(" --> false (illegaluser)");
+            return false;
+        }
 
         if (TestParams.instance.failNextBackendAuthentication) {
             TestParams.instance.failNextBackendAuthentication = false;
@@ -71,19 +74,18 @@ public class MockCasResource {
     public Response createCasTgt(@Context HttpServletRequest request, @FormParam("username") String username, @FormParam("password") String password) throws URISyntaxException {
         System.out.println("MockCasResource.cas tgt, username: "+ username);
         if (username == null) throw new NullPointerException("username param is null"); // tunnareiden "tarkastus"
-        request.getSession().setAttribute(CAS_USERNAME, username); // nyt käyttäjä on autentikoitunut kun tunnarit on "tarkastettu"
         String tgt = "TEMP_TGTX_"+username+"_"+System.currentTimeMillis();
         TestParams.instance.authTgtCount++;
-        return Response.created(new URI("/mock_cas/cas/v1/tickets/" + tgt)).build();
+        return Response.created(new URI("/mock_cas/cas/v1/tickets/" + tgt + "?user=" + username)).build();
     }
 
     @Path("/cas/v1/tickets/{tgt}")
     @POST
-    public Response getCasServiceTicket(@PathParam("tgt") String tgt, @FormParam("service") String service) throws URISyntaxException {
-        System.out.println("MockCasResource.cas getCasServiceTicket, tgt: "+ tgt+", service: "+service);
+    public Response getCasServiceTicket(@PathParam("tgt") String tgt, @FormParam("service") String service, @QueryParam("user") String user) throws URISyntaxException {
+        System.out.println("MockCasResource.cas getCasServiceTicket, tgt: "+ tgt+", service: "+service+", user: "+user);
         if (tgt == null) throw new NullPointerException("tgt param is null");
         if (service == null) throw new NullPointerException("service param is null");
-        String ticket = "TEMP_STX_"+service+"_"+System.currentTimeMillis();
+        String ticket = "TEMP_STX_"+user+"_"+service+"_"+System.currentTimeMillis();
         TestParams.instance.authTicketCount++;
         return Response.ok(ticket).build();
     }
