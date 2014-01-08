@@ -21,6 +21,8 @@ import org.apache.http.impl.client.RedirectLocations;
 import org.apache.http.impl.client.cache.CacheConfig;
 import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
@@ -58,6 +60,7 @@ import static org.apache.commons.httpclient.HttpStatus.SC_UNAUTHORIZED;
 public class CachingRestClient implements HealthChecker {
 
     public static final String WAS_REDIRECTED_TO_CAS = "redirected_to_cas";
+    public static final int DEFAULT_TIMEOUT_MS = 5 * 60 * 1000; // 5min
     private static final Charset UTF8 = Charset.forName("UTF-8");
     protected static Logger logger = LoggerFactory.getLogger(CachingRestClient.class);
     private static ThreadLocal<DateFormat> df1 = new ThreadLocal<DateFormat>(){
@@ -96,6 +99,10 @@ public class CachingRestClient implements HealthChecker {
     private String requiredVersionRegex;
 
     public CachingRestClient() {
+        this(DEFAULT_TIMEOUT_MS);
+    }
+
+    public CachingRestClient(int timeoutMs) {
         // multithread support + max connections
         PoolingClientConnectionManager connectionManager = new PoolingClientConnectionManager();
         connectionManager.setDefaultMaxPerRoute(100); // default 2
@@ -108,6 +115,11 @@ public class CachingRestClient implements HealthChecker {
 
         // init stuff
         final DefaultHttpClient actualClient = new DefaultHttpClient(connectionManager);
+
+        HttpParams httpParams = actualClient.getParams();
+        HttpConnectionParams.setConnectionTimeout(httpParams, timeoutMs);
+        HttpConnectionParams.setSoTimeout(httpParams, timeoutMs);
+
         actualClient.setRedirectStrategy(new DefaultRedirectStrategy(){
             // detect redirects to cas
             @Override
@@ -202,17 +214,17 @@ public class CachingRestClient implements HealthChecker {
 
         // username / password authentication
 
-        if(useServiceAsAUserAuthentication() && serviceAsAUserTicket == null) {
+        if (useServiceAsAUserAuthentication()) {
+            // get ticket
+            if (serviceAsAUserTicket == null) {
+                checkNotNull(username, "username");
+                checkNotNull(password, "password");
+                checkNotNull(webCasUrl, "webCasUrl");
+                checkNotNull(casService, "casService");
 
-            checkNotNull(username, "username");
-            checkNotNull(password, "password");
-            checkNotNull(webCasUrl, "webCasUrl");
-            checkNotNull(casService, "casService");
-
-            serviceAsAUserTicket = obtainNewCasServiceAsAUserTicket();
-            if (req.getURI().toString().contains("ticket=")) { // this shouldn't happen, but have had similar problems before
-                throw new RuntimeException("uri already has a ticket: "+req.getURI());
+                serviceAsAUserTicket = obtainNewCasServiceAsAUserTicket();
             }
+            // attach ticket
             addRequestParameter(req, "ticket", serviceAsAUserTicket);
             return true;
         }
@@ -250,7 +262,7 @@ public class CachingRestClient implements HealthChecker {
     }
 
     private void addRequestParameter(HttpRequestBase req, String key, String value) {
-        URIBuilder builder = new URIBuilder(req.getURI()).addParameter(key, value);
+        URIBuilder builder = new URIBuilder(req.getURI()).setParameter(key, value);
         try {
             req.setURI(builder.build());
         } catch (URISyntaxException e) {
@@ -316,17 +328,21 @@ public class CachingRestClient implements HealthChecker {
         final HttpResponse response = cachingClient.execute(req, localContext.get());
 
         // authentication: was redirected to cas OR http 401 -> get ticket and retry once (but do it only once, hence '!wasJustAuthenticated')
-        logger.debug("url: "+ req.getURI()+", method: "+req.getMethod()+", serviceauth: " + useServiceAsAUserAuthentication() + ", proxyauth: "+useProxyAuthentication+", currentuser: "+getCurrentUser()+", isredir: "+isRedirectToCas(response)+", wasredir: " + wasRedirectedToCas() + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated);
-        if (/*useServiceAsAUserAuthentication() &&*/ (isRedirectToCas(response) || wasRedirectedToCas() || response.getStatusLine().getStatusCode() == 401) && !wasJustAuthenticated) {
+        boolean isRedirCas = isRedirectToCas(response);
+        boolean isHttp401 = response.getStatusLine().getStatusCode() == SC_UNAUTHORIZED;
+        boolean wasRedirCas = wasRedirectedToCas();
+        logger.debug("url: "+ req.getURI()+", method: "+req.getMethod()+", serviceauth: " + useServiceAsAUserAuthentication() + ", proxyauth: "+useProxyAuthentication+", currentuser: "+getCurrentUser()+", isredircas: "+ isRedirCas +", wasredircas: " + wasRedirCas + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated);
+        if (/*useServiceAsAUserAuthentication() &&*/ (isRedirCas || wasRedirCas || isHttp401) && !wasJustAuthenticated) {
             logger.warn("warn! got redirect to cas or 401 unauthorized, re-getting ticket and retrying request");
             clearTicket(); // will force to get new ticket next time
             return execute(req, contentType, postOrPutContent);
         }
 
-        if(response.getStatusLine().getStatusCode() == SC_UNAUTHORIZED) {
+        if(isHttp401) {
             logger.warn("Wrong status code "+SC_UNAUTHORIZED+", clearing ticket.", response.getStatusLine().getStatusCode());
             clearTicket();
-            throw new HttpException(req, response);
+//            throw new HttpException(req, response);
+            return execute(req, contentType, postOrPutContent);
         }
 
         if(response.getStatusLine().getStatusCode() >= SC_INTERNAL_SERVER_ERROR) {
