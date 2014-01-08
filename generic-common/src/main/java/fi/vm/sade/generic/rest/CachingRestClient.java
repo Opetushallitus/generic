@@ -14,6 +14,8 @@ import org.apache.http.ProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.HttpEntityWrapper;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
@@ -25,6 +27,7 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,6 +79,7 @@ public class CachingRestClient implements HealthChecker {
         
     };
 
+    private PoolingClientConnectionManager connectionManager = new PoolingClientConnectionManager();
     private HttpClient cachingClient;
     private ThreadLocal<HttpContext> localContext = new ThreadLocal<HttpContext>(){
         @Override
@@ -104,7 +108,6 @@ public class CachingRestClient implements HealthChecker {
 
     public CachingRestClient(int timeoutMs) {
         // multithread support + max connections
-        PoolingClientConnectionManager connectionManager = new PoolingClientConnectionManager();
         connectionManager.setDefaultMaxPerRoute(100); // default 2
         connectionManager.setMaxTotal(1000); // default 20
 
@@ -325,7 +328,16 @@ public class CachingRestClient implements HealthChecker {
         boolean wasJustAuthenticated = authenticate(req);
 
         // do actual request
-        final HttpResponse response = cachingClient.execute(req, localContext.get());
+        HttpResponse response = null;
+        try {
+            response = cachingClient.execute(req, localContext.get());
+        } finally {
+            // after request, wrap response entity so it can be accessed later, and release the connection
+            if (response != null) {
+                response.setEntity(new StringEntity(IOUtils.toString(response.getEntity().getContent()), "UTF-8"));
+            }
+            req.releaseConnection();
+        }
 
         // authentication: was redirected to cas OR http 401 -> get ticket and retry once (but do it only once, hence '!wasJustAuthenticated')
         boolean isRedirCas = isRedirectToCas(response);

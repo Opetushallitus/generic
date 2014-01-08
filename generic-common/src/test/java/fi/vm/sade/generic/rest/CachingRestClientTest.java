@@ -218,7 +218,7 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         final HttpResponse response = client.post(getUrl("/httptest/special-character-resource"), MediaType.APPLICATION_JSON, json);
         final String responseJson = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
         System.out.println("got response entity: " + responseJson);
-        Assert.assertTrue("response should contain \"Möttönen\"", StringUtils.contains(responseJson, "Möttönen"));
+        Assert.assertTrue("response should contain \"Möttönen\": "+responseJson, StringUtils.contains(responseJson, "Möttönen"));
     }
 
     @Test
@@ -227,7 +227,7 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         final HttpResponse response = client.put(getUrl("/httptest/special-character-resource"), MediaType.APPLICATION_JSON, json);
         final String responseJson = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
         System.out.println("got response entity: " + responseJson);
-        Assert.assertTrue("response should contain \"Möttönen\"", StringUtils.contains(responseJson, "Möttönen"));
+        Assert.assertTrue("response should contain \"Möttönen\": "+responseJson, StringUtils.contains(responseJson, "Möttönen"));
     }
 
 }
