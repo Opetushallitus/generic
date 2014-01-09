@@ -220,10 +220,11 @@ public class CachingRestClient implements HealthChecker {
                 checkNotNull(webCasUrl, "webCasUrl");
                 checkNotNull(casService, "casService");
                 serviceAsAUserTicket = obtainNewCasServiceAsAUserTicket();
-                logger.debug("got new serviceAsAUser ticket: "+serviceAsAUserTicket);
+                logger.debug("got new serviceAsAUser ticket, service: "+casService+", ticket: "+serviceAsAUserTicket);
             }
             // attach ticket
-            addRequestParameter(req, "ticket", serviceAsAUserTicket);
+            //addRequestParameter(req, "ticket", serviceAsAUserTicket);
+            req.addHeader("CasSecurityTicket", serviceAsAUserTicket);
             return true;
         }
 
@@ -245,7 +246,7 @@ public class CachingRestClient implements HealthChecker {
                 }
                 @Override
                 public void gotNewTicket(Authentication authentication, String proxyTicket) {
-                    logger.debug("got new proxy ticket: "+proxyTicket);
+                    logger.debug("got new proxy ticket, service: "+casService+", ticket: "+proxyTicket);
                     gotNewProxyTicket[0] = true;
                 }
             });
@@ -259,6 +260,7 @@ public class CachingRestClient implements HealthChecker {
         if (value == null) throw new NullPointerException("CachingRestClient."+name+" is null, and guess what, it shouldn't!");
     }
 
+    /*
     private void addRequestParameter(HttpRequestBase req, String key, String value) {
         URIBuilder builder = new URIBuilder(req.getURI()).setParameter(key, value);
         try {
@@ -267,6 +269,7 @@ public class CachingRestClient implements HealthChecker {
             throw new RuntimeException(e);
         }
     }
+    */
 
     private boolean useServiceAsAUserAuthentication() {
         return username != null;
@@ -333,7 +336,7 @@ public class CachingRestClient implements HealthChecker {
             response = cachingClient.execute(req, localContext.get());
         } finally {
             // after request, wrap response entity so it can be accessed later, and release the connection
-            if (response != null) {
+            if (response != null && response.getEntity() != null) {
                 responseString = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
                 response.setEntity(new StringEntity(responseString, "UTF-8"));
             }
