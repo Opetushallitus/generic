@@ -78,7 +78,11 @@ public class ProxyAuthenticator {
     }
 
     protected String obtainNewCasProxyTicket(String casTargetService, Authentication casAuthenticationToken) {
-        return ((CasAuthenticationToken)casAuthenticationToken).getAssertion().getPrincipal().getProxyTicketFor(casTargetService);
+        String ticket = ((CasAuthenticationToken) casAuthenticationToken).getAssertion().getPrincipal().getProxyTicketFor(casTargetService);
+        if (ticket == null) {
+            throw new NullPointerException("obtainNewCasProxyTicket got null proxyticket, there must be something wrong with cas proxy authentication -scenario! check proxy callback works etc, targetService: "+casTargetService+", user: "+ casAuthenticationToken.getName());
+        }
+        return ticket;
     }
 
     private String toString(Collection<? extends GrantedAuthority> authorities) {
