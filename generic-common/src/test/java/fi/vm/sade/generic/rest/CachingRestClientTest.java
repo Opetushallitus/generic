@@ -118,14 +118,17 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         Assert.assertEquals("pong 4", get("/httptest/pingSecuredRedirect/asd1"));
         assertCas(2, 1, 1, 6, 3);
 
-        // invalidoi tiketti ja cas sessio (simuloi cas/backend restarttia)
+        // tehdään ensin onnistunut kutsu..
+        Assert.assertEquals("pong 5", get("/httptest/pingSecuredRedirect/asd1"));
+        assertCas(2, 1, 1, 7, 3);
+        // ..sitten invalidoi tiketti ja cas sessio (simuloi cas/backend restarttia)
         // -> resurssi redirectoi cassille, mutta cas ei ohjaa takaisin koska ei olla sisällä casissa
         // -> CachingRestClient havaitsee puuttuvan authin, ja osaa hakea uuden tiketin, ja tehdä pyynnön uusiksi
         // -> redirectejä ei tämän jälkeen tapahdu, mutta tgt+ticket luodaan casiin, ja validoidaan backend resurssilla
         TestParams.instance.failNextBackendAuthentication = true;
         TestParams.instance.userIsAlreadyAuthenticatedToCas = null;
-        Assert.assertEquals("pong 5", get("/httptest/pingSecuredRedirect/asd1"));
-        assertCas(2, 2, 2, 8, 4);
+        Assert.assertEquals("pong 6", get("/httptest/pingSecuredRedirect/asd1"));
+        assertCas(2, 2, 2, 9, 4);
     }
 
     @Test
@@ -237,6 +240,23 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         final String responseJson = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
         System.out.println("got response entity: " + responseJson);
         Assert.assertTrue("response should contain \"Möttönen\": "+responseJson, StringUtils.contains(responseJson, "Möttönen"));
+    }
+
+    @Test
+    public void testGotRedirectToCasBecauseSystemBroken() {
+        /*
+         -systeemi/konffit rikki
+         -eka kutsu, juuri hankittu validi tiketti
+         -silti tulee redirect cas:lle
+         -clientin pitäisi osata heittää poikkeus tällöin
+        */
+        initClientAuthentication("test");
+        try {
+            String resp = get("/httptest/pingSecuredRedirect/asd1?SKIP_CAS_FILTER");
+            Assert.fail("should fail, but got response: "+resp);
+        } catch (Exception e) {
+            Assert.assertTrue(e.toString().contains("something wrong with the system"));
+        }
     }
 
 }

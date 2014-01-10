@@ -344,12 +344,18 @@ public class CachingRestClient implements HealthChecker {
         }
 
         // debug logging
-        boolean isRedirCas = isRedirectToCas(response);
+        boolean isRedirCas = isRedirectToCas(response); // this response is 302 with location header pointing to cas
+        boolean wasRedirCas = wasRedirectedToCas(); // this response is from cas after 302 redirect
         boolean isHttp401 = response.getStatusLine().getStatusCode() == SC_UNAUTHORIZED;
-        boolean wasRedirCas = wasRedirectedToCas();
         if (logger.isDebugEnabled()) {
-            logger.debug("url: "+ req.getURI()+", method: "+req.getMethod()+", serviceauth: " + useServiceAsAUserAuthentication() + ", proxyauth: "+useProxyAuthentication+", currentuser: "+getCurrentUser()+", isredircas: "+ isRedirCas +", wasredircas: " + wasRedirCas + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated);
+            logger.debug(info(req, response, wasJustAuthenticated, isRedirCas, wasRedirCas, retry));
             logger.debug("    responseString: "+responseString);
+        }
+
+        // just got new valid ticket, but still got cas login page.. something wrong with the system, target service didn't process the request/ticket correctly?
+        if (retry > 0 && wasJustAuthenticated && (isRedirCas || wasRedirCas)) {
+            throw new IOException("just got new valid ticket, but still got cas login page.. something wrong with the system, target service didn't process the request/ticket correctly?\n"
+                    +info(req, response, wasJustAuthenticated, isRedirCas, wasRedirCas, retry));
         }
 
         // authentication: was redirected to cas OR http 401 -> get ticket and retry once (but do it only once, hence 'retry')
@@ -381,6 +387,10 @@ public class CachingRestClient implements HealthChecker {
 
         logger.debug("{}, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{req.getMethod(), url, contentType, postOrPutContent, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});
         return response;
+    }
+
+    private String info(HttpRequestBase req, HttpResponse response, boolean wasJustAuthenticated, boolean isRedirCas, boolean wasRedirCas, int retry) {
+        return "url: "+ req.getURI()+", method: "+req.getMethod()+", serviceauth: " + useServiceAsAUserAuthentication() + ", proxyauth: "+useProxyAuthentication+", currentuser: "+getCurrentUser()+", isredircas: "+ isRedirCas +", wasredircas: " + wasRedirCas + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated+", retry: "+retry;
     }
 
     private String getCurrentUser() {

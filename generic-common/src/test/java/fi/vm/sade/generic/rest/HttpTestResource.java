@@ -111,7 +111,7 @@ public class HttpTestResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response pingSecuredRedirect(@Context HttpServletRequest request) throws URISyntaxException {
         System.out.println("HttpTestResource.pingSecuredRedirect, params: "+request.getParameterMap());
-        if (MockCasResource.isRequestAuthenticated(request)) {
+        if (MockCasResource.isRequestAuthenticated(request) && request.getParameter("SKIP_CAS_FILTER")==null) {
             String s = "pong " + (counter++);
             System.out.println("HttpTestResource.pingSecuredRedirect, ok: "+s);
             return Response.ok(s).build();
