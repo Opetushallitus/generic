@@ -96,12 +96,15 @@ public class CachingRestClient implements HealthChecker {
     @Value("${auth.mode:cas}")
     private String proxyAuthMode;
     private String requiredVersionRegex;
+    private final int timeoutMs;
 
     public CachingRestClient() {
         this(DEFAULT_TIMEOUT_MS);
     }
 
     public CachingRestClient(int timeoutMs) {
+        this.timeoutMs = timeoutMs;
+
         // multithread support + max connections
         connectionManager.setDefaultMaxPerRoute(100); // default 2
         connectionManager.setMaxTotal(1000); // default 20
@@ -334,6 +337,9 @@ public class CachingRestClient implements HealthChecker {
         String responseString = null;
         try {
             response = cachingClient.execute(req, localContext.get());
+        } catch (Exception e) {
+            logger.error("error in CachingRestClient - " + info(req, response, wasJustAuthenticated, wasJustAuthenticated, wasJustAuthenticated, retry), e);
+            throw new IOException("Internal error calling "+req.getMethod()+"/"+url+" (check logs): "+e.getMessage());
         } finally {
             // after request, wrap response entity so it can be accessed later, and release the connection
             if (response != null && response.getEntity() != null) {
@@ -390,7 +396,7 @@ public class CachingRestClient implements HealthChecker {
     }
 
     private String info(HttpRequestBase req, HttpResponse response, boolean wasJustAuthenticated, boolean isRedirCas, boolean wasRedirCas, int retry) {
-        return "url: "+ req.getURI()+", method: "+req.getMethod()+", serviceauth: " + useServiceAsAUserAuthentication() + ", proxyauth: "+useProxyAuthentication+", currentuser: "+getCurrentUser()+", isredircas: "+ isRedirCas +", wasredircas: " + wasRedirCas + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated+", retry: "+retry;
+        return "url: "+ req.getURI()+", method: "+req.getMethod()+", serviceauth: " + useServiceAsAUserAuthentication() + ", proxyauth: "+useProxyAuthentication+", currentuser: "+getCurrentUser()+", isredircas: "+ isRedirCas +", wasredircas: " + wasRedirCas + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated+", retry: "+retry+", timeoutMs: "+timeoutMs;
     }
 
     private String getCurrentUser() {
