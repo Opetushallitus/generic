@@ -396,7 +396,17 @@ public class CachingRestClient implements HealthChecker {
     }
 
     private String info(HttpRequestBase req, HttpResponse response, boolean wasJustAuthenticated, boolean isRedirCas, boolean wasRedirCas, int retry) {
-        return "url: "+ req.getURI()+", method: "+req.getMethod()+", serviceauth: " + useServiceAsAUserAuthentication() + ", proxyauth: "+useProxyAuthentication+", currentuser: "+getCurrentUser()+", isredircas: "+ isRedirCas +", wasredircas: " + wasRedirCas + ", status: " + response.getStatusLine().getStatusCode() + ", wasJustAuthenticated: " + wasJustAuthenticated+", retry: "+retry+", timeoutMs: "+timeoutMs;
+        return "url: " + req.getURI()
+                + ", method: " + req.getMethod()
+                + ", serviceauth: " + useServiceAsAUserAuthentication()
+                + ", proxyauth: " + useProxyAuthentication
+                + ", currentuser: " + getCurrentUser()
+                + ", isredircas: " + isRedirCas
+                + ", wasredircas: " + wasRedirCas
+                + ", status: " + (response != null && response.getStatusLine() != null ? response.getStatusLine().getStatusCode() : "?")
+                + ", wasJustAuthenticated: " + wasJustAuthenticated
+                + ", retry: " + retry
+                + ", timeoutMs: " + timeoutMs;
     }
 
     private String getCurrentUser() {
