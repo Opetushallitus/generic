@@ -6,6 +6,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 
 /**
  * Simple cas http mock, works with CasClient, see also HttpTestResource.
@@ -17,6 +18,7 @@ public class MockCasResource {
 
     public static boolean isRequestAuthenticated(HttpServletRequest request) { // todo: tän voisi korvata casfiltterillä oikeastaan niin ois todellisempi
         TestParams.instance.isRequestAuthenticatedCount++;
+        TestParams.prevRequestTicketHeaders = Collections.list(request.getHeaders("CasSecurityTicket"));
 
         String ticket = request.getParameter("ticket");
         if (ticket == null) ticket = request.getHeader("CasSecurityTicket"); // jos ticket headerissa

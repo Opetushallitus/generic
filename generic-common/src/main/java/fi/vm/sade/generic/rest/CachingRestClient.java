@@ -227,7 +227,7 @@ public class CachingRestClient implements HealthChecker {
             }
             // attach ticket
             //addRequestParameter(req, "ticket", serviceAsAUserTicket);
-            req.addHeader("CasSecurityTicket", serviceAsAUserTicket);
+            req.setHeader("CasSecurityTicket", serviceAsAUserTicket);
             return true;
         }
 
@@ -415,7 +415,7 @@ public class CachingRestClient implements HealthChecker {
     }
 
     /** will force to get new ticket next time */
-    private void clearTicket() {
+    public void clearTicket() {
         serviceAsAUserTicket = null;
         if (useProxyAuthentication && proxyAuthenticator != null) {
             proxyAuthenticator.clearTicket(casService);
