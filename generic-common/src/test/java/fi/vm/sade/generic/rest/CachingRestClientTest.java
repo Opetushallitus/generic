@@ -17,10 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import javax.ws.rs.core.MediaType;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Antti Salonen
@@ -257,6 +254,27 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         } catch (Exception e) {
             Assert.assertTrue(e.toString().contains("something wrong with the system"));
         }
+    }
+
+    @Test
+    public void testOnlyOneTicketHeader() throws IOException {
+        // fix bug: fix bug: cachingrestclient 401 virheen korjaus.. cas redirect tapauksissa CasSecurityTicket-header tuli kahteen kertaan, joka aiheutti ticketin validoinnin failaamisen -> 401 unauthorized
+
+        // tehdään rest kutsu
+        initClientAuthentication("test");
+        Assert.assertEquals("pong 1", get("/httptest/pingSecuredRedirect/asd1"));
+        Assert.assertEquals(1, TestParams.prevRequestTicketHeaders.size());
+        Object orgTicket = TestParams.prevRequestTicketHeaders.get(0);
+
+        // invalidoidaan ticket serverillä, jotta joudutaan käymään cassilla hakemassa redirecteillä uusi
+        TestParams.instance.failNextBackendAuthentication = true;
+
+        // tehdään toinen kutsu
+        Assert.assertEquals("pong 2", get("/httptest/pingSecuredRedirect/asd1"));
+
+        // assertoidaan että kutsussa oli edelleen vain yksi ticket-header, ja se on eri kuin edellinen ticket eli ticket oikeasti haettiin uusiksi
+        Assert.assertEquals(1, TestParams.prevRequestTicketHeaders.size());
+        Assert.assertNotSame(orgTicket, TestParams.prevRequestTicketHeaders.get(0));
     }
 
 }
