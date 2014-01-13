@@ -22,7 +22,20 @@ public class CorsFilter implements ContainerResponseFilter {
                 containerResponse.getHttpHeaders().add("Access-Control-Allow-Headers", value );
             }
         }
-        containerResponse.getHttpHeaders().add("Access-Control-Allow-Origin", "*");
+        
+        String headerOrigin = containerRequest.getRequestHeader("Origin")!=null && containerRequest.getRequestHeader("Origin").size()>0?containerRequest.getRequestHeader("Origin").get(0):null;
+
+        if (headerOrigin != null) {
+            containerResponse.getHttpHeaders().add("Access-Control-Allow-Origin", headerOrigin);
+            containerResponse.getHttpHeaders().add("Access-Control-Allow-Credentials", "true");
+
+        } else {
+            //never happens?
+            containerResponse.getHttpHeaders().add("Access-Control-Allow-Origin", "*");
+        }
+        
+
+        
         return containerResponse;
     }
 }
