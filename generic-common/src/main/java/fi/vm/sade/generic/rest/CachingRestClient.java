@@ -107,6 +107,10 @@ public class CachingRestClient implements HealthChecker {
         this(DEFAULT_TIMEOUT_MS, DEFAULT_CONNECTION_TTL_SEC);
     }
 
+    public CachingRestClient(int timeoutMs) {
+        this(timeoutMs, DEFAULT_CONNECTION_TTL_SEC);
+    }
+
     public CachingRestClient(int timeoutMs, long connectionTimeToLiveSec) {
         this.timeoutMs = timeoutMs;
 
