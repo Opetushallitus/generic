@@ -36,7 +36,7 @@ public class CacheableJerseyFilterAndAnnotationTest {
         long t0 = System.currentTimeMillis();
 
         // call 1-second resource in 100 threads
-        int threads = 100;
+        final int threads = 100;
         final int[] done = {0};
         final int[] errors = {0};
         for (int i=0; i < threads; i++) {
@@ -51,6 +51,7 @@ public class CacheableJerseyFilterAndAnnotationTest {
                         throw new RuntimeException(e);
                     } finally {
                         done[0]++;
+                        System.out.println("testHttpClientThreading done "+done[0]+"/"+threads);
                     }
                 }
             }.start();
@@ -68,7 +69,7 @@ public class CacheableJerseyFilterAndAnnotationTest {
         long took = System.currentTimeMillis() - t0;
         System.out.println("took: "+ took +" ms");
         Assert.assertEquals(0, errors[0]);
-        Assert.assertTrue(took < 15000); // because 100 max threads/connections per route in CachingRestClient, and calling resource takes 1000 ms
+        Assert.assertTrue("http conns too slow", took < 15000); // because 100 max threads/connections per route in CachingRestClient, and calling resource takes 1000 ms
     }
 
     @Before

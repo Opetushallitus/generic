@@ -15,12 +15,14 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.RedirectLocations;
 import org.apache.http.impl.client.cache.CacheConfig;
 import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.conn.SchemeRegistryFactory;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
@@ -41,6 +43,7 @@ import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.httpclient.HttpStatus.*;
 
@@ -60,6 +63,7 @@ public class CachingRestClient implements HealthChecker {
     public static final String WAS_REDIRECTED_TO_CAS = "redirected_to_cas";
     public static final int DEFAULT_TIMEOUT_MS = 5 * 60 * 1000; // 5min
     private static final Charset UTF8 = Charset.forName("UTF-8");
+    private static final long DEFAULT_CONNECTION_TTL_SEC = -1;
     protected static Logger logger = LoggerFactory.getLogger(CachingRestClient.class);
     private static ThreadLocal<DateFormat> df1 = new ThreadLocal<DateFormat>(){
         protected DateFormat initialValue() {
@@ -73,8 +77,9 @@ public class CachingRestClient implements HealthChecker {
         }
         
     };
+    private boolean reuseConnections = true;
 
-    private PoolingClientConnectionManager connectionManager = new PoolingClientConnectionManager();
+    private PoolingClientConnectionManager connectionManager;
     private HttpClient cachingClient;
     private ThreadLocal<HttpContext> localContext = new ThreadLocal<HttpContext>(){
         @Override
@@ -99,13 +104,14 @@ public class CachingRestClient implements HealthChecker {
     private final int timeoutMs;
 
     public CachingRestClient() {
-        this(DEFAULT_TIMEOUT_MS);
+        this(DEFAULT_TIMEOUT_MS, DEFAULT_CONNECTION_TTL_SEC);
     }
 
-    public CachingRestClient(int timeoutMs) {
+    public CachingRestClient(int timeoutMs, long connectionTimeToLiveSec) {
         this.timeoutMs = timeoutMs;
 
         // multithread support + max connections
+        connectionManager = new PoolingClientConnectionManager(SchemeRegistryFactory.createDefault(), connectionTimeToLiveSec, TimeUnit.MILLISECONDS);
         connectionManager.setDefaultMaxPerRoute(100); // default 2
         connectionManager.setMaxTotal(1000); // default 20
 
@@ -120,6 +126,7 @@ public class CachingRestClient implements HealthChecker {
         HttpParams httpParams = actualClient.getParams();
         HttpConnectionParams.setConnectionTimeout(httpParams, timeoutMs);
         HttpConnectionParams.setSoTimeout(httpParams, timeoutMs);
+        HttpConnectionParams.setSoKeepalive(httpParams, true); // prevent firewall to reset idle connections?
 
         actualClient.setRedirectStrategy(new DefaultRedirectStrategy(){
             // detect redirects to cas
@@ -138,7 +145,17 @@ public class CachingRestClient implements HealthChecker {
                 return locationURI;
             }
         });
+
+        if (!reuseConnections) { // hidastaa?
+            actualClient.setReuseStrategy(new NoConnectionReuseStrategy());
+        }
+
         cachingClient = new CachingHttpClient(actualClient, cacheConfig);
+
+        initGson();
+    }
+
+    private void initGson() {
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(XMLGregorianCalendar.class, new JsonDeserializer<XMLGregorianCalendar>() {
 
@@ -156,7 +173,7 @@ public class CachingRestClient implements HealthChecker {
         });
         gsonBuilder.registerTypeAdapter(Date.class, new JsonDeserializer<Date>() {
             @Override
-            public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws com.google.gson.JsonParseException {
+            public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
                 return new Date(json.getAsJsonPrimitive().getAsLong());
             }
         });
@@ -557,6 +574,10 @@ public class CachingRestClient implements HealthChecker {
 
     public void setRequiredVersionRegex(String requiredVersionRegex) {
         this.requiredVersionRegex = requiredVersionRegex;
+    }
+
+    public void setReuseConnections(boolean reuseConnections) {
+        this.reuseConnections = reuseConnections;
     }
 
     public static class HttpException extends IOException {
