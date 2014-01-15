@@ -277,4 +277,11 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         Assert.assertNotSame(orgTicket, TestParams.prevRequestTicketHeaders.get(0));
     }
 
+    @Test
+    public void testConnectionResetByInfraProblem() throws IOException {
+        // fix bug: ...
+
+
+    }
+
 }
