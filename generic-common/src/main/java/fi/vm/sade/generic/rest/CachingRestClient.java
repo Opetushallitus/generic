@@ -63,7 +63,7 @@ public class CachingRestClient implements HealthChecker {
     public static final String WAS_REDIRECTED_TO_CAS = "redirected_to_cas";
     public static final int DEFAULT_TIMEOUT_MS = 5 * 60 * 1000; // 5min
     private static final Charset UTF8 = Charset.forName("UTF-8");
-    private static final long DEFAULT_CONNECTION_TTL_SEC = -1;
+    private static final long DEFAULT_CONNECTION_TTL_SEC = 60; // infran palomuuri katkoo monta minuuttia makaavat connectionit
     protected static Logger logger = LoggerFactory.getLogger(CachingRestClient.class);
     private static ThreadLocal<DateFormat> df1 = new ThreadLocal<DateFormat>(){
         protected DateFormat initialValue() {
