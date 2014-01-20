@@ -64,7 +64,12 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
         // put service ticket to SOAP message as a http header 'CasSecurityTicket'
         httpConnection.setRequestProperty("CasSecurityTicket", serviceTicket);
 
-        logger.debug("CasApplicationAsAUserInterceptor.handleMessage added CasSecurityTicket={} -header", serviceTicket);
+        logger.info("CasApplicationAsAUserInterceptor, targetService: {}, endpoint: {}, serviceuser: {}, CasSecurityTicket: {}", new Object[]{
+                targetService,
+                message.get(Message.ENDPOINT_ADDRESS),
+                appClientUsername,
+                serviceTicket
+        });
     }
 
     private String getCachedTicket(Message message) {

@@ -49,10 +49,10 @@ public final class CasClient {
     }
 
     private static String getServiceTicket(final String server, final String ticketGrantingTicket, final String service) {
-        final HttpClient client = new HttpClient();
-        
-        logger.debug("getServiceTicket: server:'{}' , ticketGrantingTicket:'{}'", server , ticketGrantingTicket);
 
+        logger.info("getServiceTicket: server:'{}', ticketGrantingTicket:'{}', service:'{}'", new Object[]{server, ticketGrantingTicket, service});
+
+        final HttpClient client = new HttpClient();
         PostMethod post = new PostMethod(server + "/" + ticketGrantingTicket);
         post.setRequestBody(new NameValuePair[]{
                 new NameValuePair("service", service)});
@@ -80,6 +80,9 @@ public final class CasClient {
     }
 
     public static String getTicketGrantingTicket(final String server, final String username, final String password) {
+
+        logger.info("getTicketGrantingTicket: server:'{}', user:'{}'", new Object[]{server, username});
+
         HttpClient client = new HttpClient();
         PostMethod post = new PostMethod(server);
         post.setRequestBody(new NameValuePair[]{
