@@ -41,7 +41,7 @@ public class ProxyAuthenticator {
     protected void proxyAuthenticateCas(String casTargetService, Callback callback, Authentication authentication) {
         String proxyTicket = getCachedProxyTicket(casTargetService, authentication, true, callback);
         if (proxyTicket == null) {
-            log.warn("got null proxyticket, cannot attach to request, casTargetService: "+casTargetService+", authentication: "+authentication);
+            log.error("got null proxyticket, cannot attach to request, casTargetService: "+casTargetService+", authentication: "+authentication);
         } else {
             callback.setRequestHeader("CasSecurityTicket", proxyTicket);
             log.debug("attached proxyticket to request! user: "+ authentication.getName() + ", ticket: "+proxyTicket);

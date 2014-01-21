@@ -35,14 +35,16 @@ public class AbstractSecurityTicketOutInterceptor<T extends Message> extends Abs
 
     @Override
     public void handleMessage(final T message) throws Fault {
-        String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
+        final String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
         proxyAuthenticator.proxyAuthenticate(casTargetService, authMode, new ProxyAuthenticator.Callback() {
             @Override
             public void setRequestHeader(String key, String value) {
+                log.info("setRequestHeader: "+key+"="+value+" (targetService: "+casTargetService+")");
                 ((HttpURLConnection) message.get("http.connection")).setRequestProperty(key, value);
             }
             @Override
             public void gotNewTicket(Authentication authentication, String proxyTicket) {
+                log.info("gotNewTicket, auth: "+authentication.getName()+", proxyTicket: "+proxyTicket+", (targetService: "+casTargetService+")");
             }
         });
     }
@@ -54,8 +56,9 @@ public class AbstractSecurityTicketOutInterceptor<T extends Message> extends Abs
             String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
             String cachedProxyTicket = proxyAuthenticator.getCachedProxyTicket(casTargetService, authentication, false, null);
             String msgProxyTicket = ((HttpURLConnection) message.get("http.connection")).getRequestProperty("CasSecurityTicket");
-            log.error("FAULT in soap call, authentication: " + authentication + ", msgProxyTicket: " + msgProxyTicket + ", cachedProxyTicket: " + cachedProxyTicket);
+            log.error("FAULT in request, targetService: "+casTargetService+", authentication: " + authentication.getName() + ", msgProxyTicket: " + msgProxyTicket + ", cachedProxyTicket: " + cachedProxyTicket);
         }
+        log.error("FAULT in request, message: "+message);
     }
 
     /**
