@@ -244,11 +244,12 @@ public class CachingRestClient implements HealthChecker {
                 checkNotNull(webCasUrl, "webCasUrl");
                 checkNotNull(casService, "casService");
                 serviceAsAUserTicket = obtainNewCasServiceAsAUserTicket();
-                logger.debug("got new serviceAsAUser ticket, service: "+casService+", ticket: "+serviceAsAUserTicket);
+                logger.info("got new serviceAsAUser ticket, service: "+casService+", ticket: "+serviceAsAUserTicket);
             }
             // attach ticket
             //addRequestParameter(req, "ticket", serviceAsAUserTicket);
             req.setHeader("CasSecurityTicket", serviceAsAUserTicket);
+            logger.info("set serviceAsAUser ticket to header, service: "+casService+", ticket: "+serviceAsAUserTicket);
             return true;
         }
 
@@ -266,11 +267,12 @@ public class CachingRestClient implements HealthChecker {
             proxyAuthenticator.proxyAuthenticate(casService, proxyAuthMode, new ProxyAuthenticator.Callback() {
                 @Override
                 public void setRequestHeader(String key, String value) {
+                    logger.info("set proxy ticket to http header, service: "+casService+", ticket: "+value);
                     req.addHeader(key, value);
                 }
                 @Override
                 public void gotNewTicket(Authentication authentication, String proxyTicket) {
-                    logger.debug("got new proxy ticket, service: "+casService+", ticket: "+proxyTicket);
+                    logger.info("got new proxy ticket, service: "+casService+", ticket: "+proxyTicket);
                     gotNewProxyTicket[0] = true;
                 }
             });
@@ -370,13 +372,13 @@ public class CachingRestClient implements HealthChecker {
             req.releaseConnection();
         }
 
-        // debug logging
+        // logging
         boolean isRedirCas = isRedirectToCas(response); // this response is 302 with location header pointing to cas
         boolean wasRedirCas = wasRedirectedToCas(); // this response is from cas after 302 redirect
         boolean isHttp401 = response.getStatusLine().getStatusCode() == SC_UNAUTHORIZED;
-        if (logger.isDebugEnabled()) {
-            logger.debug(info(req, response, wasJustAuthenticated, isRedirCas, wasRedirCas, retry));
-            logger.debug("    responseString: "+responseString);
+        if (logger.isInfoEnabled()) {
+            logger.info(info(req, response, wasJustAuthenticated, isRedirCas, wasRedirCas, retry));
+            logger.debug("    responseString: {}", responseString);
         }
 
         // just got new valid ticket, but still got cas login page.. something wrong with the system, target service didn't process the request/ticket correctly?

@@ -65,12 +65,12 @@ public final class CasClient {
             final String response = post.getResponseBodyAsString();
             switch (post.getStatusCode()) {
                 case HttpStatus.SC_OK:
-                    logger.info("serviceTicket found");
+                    logger.info("serviceTicket found: {}", response);
                     return response;
                 default:
-                    logger.warn("Invalid response code ({}) from CAS server!", post.getStatusCode());
+                    logger.warn("Invalid response code ({}) from CAS server!", post.getStatusLine());
                     logger.info("Response (1k): " + response.substring(0, Math.min(1024, response.length())));
-                    throw new RuntimeException("failed to get CAS service ticket, response code: "+post.getStatusCode()+", server: "+server+", tgt: "+ticketGrantingTicket+", service: "+service);
+                    throw new RuntimeException("failed to get CAS service ticket, response code: "+post.getStatusLine()+", server: "+server+", tgt: "+ticketGrantingTicket+", service: "+service);
             }
         } catch (final IOException e) {
             throw new RuntimeException("failed to get CAS service ticket, server: "+server+", tgt: "+ticketGrantingTicket+", service: "+service+", cause: "+e, e);
@@ -152,7 +152,7 @@ public final class CasClient {
                     throw new RuntimeException("Successful ticket granting request, but no ticket found! server: "+server+", user: "+username);
                 }
             	default:
-                    throw new RuntimeException("Invalid response code from CAS server: "+post.getStatusCode()+", server: "+server+", user: "+username);
+                    throw new RuntimeException("Invalid response code from CAS server: "+post.getStatusLine()+", server: "+server+", user: "+username);
             }
         } catch (final IOException e) {
             throw new RuntimeException("error getting TGT, server: "+server+", user: "+username+", exception: "+e, e);

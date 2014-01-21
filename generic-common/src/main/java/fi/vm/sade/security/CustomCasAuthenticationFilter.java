@@ -5,6 +5,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Extends spring CasAuthenticationFilter so that it can obtain ticket also from 'CasSecurityTicket' -http header in addition to http parameter
@@ -25,7 +26,7 @@ public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
 
             // jos ko tiketillä ollaan jo autentikoiduttu sessio, ei tehdä sitä enää
             if (casTicketHeader.equals(getSessionTicket())) {
-                logger.info("ticket already authenticated in session: "+casTicketHeader);
+                logger.warn("ticket already authenticated in session: " + casTicketHeader); // note! casfiltterin pitäisi oletuksena toimia niin että validoidaan vain kerran per sessio, ainakin CasJettyTest mukaan
                 return null;
             } else {
                 return casTicketHeader;
@@ -40,6 +41,20 @@ public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
         }
 
         return super.obtainArtifact(request);
+    }
+
+    @Override
+    protected boolean requiresAuthentication(HttpServletRequest request, HttpServletResponse response) {
+        // we want to re-login if ticket changed
+        String requestTicket = obtainArtifact(request);
+        Object sessionTicket = getSessionTicket();
+        boolean ticketChanged = requestTicket != null && !requestTicket.equals(sessionTicket);
+        if (ticketChanged) {
+            logger.warn("clear authentication because ticket changed, requestTicket: " + requestTicket + ", sessionTicket: " + sessionTicket); // normal scenario but want to log it
+            SecurityContextHolder.clearContext();
+        }
+
+        return super.requiresAuthentication(request, response);
     }
 
     private Object getSessionTicket() {
