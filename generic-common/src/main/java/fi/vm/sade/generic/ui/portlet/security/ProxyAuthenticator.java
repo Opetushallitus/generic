@@ -2,6 +2,7 @@ package fi.vm.sade.generic.ui.portlet.security;
 
 import fi.vm.sade.authentication.cas.DefaultTicketCachePolicy;
 import fi.vm.sade.authentication.cas.TicketCachePolicy;
+import fi.vm.sade.generic.PERA;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.cas.authentication.CasAuthenticationToken;
@@ -10,7 +11,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author Antti Salonen
@@ -44,6 +44,7 @@ public class ProxyAuthenticator {
             log.error("got null proxyticket, cannot attach to request, casTargetService: "+casTargetService+", authentication: "+authentication);
         } else {
             callback.setRequestHeader("CasSecurityTicket", proxyTicket);
+            PERA.setProxyKayttajaHeaders(callback, authentication.getName());
             log.debug("attached proxyticket to request! user: "+ authentication.getName() + ", ticket: "+proxyTicket);
         }
     }

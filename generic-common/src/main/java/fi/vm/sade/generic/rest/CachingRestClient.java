@@ -3,6 +3,7 @@ package fi.vm.sade.generic.rest;
 import com.google.gson.*;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import fi.vm.sade.authentication.cas.CasClient;
+import fi.vm.sade.generic.PERA;
 import fi.vm.sade.generic.healthcheck.HealthChecker;
 import fi.vm.sade.generic.ui.portlet.security.ProxyAuthenticator;
 import org.apache.commons.httpclient.HttpStatus;
@@ -64,6 +65,7 @@ public class CachingRestClient implements HealthChecker {
     public static final int DEFAULT_TIMEOUT_MS = 5 * 60 * 1000; // 5min
     private static final Charset UTF8 = Charset.forName("UTF-8");
     private static final long DEFAULT_CONNECTION_TTL_SEC = 60; // infran palomuuri katkoo monta minuuttia makaavat connectionit
+    public static final String CAS_SECURITY_TICKET = "CasSecurityTicket";
     protected static Logger logger = LoggerFactory.getLogger(CachingRestClient.class);
     private static ThreadLocal<DateFormat> df1 = new ThreadLocal<DateFormat>(){
         protected DateFormat initialValue() {
@@ -248,8 +250,9 @@ public class CachingRestClient implements HealthChecker {
             }
             // attach ticket
             //addRequestParameter(req, "ticket", serviceAsAUserTicket);
-            req.setHeader("CasSecurityTicket", serviceAsAUserTicket);
-            logger.info("set serviceAsAUser ticket to header, service: "+casService+", ticket: "+serviceAsAUserTicket);
+            req.setHeader(CAS_SECURITY_TICKET, serviceAsAUserTicket);
+            PERA.setKayttajaHeaders(req, getCurrentUser(), username);
+            logger.info("set serviceAsAUser ticket to header, service: "+casService+", ticket: "+serviceAsAUserTicket+", currentUser: "+getCurrentUser()+", callAsUser: "+username);
             return true;
         }
 
@@ -267,8 +270,9 @@ public class CachingRestClient implements HealthChecker {
             proxyAuthenticator.proxyAuthenticate(casService, proxyAuthMode, new ProxyAuthenticator.Callback() {
                 @Override
                 public void setRequestHeader(String key, String value) {
-                    logger.info("set proxy ticket to http header, service: "+casService+", ticket: "+value);
-                    req.addHeader(key, value);
+                    req.setHeader(key, value);
+                    PERA.setKayttajaHeaders(req, getCurrentUser(), username);
+                    logger.info("set proxy ticket to http header, service: "+casService+", ticket: "+value+", currentUser: "+getCurrentUser()+", callAsUser: "+username);
                 }
                 @Override
                 public void gotNewTicket(Authentication authentication, String proxyTicket) {
@@ -397,25 +401,51 @@ public class CachingRestClient implements HealthChecker {
                 localContext.get().removeAttribute(WAS_REDIRECTED_TO_CAS);
                 return execute(req, contentType, postOrPutContent, 1);
             } else { // if already retried, 401 unauthorized is for real!
-                logger.error("Error calling REST resource, got redirect to cas or 401 unauthorized, status: "+response.getStatusLine()+", url: "+req.getURI());
-                throw new HttpException(req, response);
+                logAndThrowHttpEcxception(req, response, "Unauthorized error calling REST resource, got redirect to cas or 401 unauthorized");
             }
         }
 
+        if(response.getStatusLine().getStatusCode() == SC_FORBIDDEN) {
+            logAndThrowHttpEcxception(req, response, "Access denied error calling REST resource");
+        }
+
         if(response.getStatusLine().getStatusCode() >= SC_INTERNAL_SERVER_ERROR) {
-            logger.error("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
-            throw new HttpException(req, response);
+            logAndThrowHttpEcxception(req, response, "Internal error calling REST resource");
         }
 
         if(response.getStatusLine().getStatusCode() >= SC_NOT_FOUND) {
-            logger.error("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
-            throw new HttpException(req, response);
+            logAndThrowHttpEcxception(req, response, "Not found error calling REST resource");
         }
 
         cacheStatus = localContext.get().getAttribute(CachingHttpClient.CACHE_RESPONSE_STATUS);
 
         logger.debug("{}, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{req.getMethod(), url, contentType, postOrPutContent, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});
         return response;
+    }
+
+    private void logAndThrowHttpEcxception(HttpRequestBase req, HttpResponse response, final String msg) throws CachingRestClient.HttpException {
+        String message = msg + ", url: " + req.getURI() + ", status: " + response.getStatusLine()+", userinfo: "+getUserInfo(req);
+        logger.error(message);
+        throw new CachingRestClient.HttpException(req, response, message);
+    }
+
+    private String getUserInfo(HttpRequestBase req) {
+        return header(req, "current", PERA.X_KUTSUKETJU_ALOITTAJA_KAYTTAJA_TUNNUS)
+                + header(req, "caller", PERA.X_PALVELUKUTSU_LAHETTAJA_KAYTTAJA_TUNNUS)
+                + header(req, "proxy", PERA.X_PALVELUKUTSU_LAHETTAJA_PROXY_AUTH)
+                + header(req, "ticket", CAS_SECURITY_TICKET);
+    }
+
+    private String header(HttpRequestBase req, String info, String name) {
+        Header[] headers = req.getHeaders(name);
+        StringBuilder res = new StringBuilder();
+        if (headers != null && headers.length > 0) {
+            res.append("|").append(info).append(":");
+            for (Header header : headers) {
+                res.append(header.getValue()).append(",");
+            }
+        }
+        return res.toString();
     }
 
     private String info(HttpRequestBase req, HttpResponse response, boolean wasJustAuthenticated, boolean isRedirCas, boolean wasRedirCas, int retry) {
@@ -592,8 +622,8 @@ public class CachingRestClient implements HealthChecker {
         private String statusMsg;
         private String errorContent;
 
-        public HttpException(HttpRequestBase req, HttpResponse response) {
-            super("Error calling REST resource, status: "+response.getStatusLine()+", url: "+req.getURI());
+        public HttpException(HttpRequestBase req, HttpResponse response, String message) {
+            super(message);
             this.statusCode = response.getStatusLine().getStatusCode();
             this.statusMsg = response.getStatusLine().getReasonPhrase();
             try {
