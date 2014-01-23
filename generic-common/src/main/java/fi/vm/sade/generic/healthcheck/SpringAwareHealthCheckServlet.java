@@ -5,8 +5,9 @@ import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import javax.servlet.ServletException;
@@ -16,12 +17,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -89,6 +86,12 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
     @Autowired(required = false)
     private DataSource dataSource;
 
+    @Value("${web.url.cas}")
+    String casUrl;
+
+    @Value("${host.virkailija}")
+    String hostVirkailija;
+
     @Override
     public void init() throws ServletException {
         log.info("init healthcheck servlet");
@@ -105,8 +108,14 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
 
     @Override
     protected final void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("application/json");
+
+        if (req.getParameter("userinfo") != null) {
+            resp.getWriter().print(toJson(SecurityContextHolder.getContext().getAuthentication()));
+            return;
+        }
+
         try {
-            resp.setContentType("application/json");
             Map<String, Object> result = doHealthCheck();
             String resultJson = toJson(result);
             if (result == null || !OK.equals(result.get(STATUS))) { // log status != ok
@@ -155,7 +164,12 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
 
     protected Map<String, HealthChecker> registerHealthCheckers() {
         Map<String, HealthChecker> checkers = ctx.getBeansOfType(HealthChecker.class);
-        addDatabaseChecker(checkers); // by default check databases
+
+        // register some default checkers
+        checkers.put("database", new DatabaseHealthChecker(dataSource));
+        checkers.put("buildversion", new BuildVersionHealthChecker(getServletContext()));
+        checkers.put("proxyauth", new ProxyAuthenticationChecker(getServletContext(), ctx));
+
         return checkers;
     }
 
@@ -182,44 +196,6 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
 
         // put checker result in healthcheck result
         ((Map<String,Object>)result.get("checks")).put(checkerName, res);
-    }
-
-    protected void addDatabaseChecker(Map<String, HealthChecker> checkers) {
-        checkers.put("database", new HealthChecker() {
-            @Override
-            public Object checkHealth() throws Throwable {
-                if (dataSource != null) {
-                    Map<String, Object> result = new LinkedHashMap<String, Object>();
-                    DatabaseMetaData dbMetaData = dataSource.getConnection().getMetaData();
-                    result.put("url", dbMetaData.getURL());
-                    ResultSet rs = dbMetaData.getTables(null, null, "DATA_STATUS", null);
-                    boolean dataStatusTableExists = rs.next();
-                    if (dataStatusTableExists) {
-                        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-                        List<Map<String, Object>> list = jdbcTemplate.queryForList("SELECT * FROM data_status ORDER BY muutoshetki");
-                        result.put("data_status", list);
-                    }
-
-                    //
-                    // Get count information from database tables
-                    //
-                    List<Map<String, Object>> countList = new ArrayList<Map<String, Object>>();
-                    rs = dbMetaData.getTables(null, null, "%" ,new String[] {"TABLE"});
-                    while(rs.next()) {
-                        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-                        String tableName = rs.getString("TABLE_NAME");
-                        countList.add(jdbcTemplate.queryForMap("SELECT '" + tableName + "' AS tablename, COUNT(*) AS countresult FROM " + tableName));
-                    }
-                    if (countList.size() != 0) {
-                        result.put("counts", countList);
-                    }
-
-                    return result;
-                } else {
-                    return "N/A";
-                }
-            }
-        });
     }
 
     protected void afterHealthCheck(Map<String, Object> result, Map<String, HealthChecker> checkers) {

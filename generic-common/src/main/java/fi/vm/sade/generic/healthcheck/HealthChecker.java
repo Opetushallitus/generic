@@ -3,7 +3,7 @@ package fi.vm.sade.generic.healthcheck;
 /**
  * Healthcheckiin kuuluva tarkastaja, jonka roolina on tarkastaa yksi kohde healthcheckin yhteydessä.
  * SpringAwareHealthCheckServlet kutsuu spring application contextista löytyviä tämän HealthChecker -interfacen toteuttavia beaneja.
- * checkHealth -metodin palauttama objekti serialisoidaan JSON:ksi, ja liitetään healthcheckin checks osioon kentäksi [beanName].
+ * checkHealth -metodin palauttama objekti serialisoidaan JSON:ksi, ja liitetään healthcheckin checks -osioon kentäksi [beanName].
  * Mikäli tarkastuksessa on virhe, checkHealth -metodin tulee heittää sitä poikkeus (jonka message kuvaa virhetilannetta).
  * Tällöin poikkeuksen message liitetään healthcheck tulokseen, ja koko healthcheckin tila on ERREOR.
  *
@@ -30,5 +30,9 @@ package fi.vm.sade.generic.healthcheck;
  * @author Antti Salonen
  */
 public interface HealthChecker {
+    /**
+     * @return something json-serializable that describes the state of this checker
+     * @throws Throwable if there is health check error
+     */
     Object checkHealth() throws Throwable;
 }

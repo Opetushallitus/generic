@@ -5,6 +5,7 @@ import fi.vm.sade.authentication.cas.TicketCachePolicy;
 import fi.vm.sade.generic.PERA;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.cas.authentication.CasAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -34,7 +35,7 @@ public class ProxyAuthenticator {
             }
 
         } catch (Throwable e) {
-            throw new RuntimeException("Could not attach security ticket to SOAP message, authMode: "+ authMode +", authentication: " + authentication+", exception: "+e, e);
+            throw new RuntimeException("Could not attach security ticket to SOAP message, user: " + (authentication != null ? authentication.getName() : "null") + ", authmode: "+authMode+", exception: "+e, e);
         }
     }
 
@@ -78,10 +79,13 @@ public class ProxyAuthenticator {
         log.info("clearTicket done, user: " + authentication.getName());
     }
 
-    protected String obtainNewCasProxyTicket(String casTargetService, Authentication casAuthenticationToken) {
-        String ticket = ((CasAuthenticationToken) casAuthenticationToken).getAssertion().getPrincipal().getProxyTicketFor(casTargetService);
+    protected String obtainNewCasProxyTicket(String casTargetService, Authentication authentication) {
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
+            throw new RuntimeException("current user is not authenticated");
+        }
+        String ticket = ((CasAuthenticationToken) authentication).getAssertion().getPrincipal().getProxyTicketFor(casTargetService);
         if (ticket == null) {
-            throw new NullPointerException("obtainNewCasProxyTicket got null proxyticket, there must be something wrong with cas proxy authentication -scenario! check proxy callback works etc, targetService: "+casTargetService+", user: "+ casAuthenticationToken.getName());
+            throw new NullPointerException("obtainNewCasProxyTicket got null proxyticket, there must be something wrong with cas proxy authentication -scenario! check proxy callback works etc, targetService: "+casTargetService+", user: "+ authentication.getName());
         }
         return ticket;
     }
