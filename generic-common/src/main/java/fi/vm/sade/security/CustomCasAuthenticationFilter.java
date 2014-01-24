@@ -1,11 +1,14 @@
 package fi.vm.sade.security;
 
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.cas.web.CasAuthenticationFilter;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * Extends spring CasAuthenticationFilter so that it can obtain ticket also from 'CasSecurityTicket' -http header in addition to http parameter
@@ -66,4 +69,18 @@ public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
         }
     }
 
+    @Override
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException {
+        try {
+            return super.attemptAuthentication(request, response);    //To change body of overridden methods use File | Settings | File Templates.
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof IOException) {
+                IOException cause = (IOException) e.getCause();
+                if (cause != null && cause.getMessage() != null && cause.getMessage().contains("412") && cause.getMessage().contains("proxyValidate")) {
+                    throw new BadCredentialsException("Possible error with auth system or infra.. check: 1) configs, urls, ports, 2) caller ticket not expired, 3) cas logs for req ticket: "+obtainArtifact(request), e);
+                }
+            }
+            throw e;
+        }
+    }
 }
