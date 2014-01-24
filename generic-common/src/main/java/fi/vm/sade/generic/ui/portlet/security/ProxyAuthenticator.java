@@ -1,8 +1,7 @@
 package fi.vm.sade.generic.ui.portlet.security;
 
-import fi.vm.sade.authentication.cas.DefaultTicketCachePolicy;
-import fi.vm.sade.authentication.cas.TicketCachePolicy;
-import fi.vm.sade.generic.PERA;
+import java.util.Collection;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -11,7 +10,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.Collection;
+import fi.vm.sade.authentication.cas.DefaultTicketCachePolicy;
+import fi.vm.sade.authentication.cas.TicketCachePolicy;
+import fi.vm.sade.generic.PERA;
 
 /**
  * @author Antti Salonen
@@ -19,7 +20,8 @@ import java.util.Collection;
 public class ProxyAuthenticator {
 
     private static final Logger log = LoggerFactory.getLogger(ProxyAuthenticator.class);
-    //private TicketCachePolicy ticketCachePolicy = new SimpleTicketCachePolicy();
+    // private TicketCachePolicy ticketCachePolicy = new
+    // SimpleTicketCachePolicy();
     private TicketCachePolicy ticketCachePolicy = new DefaultTicketCachePolicy();
 
     public void proxyAuthenticate(String casTargetService, String authMode, Callback callback) {
@@ -35,18 +37,21 @@ public class ProxyAuthenticator {
             }
 
         } catch (Throwable e) {
-            throw new RuntimeException("Could not attach security ticket to SOAP message, user: " + (authentication != null ? authentication.getName() : "null") + ", authmode: "+authMode+", exception: "+e, e);
+            throw new RuntimeException("Could not attach security ticket to SOAP message, user: "
+                    + (authentication != null ? authentication.getName() : "null") + ", authmode: " + authMode
+                    + ", exception: " + e, e);
         }
     }
 
     protected void proxyAuthenticateCas(String casTargetService, Callback callback, Authentication authentication) {
         String proxyTicket = getCachedProxyTicket(casTargetService, authentication, true, callback);
         if (proxyTicket == null) {
-            log.error("got null proxyticket, cannot attach to request, casTargetService: "+casTargetService+", authentication: "+authentication);
+            log.error("got null proxyticket, cannot attach to request, casTargetService: " + casTargetService
+                    + ", authentication: " + authentication);
         } else {
             callback.setRequestHeader("CasSecurityTicket", proxyTicket);
             PERA.setProxyKayttajaHeaders(callback, authentication.getName());
-            log.debug("attached proxyticket to request! user: "+ authentication.getName() + ", ticket: "+proxyTicket);
+            log.debug("attached proxyticket to request! user: " + authentication.getName() + ", ticket: " + proxyTicket);
         }
     }
 
@@ -56,10 +61,11 @@ public class ProxyAuthenticator {
         String authorities = toString(authentication.getAuthorities());
         callback.setRequestHeader("oldDeprecatedSecurity_REMOVE_username", user);
         callback.setRequestHeader("oldDeprecatedSecurity_REMOVE_authorities", authorities);
-        log.debug("DEV Proxy ticket! user: "+ user + ", authorities: "+authorities);
+        log.debug("DEV Proxy ticket! user: " + user + ", authorities: " + authorities);
     }
 
-    public String getCachedProxyTicket(String targetService, Authentication authentication, boolean createIfNotCached, Callback callback) {
+    public String getCachedProxyTicket(String targetService, Authentication authentication, boolean createIfNotCached,
+            Callback callback) {
         String proxyTicket = ticketCachePolicy.getTicketFromCache(null, targetService, authentication);
         boolean cached = proxyTicket != null;
         if (!cached && createIfNotCached) {
@@ -69,7 +75,8 @@ public class ProxyAuthenticator {
                 callback.gotNewTicket(authentication, proxyTicket);
             }
         }
-        log.info("CAS Proxy ticket, user: "+authentication.getName()+", cached: " + cached + ", ticket: " + proxyTicket);
+        log.info("CAS Proxy ticket, user: " + authentication.getName() + ", cached: " + cached + ", ticket: "
+                + proxyTicket);
         return proxyTicket;
     }
 
@@ -83,9 +90,12 @@ public class ProxyAuthenticator {
         if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
             throw new RuntimeException("current user is not authenticated");
         }
-        String ticket = ((CasAuthenticationToken) authentication).getAssertion().getPrincipal().getProxyTicketFor(casTargetService);
+        String ticket = ((CasAuthenticationToken) authentication).getAssertion().getPrincipal()
+                .getProxyTicketFor(casTargetService);
         if (ticket == null) {
-            throw new NullPointerException("obtainNewCasProxyTicket got null proxyticket, there must be something wrong with cas proxy authentication -scenario! check proxy callback works etc, targetService: "+casTargetService+", user: "+ authentication.getName());
+            throw new NullPointerException(
+                    "obtainNewCasProxyTicket got null proxyticket, there must be something wrong with cas proxy authentication -scenario! check proxy callback works etc, targetService: "
+                            + casTargetService + ", user: " + authentication.getName());
         }
         return ticket;
     }
@@ -100,6 +110,11 @@ public class ProxyAuthenticator {
 
     public static interface Callback {
         void setRequestHeader(String key, String value);
+
         void gotNewTicket(Authentication authentication, String proxyTicket);
+    }
+
+    public void setTicketCachePolicy(TicketCachePolicy ticketCachePolicy) {
+        this.ticketCachePolicy = ticketCachePolicy;
     }
 }

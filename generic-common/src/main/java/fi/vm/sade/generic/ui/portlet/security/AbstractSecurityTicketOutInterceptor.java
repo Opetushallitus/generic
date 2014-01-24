@@ -1,5 +1,7 @@
 package fi.vm.sade.generic.ui.portlet.security;
 
+import java.net.HttpURLConnection;
+
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
@@ -11,14 +13,11 @@ import org.springframework.security.cas.authentication.CasAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.net.HttpURLConnection;
-
 /**
- * CAS proxy authenticate helper, will get ticket for targetservice for current user, and attach it into http request.
- *
- * User: wuoti
- * Date: 3.9.2013
- * Time: 14.00
+ * CAS proxy authenticate helper, will get ticket for targetservice for current
+ * user, and attach it into http request.
+ * 
+ * User: wuoti Date: 3.9.2013 Time: 14.00
  */
 public class AbstractSecurityTicketOutInterceptor<T extends Message> extends AbstractPhaseInterceptor<T> {
 
@@ -39,12 +38,14 @@ public class AbstractSecurityTicketOutInterceptor<T extends Message> extends Abs
         proxyAuthenticator.proxyAuthenticate(casTargetService, authMode, new ProxyAuthenticator.Callback() {
             @Override
             public void setRequestHeader(String key, String value) {
-                log.info("setRequestHeader: "+key+"="+value+" (targetService: "+casTargetService+")");
+                log.info("setRequestHeader: " + key + "=" + value + " (targetService: " + casTargetService + ")");
                 ((HttpURLConnection) message.get("http.connection")).setRequestProperty(key, value);
             }
+
             @Override
             public void gotNewTicket(Authentication authentication, String proxyTicket) {
-                log.info("gotNewTicket, auth: "+authentication.getName()+", proxyTicket: "+proxyTicket+", (targetService: "+casTargetService+")");
+                log.info("gotNewTicket, auth: " + authentication.getName() + ", proxyTicket: " + proxyTicket
+                        + ", (targetService: " + casTargetService + ")");
             }
         });
     }
@@ -54,19 +55,22 @@ public class AbstractSecurityTicketOutInterceptor<T extends Message> extends Abs
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication instanceof CasAuthenticationToken) {
             String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
-            String cachedProxyTicket = proxyAuthenticator.getCachedProxyTicket(casTargetService, authentication, false, null);
-            String msgProxyTicket = ((HttpURLConnection) message.get("http.connection")).getRequestProperty("CasSecurityTicket");
-            log.error("FAULT in request, targetService: "+casTargetService+", authentication: " + authentication.getName() + ", msgProxyTicket: " + msgProxyTicket + ", cachedProxyTicket: " + cachedProxyTicket);
+            String cachedProxyTicket = proxyAuthenticator.getCachedProxyTicket(casTargetService, authentication, false,
+                    null);
+            String msgProxyTicket = ((HttpURLConnection) message.get("http.connection"))
+                    .getRequestProperty("CasSecurityTicket");
+            log.error("FAULT in request, targetService: " + casTargetService + ", authentication: "
+                    + authentication.getName() + ", msgProxyTicket: " + msgProxyTicket + ", cachedProxyTicket: "
+                    + cachedProxyTicket);
         }
-        log.error("FAULT in request, message: "+message);
+        log.error("FAULT in request, message: " + message);
     }
 
     /**
-     * Get cas service from url string, get string before 4th '/' char.
-     * For example:
+     * Get cas service from url string, get string before 4th '/' char. For
+     * example:
      * <p/>
-     * https://asd.asd.asd:8080/backend-service/asd/qwe/qwe2.foo?bar=asd
-     * --->
+     * https://asd.asd.asd:8080/backend-service/asd/qwe/qwe2.foo?bar=asd --->
      * https://asd.asd.asd:8080/backend-service
      */
     private static String getCasTargetService(String url) {
@@ -77,4 +81,7 @@ public class AbstractSecurityTicketOutInterceptor<T extends Message> extends Abs
         this.authMode = authMode;
     }
 
+    public void setProxyAuthenticator(ProxyAuthenticator proxyAuthenticator) {
+        this.proxyAuthenticator = proxyAuthenticator;
+    }
 }
