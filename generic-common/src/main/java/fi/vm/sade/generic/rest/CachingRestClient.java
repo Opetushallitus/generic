@@ -442,7 +442,7 @@ public class CachingRestClient implements HealthChecker {
         if (headers != null && headers.length > 0) {
             res.append("|").append(info).append(":");
             for (Header header : headers) {
-                res.append(header.getValue()).append(",");
+                res.append(header.getValue());
             }
         }
         return res.toString();
@@ -560,8 +560,10 @@ public class CachingRestClient implements HealthChecker {
     @Override
     public Object checkHealth() throws Throwable {
         if (casService != null) {
+
             // call target service's buildversion url (if we have credentials try the secured url)
-            final String buildversionUrl = casService.replace("/j_spring_cas_security_check", "") + "/buildversion.txt" + (useServiceAsAUserAuthentication() ? "?auth" : "");
+            String serviceUrl = casService.replace("/j_spring_cas_security_check", "");
+            final String buildversionUrl = serviceUrl + "/buildversion.txt" + (useServiceAsAUserAuthentication() ? "?auth" : "");
             final HttpResponse result = execute(new HttpGet(buildversionUrl), null, null);
 
             LinkedHashMap<String,Object> map = new LinkedHashMap<String,Object>() {{
@@ -570,6 +572,23 @@ public class CachingRestClient implements HealthChecker {
                 put("status", result.getStatusLine().getStatusCode() == 200 ? "OK" : result.getStatusLine());
                 // todo: kuormitusdata?
             }};
+
+            // kohdepalvelun healthcheck
+            try {
+                Map hc = get(serviceUrl+"/healthcheck", Map.class);
+                Object targetserviceStatus = hc.get("status");
+                if ("OK".equals(targetserviceStatus)) {
+                    map.put("targetserviceHealthcheck", "OK");
+                } else {
+                    throw new Exception("targetserviceHealthcheck error: "+targetserviceStatus);
+                }
+            } catch (HttpException e) {
+                if (e.getStatusCode() == 404) {
+                    map.put("targetserviceHealthcheck", "not found");
+                } else {
+                    throw new Exception("targetserviceHealthcheck exception: "+e.getMessage());
+                }
+            }
 
             // mikäli kohdepalvelu ok, mutta halutaan varmistaa vielä sen versio
             if (result.getStatusLine().getStatusCode() == 200 && requiredVersionRegex != null) {
@@ -584,7 +603,7 @@ public class CachingRestClient implements HealthChecker {
 
             return map;
         } else {
-            return "nothing to check";
+            return "nothing to check, casService not configured";
         }
     }
 

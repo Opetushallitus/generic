@@ -2,11 +2,13 @@ package fi.vm.sade.generic.healthcheck;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import fi.vm.sade.security.SimpleCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
@@ -18,6 +20,7 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -69,19 +72,21 @@ import java.util.Map;
  *
  * - https://liitu.hard.ware.fi/confluence/display/PROG/Healthcheck+url
  *
- *
- * TODO: sisäinen cachetus esim 10 sekunniksi
- *
  * @see HealthChecker
  * @author Antti Salonen
  */
 public class SpringAwareHealthCheckServlet extends HttpServlet {
 
+    public static final long CACHE_MS = 10 * 1000; // cache results 10 secs per session to prevent dos, or circular healthchecks between services
     public static final String OK = "OK";
     public static final String STATUS = "status";
+    public static final String ERRORS = "errors";
 
     private static final Logger log = LoggerFactory.getLogger(SpringAwareHealthCheckServlet.class);
+    public static final String RESULT_JSON = "resultJson";
+    public static final String TIMESTAMP = "timestamp";
     protected ApplicationContext ctx;
+    protected Map<String, Map<String,Object>> cache = SimpleCache.buildCache(100);
 
     @Autowired(required = false)
     private DataSource dataSource;
@@ -100,7 +105,7 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
         ctx = WebApplicationContextUtils.getWebApplicationContext(getServletContext());
         if (ctx != null) {
             ctx.getAutowireCapableBeanFactory().autowireBean(this);
-            log.info("initial health check:\n" + toJson(doHealthCheck()));
+            log.info("initial health check:\n" + toJson(doHealthCheck(System.currentTimeMillis(), "init")));
         } else {
             log.warn("spring ctx null in healthcheck servlet!");
         }
@@ -108,19 +113,37 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
 
     @Override
     protected final void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // prepare
         resp.setContentType("application/json");
+        final long timestamp = System.currentTimeMillis();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String user = auth != null ? auth.getName() : "anonymous";
 
+        // ?userinfo --> näytetäänkin vain userinfoa eikä healthcheckiä
         if (req.getParameter("userinfo") != null) {
             resp.getWriter().print(toJson(SecurityContextHolder.getContext().getAuthentication()));
             return;
         }
 
+        // jos cachessa
+        Map<String,Object> cachedResult = cache.get(user);
+        if (cachedResult != null && timestamp - (Long)cachedResult.get(TIMESTAMP) < CACHE_MS) {
+            resp.getWriter().print(cachedResult.get(RESULT_JSON));
+            return;
+        }
+
+        // actual health check
         try {
-            Map<String, Object> result = doHealthCheck();
-            String resultJson = toJson(result);
+            Map<String, Object> result = doHealthCheck(timestamp, user);
+            final String resultJson = toJson(result);
             if (result == null || !OK.equals(result.get(STATUS))) { // log status != ok
                 log.warn("healthcheck failed:\n" + resultJson);
             }
+
+            // cache the result
+            cache.put(user, new HashMap<String,Object>(){{ put(TIMESTAMP, timestamp); put(RESULT_JSON, resultJson); }});
+
+            // write result
             resp.getWriter().print(resultJson);
         } catch (Throwable e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -133,27 +156,30 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
         return gson.toJson(o);
     }
 
-    protected Map<String, Object> doHealthCheck() {
-        StringBuffer errorString = new StringBuffer("");
+    protected Map<String, Object> doHealthCheck(long timestamp, String user) {
+        Map<String, String> errors = new HashMap<String, String>();
 
         // register healthcheckers
         Map<String, HealthChecker> checkers = registerHealthCheckers();
 
         // invoke all healthcheckers
         LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>();
+        result.put("timestamp", timestamp);
+        result.put("user", user);
         result.put("contextPath", getServletContext().getContextPath());
         result.put("checks", new LinkedHashMap());
         for (String checkerName : checkers.keySet()) {
             HealthChecker healthChecker = checkers.get(checkerName);
             log.debug("healthcheck calling checker: " + checkerName);
-            doHealthChecker(errorString, result, checkerName, healthChecker);
+            doHealthChecker(result, errors, checkerName, healthChecker);
         }
 
         // set app's health check status
-        if (errorString.length() == 0) {
+        if (errors.size() == 0) {
             result.put(STATUS, OK);
         } else {
-            result.put(STATUS, "ERROR: " + errorString);
+            result.put(ERRORS, errors);
+            result.put(STATUS, "ERRORS --- " + errors.keySet());
         }
 
         //
@@ -173,7 +199,7 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
         return checkers;
     }
 
-    protected void doHealthChecker(StringBuffer errorString, LinkedHashMap<String, Object> result, String checkerName, HealthChecker healthChecker) {
+    protected void doHealthChecker(Map<String, Object> result, Map<String, String> erros, String checkerName, HealthChecker healthChecker) {
         Object res = null;
         try {
             res = healthChecker.checkHealth();
@@ -191,7 +217,7 @@ public class SpringAwareHealthCheckServlet extends HttpServlet {
                 e = ((InvocationTargetException) e).getTargetException();
             }
             res = "ERROR: " + e.getMessage();
-            errorString.append(checkerName).append("=").append(e.getMessage()).append(", ");
+            erros.put(checkerName, e.getMessage());
         }
 
         // put checker result in healthcheck result
