@@ -20,8 +20,6 @@ import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.RedirectLocations;
-import org.apache.http.impl.client.cache.CacheConfig;
-import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.impl.conn.SchemeRegistryFactory;
 import org.apache.http.params.HttpConnectionParams;
@@ -66,6 +64,7 @@ public class CachingRestClient implements HealthChecker {
     private static final Charset UTF8 = Charset.forName("UTF-8");
     private static final long DEFAULT_CONNECTION_TTL_SEC = 60; // infran palomuuri katkoo monta minuuttia makaavat connectionit
     public static final String CAS_SECURITY_TICKET = "CasSecurityTicket";
+    private static final String CACHE_RESPONSE_STATUS = "http.cache.response.status"; //CachingHttpClient.CACHE_RESPONSE_STATUS
     protected static Logger logger = LoggerFactory.getLogger(CachingRestClient.class);
     private static ThreadLocal<DateFormat> df1 = new ThreadLocal<DateFormat>(){
         protected DateFormat initialValue() {
@@ -121,11 +120,6 @@ public class CachingRestClient implements HealthChecker {
         connectionManager.setDefaultMaxPerRoute(100); // default 2
         connectionManager.setMaxTotal(1000); // default 20
 
-        // cache config
-        CacheConfig cacheConfig = new CacheConfig();
-        cacheConfig.setMaxCacheEntries(50 * 1000);
-        cacheConfig.setMaxObjectSize(10 * 1024 * 1024); // 10M, eg oppilaitosnumero -koodisto is 7,5M
-
         // init stuff
         final DefaultHttpClient actualClient = new DefaultHttpClient(connectionManager);
 
@@ -156,9 +150,21 @@ public class CachingRestClient implements HealthChecker {
             actualClient.setReuseStrategy(new NoConnectionReuseStrategy());
         }
 
-        cachingClient = new CachingHttpClient(actualClient, cacheConfig);
+        cachingClient = initCachingClient(actualClient);
 
         initGson();
+    }
+
+    private HttpClient initCachingClient(DefaultHttpClient actualClient) {
+        try {
+            org.apache.http.impl.client.cache.CacheConfig cacheConfig = new org.apache.http.impl.client.cache.CacheConfig();
+            cacheConfig.setMaxCacheEntries(50 * 1000);
+            cacheConfig.setMaxObjectSize(10 * 1024 * 1024); // 10M, eg oppilaitosnumero -koodisto is 7,5M
+            return new org.apache.http.impl.client.cache.CachingHttpClient(actualClient, cacheConfig);
+        } catch (Throwable e) {
+            logger.error("ERROR creating CachingRestClient, httpclient-cache jar missing? falling back to non-cached http client - "+e, e);
+            return actualClient;
+        }
     }
 
     private void initGson() {
@@ -418,7 +424,7 @@ public class CachingRestClient implements HealthChecker {
             logAndThrowHttpEcxception(req, response, "Not found error calling REST resource");
         }
 
-        cacheStatus = localContext.get().getAttribute(CachingHttpClient.CACHE_RESPONSE_STATUS);
+        cacheStatus = localContext.get().getAttribute(CACHE_RESPONSE_STATUS);
 
         logger.debug("{}, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{req.getMethod(), url, contentType, postOrPutContent, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});
         return response;
