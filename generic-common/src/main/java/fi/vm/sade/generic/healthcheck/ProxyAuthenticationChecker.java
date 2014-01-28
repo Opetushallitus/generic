@@ -3,6 +3,7 @@ package fi.vm.sade.generic.healthcheck;
 import fi.vm.sade.generic.rest.CachingRestClient;
 import org.springframework.beans.factory.support.AbstractBeanFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -24,7 +25,7 @@ public class ProxyAuthenticationChecker implements HealthChecker {
     @Override
     public Object checkHealth() throws Throwable {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return "(must be logged in for proxyauth health check to work)";
+        if (auth == null || auth instanceof AnonymousAuthenticationToken) return "(must be logged in for proxyauth health check to work)";
         String currentUser = auth.getName();
 
         CachingRestClient restClient = new CachingRestClient();
