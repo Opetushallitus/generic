@@ -48,13 +48,15 @@ public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
 
     @Override
     protected boolean requiresAuthentication(HttpServletRequest request, HttpServletResponse response) {
-        // we want to re-login if ticket changed
-        String requestTicket = obtainArtifact(request);
-        Object sessionTicket = getSessionTicket();
-        boolean ticketChanged = requestTicket != null && !requestTicket.equals(sessionTicket);
-        if (ticketChanged) {
-            logger.warn("clear authentication because ticket changed, requestTicket: " + requestTicket + ", sessionTicket: " + sessionTicket); // normal scenario but want to log it
-            SecurityContextHolder.clearContext();
+        // we want to re-login if ticket changed - this is mainly a precaution, if a client gets new ticket for new user in the middle of the session
+        Object sessionTicket = getSessionTicket(); // is null when user/session is not yet authenticated
+        if (sessionTicket != null) {
+            String requestTicket = obtainArtifact(request);
+            boolean ticketChanged = requestTicket != null && !requestTicket.equals(sessionTicket);
+            if (ticketChanged) {
+                logger.warn("clear authentication because ticket changed, requestTicket: " + requestTicket + ", sessionTicket: " + sessionTicket); // normal scenario but want to log it
+                SecurityContextHolder.clearContext();
+            }
         }
 
         return super.requiresAuthentication(request, response);
