@@ -15,8 +15,8 @@ public class CasApplicationAsAUserInterceptorTest extends RestWithCasTestSupport
 
     private WebClient webClient;
     private CasApplicationAsAUserInterceptor appAsUserInterceptor;
-    private String targetService = "target";
-    private String user = "user";
+    private String targetService;
+    private String user;
     private String pass = "pass";
 
     @Test
@@ -119,11 +119,49 @@ public class CasApplicationAsAUserInterceptorTest extends RestWithCasTestSupport
         assertCas(0, 2, 2, 3, 3);
     }
 
-    private WebClient createClient() {
-        appAsUserInterceptor = new CasApplicationAsAUserInterceptor();
+    // todo: nämä testit kuuluisi ehkä johonkin muualle huom ticket client refaktoroinnin jälkeen
+
+    @Test
+    public void testSameClientForDifferentServicesAndUsers() throws Exception {
+        webClient = createClient();
+
+        // testataan 2 eri käyttäjällä ja 2 eri kohdepalvelulla että jokaiselle syntyy omat tgt+tiketit
+
+        changeUserAndService("user1", "target1");
+        Assert.assertEquals(HttpStatus.SC_OK, webClient.get().getStatus());
+        assertCas(0, 1, 1, 1, 1);
+
+        changeUserAndService("user1", "target2");
+        Assert.assertEquals(HttpStatus.SC_OK, webClient.get().getStatus());
+        assertCas(0, 2, 2, 2, 2);
+
+        changeUserAndService("user2", "target1");
+        Assert.assertEquals(HttpStatus.SC_OK, webClient.get().getStatus());
+        assertCas(0, 3, 3, 3, 3);
+
+        changeUserAndService("user2", "target2");
+        Assert.assertEquals(HttpStatus.SC_OK, webClient.get().getStatus());
+        assertCas(0, 4, 4, 4, 4);
+
+        // tämän jälkeen käytetään cachetettua tikettiä onnistuneesti
+
+        changeUserAndService("user1", "target1");
+        Assert.assertEquals(HttpStatus.SC_OK, webClient.get().getStatus());
+        assertCas(0, 4, 4, 5, 5);
+    }
+
+    private void changeUserAndService(String u, String s) {
+        user = u;
+        pass = "pass";
+        targetService = s;
         appAsUserInterceptor.setAppClientUsername(user);
         appAsUserInterceptor.setAppClientPassword(pass);
         appAsUserInterceptor.setTargetService(targetService);
+    }
+
+    private WebClient createClient() {
+        appAsUserInterceptor = new CasApplicationAsAUserInterceptor();
+        changeUserAndService("user", "target");
         appAsUserInterceptor.setWebCasUrl(getUrl("/mock_cas/cas"));
         WebClient c = WebClient.create(getUrl("/httptest/testMethod"));
         WebClient.getConfig(c).getOutInterceptors().add(appAsUserInterceptor);
