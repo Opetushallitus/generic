@@ -98,7 +98,7 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         Assert.assertEquals("pong 1", get("/httptest/pingSecuredRedirect/asd1"));
         assertCas(0, 1, 1, 1, 1);
 
-        // autentikoiduttu casiin, mutta ei kohdepalveluun vielä, joten kutsun suojattuun resurssiin pitäisi redirectoitua casiin
+        // simuloidaan että ollaan autentikoiduttu casiin, mutta ei kohdepalveluun vielä, joten kutsun suojattuun resurssiin pitäisi redirectoitua casiin
         TestParams.instance.userIsAlreadyAuthenticatedToCas = "asdsad";
         TestParams.instance.failNextBackendAuthentication = true;
 
@@ -108,16 +108,16 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
 
         // kutsu uudestaan -> ei redirectiä koska nyt serviceenkin ollaan autentikoiduttu, ainoastaan request autentikoidaan backendissä
         Assert.assertEquals("pong 3", get("/httptest/pingSecuredRedirect/asd1"));
-        assertCas(1, 1, 1, 4, 2);
+        assertCas(1, 1, 1, 4, 3);
 
         // invalidoi tiketti serverillä, cas sessio edelleen ok (simuloi ticket cachen tyhjäytymistä serverillä) -> redirectit resource->cas->resource tapahtuu uusiksi
         TestParams.instance.failNextBackendAuthentication = true;
         Assert.assertEquals("pong 4", get("/httptest/pingSecuredRedirect/asd1"));
-        assertCas(2, 1, 1, 6, 3);
+        assertCas(2, 1, 1, 6, 4);
 
         // tehdään ensin onnistunut kutsu..
         Assert.assertEquals("pong 5", get("/httptest/pingSecuredRedirect/asd1"));
-        assertCas(2, 1, 1, 7, 3);
+        assertCas(2, 1, 1, 7, 5);
         // ..sitten invalidoi tiketti ja cas sessio (simuloi cas/backend restarttia)
         // -> resurssi redirectoi cassille, mutta cas ei ohjaa takaisin koska ei olla sisällä casissa
         // -> CachingRestClient havaitsee puuttuvan authin, ja osaa hakea uuden tiketin, ja tehdä pyynnön uusiksi
@@ -125,7 +125,7 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         TestParams.instance.failNextBackendAuthentication = true;
         TestParams.instance.userIsAlreadyAuthenticatedToCas = null;
         Assert.assertEquals("pong 6", get("/httptest/pingSecuredRedirect/asd1"));
-        assertCas(2, 2, 2, 9, 4);
+        assertCas(2, 2, 2, 9, 6);
     }
 
     @Test
@@ -179,12 +179,12 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         List<GrantedAuthority> roles = Arrays.asList((GrantedAuthority)new SimpleGrantedAuthority("testrole"));
         TestingAuthenticationToken clientAuth = new TestingAuthenticationToken(user, user, roles);
         SecurityContextHolder.getContext().setAuthentication(clientAuth);
-        client.setCasService(getUrl("/mock_cas/cas"));
+        client.setCasService(getUrl("/httptest"));
         client.setUseProxyAuthentication(true);
         client.setProxyAuthenticator(new ProxyAuthenticator() {
             @Override
             protected String obtainNewCasProxyTicket(String casTargetService, Authentication casAuthenticationToken) {
-                return user + "_" + (++proxyTicketCounter[0]);
+                return "mockticket_" + user + "_" + (++proxyTicketCounter[0]);
             }
         });
 
@@ -203,7 +203,7 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         client.getProxyAuthenticator().clearTicket(getUrl("/httptest"));
         Assert.assertEquals("pong 3", get("/httptest/pingSecured401Unauthorized"));
         Assert.assertEquals(3, proxyTicketCounter[0]);
-        assertCas(0,0,0,4,2); // todo: wtf onnistuneita validointeja serverillä pitäisi olla +1 ???
+        assertCas(0,0,0,4,3);
     }
 
     private void initClientAuthentication(String username) {

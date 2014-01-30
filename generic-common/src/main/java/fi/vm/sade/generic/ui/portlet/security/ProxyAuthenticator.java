@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.cas.authentication.CasAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -44,9 +45,9 @@ public class ProxyAuthenticator {
     }
 
     protected void proxyAuthenticateCas(String casTargetService, Callback callback, Authentication authentication) {
-        String proxyTicket = getCachedProxyTicket(casTargetService, authentication, true, callback);
+        String proxyTicket = getCachedProxyTicket(casTargetService, authentication, callback);
         if (proxyTicket == null) {
-            log.error("got null proxyticket, cannot attach to request, casTargetService: " + casTargetService
+            throw new BadCredentialsException("got null proxyticket, cannot attach to request, casTargetService: " + casTargetService
                     + ", authentication: " + authentication);
         } else {
             callback.setRequestHeader("CasSecurityTicket", proxyTicket);
@@ -64,26 +65,22 @@ public class ProxyAuthenticator {
         log.debug("DEV Proxy ticket! user: " + user + ", authorities: " + authorities);
     }
 
-    public String getCachedProxyTicket(String targetService, Authentication authentication, boolean createIfNotCached,
-            Callback callback) {
-        String proxyTicket = ticketCachePolicy.getTicketFromCache(null, targetService, authentication);
-        boolean cached = proxyTicket != null;
-        if (!cached && createIfNotCached) {
-            proxyTicket = obtainNewCasProxyTicket(targetService, authentication);
-            ticketCachePolicy.putTicketToCache(null, targetService, authentication, proxyTicket);
-            if (callback != null) {
-                callback.gotNewTicket(authentication, proxyTicket);
+    public String getCachedProxyTicket(final String targetService, final Authentication authentication, final Callback callback) {
+        return ticketCachePolicy.getCachedTicket(targetService, authentication, new TicketCachePolicy.TicketLoader() {
+            @Override
+            public String loadTicket() {
+                String proxyTicket = obtainNewCasProxyTicket(targetService, authentication);
+                if (callback != null) {
+                    callback.gotNewTicket(authentication, proxyTicket);
+                }
+                return proxyTicket;
             }
-        }
-        log.info("CAS Proxy ticket, user: " + authentication.getName() + ", cached: " + cached + ", ticket: "
-                + proxyTicket);
-        return proxyTicket;
+        });
     }
 
     public void clearTicket(String casTargetService) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        ticketCachePolicy.putTicketToCache(null, casTargetService, authentication, null);
-        log.info("clearTicket done, user: " + authentication.getName());
+        ticketCachePolicy.clearTicket(casTargetService, authentication);
     }
 
     protected String obtainNewCasProxyTicket(String casTargetService, Authentication authentication) {

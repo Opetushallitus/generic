@@ -55,13 +55,10 @@ public class AbstractSecurityTicketOutInterceptor<T extends Message> extends Abs
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication instanceof CasAuthenticationToken) {
             String casTargetService = getCasTargetService((String) message.get(Message.ENDPOINT_ADDRESS));
-            String cachedProxyTicket = proxyAuthenticator.getCachedProxyTicket(casTargetService, authentication, false,
-                    null);
             String msgProxyTicket = ((HttpURLConnection) message.get("http.connection"))
                     .getRequestProperty("CasSecurityTicket");
             log.error("FAULT in request, targetService: " + casTargetService + ", authentication: "
-                    + authentication.getName() + ", msgProxyTicket: " + msgProxyTicket + ", cachedProxyTicket: "
-                    + cachedProxyTicket);
+                    + authentication.getName() + ", msgProxyTicket: " + msgProxyTicket);
         }
         log.error("FAULT in request, message: " + message);
     }

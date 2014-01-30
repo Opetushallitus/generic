@@ -37,9 +37,13 @@ public class MockCasResource {
         }
 
         // jos sessio on jo autentikoitu, ei autentikoida cassia vasten vaan luotetaan sessioon
-        if (request.getSession().getAttribute("authenticatedTicket") != null) {
-            System.out.println(" --> true (authenticatedTicket)");
-            return true;
+        Object sessionTicket = request.getSession().getAttribute("authenticatedTicket");
+        if (sessionTicket != null) {
+            // ...paitsi ainoastaan näin mikäli sama tiketti.. jos uusi tiketti parametrina, casfilter autentikoi uusiksi
+            if (sessionTicket.equals(ticket)) {
+                System.out.println(" --> true (authenticatedTicket)");
+                return true;
+            }
         }
 
         boolean ok = ticket != null && !ticket.startsWith("invalid");
@@ -87,7 +91,7 @@ public class MockCasResource {
         System.out.println("MockCasResource.cas getCasServiceTicket, tgt: "+ tgt+", service: "+service+", user: "+user);
         if (tgt == null) throw new NullPointerException("tgt param is null");
         if (service == null) throw new NullPointerException("service param is null");
-        String ticket = "TEMP_STX_"+user+"_"+service+"_"+System.currentTimeMillis();
+        String ticket = "TEMP_STX_"+(++TestParams.instance.ticketNr)+"_"+user+"_"+service+"_"+System.currentTimeMillis();
         TestParams.instance.authTicketCount++;
         return Response.ok(ticket).build();
     }

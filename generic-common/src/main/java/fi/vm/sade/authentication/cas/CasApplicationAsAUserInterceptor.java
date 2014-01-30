@@ -42,7 +42,12 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
 
     @Override
     public void handleMessage(Message message) throws Fault {
-        String serviceTicket = getCachedTicket(message);
+        String serviceTicket = ticketCachePolicy.getCachedTicket(targetService, appClientUsername, new TicketCachePolicy.TicketLoader(){
+            @Override
+            public String loadTicket() {
+                return CasClient.getTicket(webCasUrl, appClientUsername, appClientPassword, targetService);
+            }
+        });
 
         HttpURLConnection httpConnection = (HttpURLConnection) message.get("http.connection");
         if (serviceTicket == null && "dev".equals(authMode)) {
@@ -72,20 +77,6 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
         });
     }
 
-    private String getCachedTicket(Message message) {
-        // get from cache
-        String cachedTicket = ticketCachePolicy.getTicketFromCache(message, targetService, new UsernamePasswordAuthenticationToken(appClientUsername, null)); // pw not needed here
-
-        if (cachedTicket == null) {
-            // authenticate against CAS REST API, and get a service ticket
-            cachedTicket = CasClient.getTicket(webCasUrl, appClientUsername, appClientPassword, targetService);
-
-            // put to cache
-            ticketCachePolicy.putTicketToCache(message, targetService, new UsernamePasswordAuthenticationToken(appClientUsername, null), cachedTicket); // pw not needed here
-        }
-        return cachedTicket;
-    }
-
     public void setWebCasUrl(String webCasUrl) {
         this.webCasUrl = webCasUrl;
     }
@@ -108,6 +99,10 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
             sb.append(authority.getAuthority()).append(",");
         }
         return sb.toString();
+    }
+
+    public TicketCachePolicy getTicketCachePolicy() {
+        return ticketCachePolicy;
     }
 
     public void setTicketCachePolicy(TicketCachePolicy ticketCachePolicy) {

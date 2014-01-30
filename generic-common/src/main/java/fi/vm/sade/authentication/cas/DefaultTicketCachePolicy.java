@@ -1,51 +1,62 @@
 package fi.vm.sade.authentication.cas;
 
-import org.apache.cxf.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * Ticket cache policy that keeps cached ticket in user's http session context (if using from spring webapp), otherwise in threadlocal.
+ * Ticket cache policy that keeps cached ticket in user's http session context
+ * (if using from spring webapp), otherwise in global (not static though) context
+ * (with configurable expiration time).
  *
  * @author Antti Salonen
  */
-public class DefaultTicketCachePolicy implements TicketCachePolicy {
+public class DefaultTicketCachePolicy extends TicketCachePolicy {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultTicketCachePolicy.class);
-    public static ThreadLocal<String> ticketThreadLocal = new ThreadLocal<String>();
+    private int globalTicketsTimeToLiveSeconds = 10*60; // 10 min default
+    private Map<String, String> globalTickets = new HashMap<String, String>();
+    private Map<String, Long> globalTicketsLoaded = new HashMap<String, Long>();
 
-    public String getTicketFromCache(Message message, String targetService, Authentication auth) {
-        String user = auth.getName();
+    @Override
+    protected String getTicketFromCache(String cacheKey) {
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
         String cachedTicket;
         if (requestAttributes != null) {
-            cachedTicket = (String) requestAttributes.getAttribute(ticketKey(targetService, user), RequestAttributes.SCOPE_SESSION);
+            cachedTicket = (String) requestAttributes.getAttribute(cacheKey, RequestAttributes.SCOPE_SESSION);
         } else {
-            cachedTicket = ticketThreadLocal.get();
+            // expire?
+            Long ticketLoaded = globalTicketsLoaded.get(cacheKey);
+            if (ticketLoaded != null && ticketLoaded + (globalTicketsTimeToLiveSeconds *1000) < System.currentTimeMillis()) {
+                globalTickets.remove(cacheKey);
+                globalTicketsLoaded.remove(cacheKey);
+                log.info("expired ticket from global expiring cache, cacheKey: "+cacheKey);
+            }
+
+            cachedTicket = globalTickets.get(cacheKey);
         }
         return cachedTicket;
     }
 
-    public void putTicketToCache(Message message, String targetService, Authentication auth, String ticket) {
-        String user = auth.getName();
+
+    @Override
+    protected void putTicketToCache(String cacheKey, String ticket) {
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
         if (requestAttributes != null) {
-            // note! normaali keissi, mutta warn jotta nähdään jos näitä tehdään liikaa
-            log.warn("cache ticket to httpsession, service: "+targetService+", user: "+user+", ticket: "+ticket);
-            requestAttributes.setAttribute(ticketKey(targetService, user), ticket, RequestAttributes.SCOPE_SESSION);
+            requestAttributes.setAttribute(cacheKey, ticket, RequestAttributes.SCOPE_SESSION);
+            log.info("cached ticket to httpsession, cacheKey: "+cacheKey+", ticket: "+ticket);
         } else {
-            // note! normaali keissi, mutta warn jotta nähdään jos näitä tehdään liikaa
-            log.warn("cache ticket to threadlocal, service: "+targetService+", user: "+user+", ticket: "+ticket);
-            ticketThreadLocal.set(ticket);
+            globalTickets.put(cacheKey, ticket);
+            globalTicketsLoaded.put(cacheKey, ticket != null ? System.currentTimeMillis() : null);
+            log.info("cached ticket to global expiring cache, cacheKey: "+cacheKey+", ticket: "+ticket);
         }
     }
 
-    private String ticketKey(String targetService, String user) {
-        return "cachedTicket_" + targetService + "_"+user;
+    public void setGlobalTicketsTimeToLiveSeconds(int globalTicketsTimeToLiveSeconds) {
+        this.globalTicketsTimeToLiveSeconds = globalTicketsTimeToLiveSeconds;
     }
-
-
 }

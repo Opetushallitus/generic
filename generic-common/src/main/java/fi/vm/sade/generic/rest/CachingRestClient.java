@@ -277,8 +277,7 @@ public class CachingRestClient implements HealthChecker {
                 @Override
                 public void setRequestHeader(String key, String value) {
                     req.setHeader(key, value);
-                    PERA.setKayttajaHeaders(req, getCurrentUser(), username);
-                    logger.info("set proxy ticket to http header, service: "+casService+", ticket: "+value+", currentUser: "+getCurrentUser()+", callAsUser: "+username);
+                    logger.info("set http header: "+key+"="+value);
                 }
                 @Override
                 public void gotNewTicket(Authentication authentication, String proxyTicket) {
@@ -416,7 +415,7 @@ public class CachingRestClient implements HealthChecker {
         }
 
         if(response.getStatusLine().getStatusCode() >= SC_INTERNAL_SERVER_ERROR) {
-            clearTicket();
+            clearTicket(); // todo: http500 tapauksissa pitää korjata kohdepalvelu, jos esim http500 johtuu tikettiongelmasta kohdepalvelussa, pitäisi kohdepalvelun antaa http 4xx
             logAndThrowHttpEcxception(req, response, "Internal error calling REST resource");
         }
 

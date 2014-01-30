@@ -12,6 +12,7 @@ public class TestParams {
 
     //
 
+    public int ticketNr = 0;
     public int authRedirects = 0;
     public int authTgtCount = 0;
     public int authTicketCount = 0;
