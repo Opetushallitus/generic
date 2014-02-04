@@ -8,7 +8,7 @@ package fi.vm.sade.generic.common.auth;
 @Deprecated // todo: cas todo, rethink, pitäisi saada se applikaatio tuohon mukaan
 public enum Role {
 
-    READ, READ_UPDATE, CRUD, NOT_REQUIRED;
+    READ, READ_UPDATE, CRUD, HAKEMUSOPO, NOT_REQUIRED;
 
     public static Role fromValue(String value) {
         for (Role role : values()) {
