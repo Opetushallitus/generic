@@ -73,6 +73,35 @@ public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException {
+
+        /*
+
+        http error 412 - TicketGrantingTicket already generated for this ServiceTicket. Cannot grant more than one TGT for ServiceTicket
+        ym virhe näyttäisi johtuvan siitä, että:
+
+        1. samalla ticketillä tehdään kutsu backendiin monessa säikeessä -> yhtäaikaset http kutsut
+        2. samaan aikaan sisääntulevat kutsut aiheuttavat CAS:ssa CentralAuthenticationService.delegateTicketGrantingTicket kutsumisen yhtä aikaa
+        3. tämä failaa ServiceTicketImpl :ssä ym erroriin
+        4.
+
+        HUOM! CentralAuthenticationService.delegateTicketGrantingTicket :ssa tehdystä http haxorista on silti syytä päästä eroon
+
+        */
+
+        String ticket = obtainArtifact(request);
+        if (ticket != null) {
+            synchronized (ticket.intern()) {
+                return atttempAuthenticationInternal(request, response);
+            }
+        }
+
+        else {
+            return atttempAuthenticationInternal(request, response);
+        }
+
+    }
+
+    private Authentication atttempAuthenticationInternal(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
             return super.attemptAuthentication(request, response);    //To change body of overridden methods use File | Settings | File Templates.
         } catch (RuntimeException e) {
