@@ -2,12 +2,11 @@ package fi.vm.sade.generic.rest;
 
 import org.apache.commons.codec.binary.Hex;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.EntityTag;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -64,7 +63,7 @@ public class HttpTestResource {
     @Produces("text/plain")
     @Cacheable(maxAgeSeconds = 2)
     public Response cacheableAnnotatedResource() {
-        System.out.println("HttpTest.cacheableAnnotatedResource, counter: "+counter+", now: " + new Date(System.currentTimeMillis()));
+        System.out.println("HttpTest.cacheableAnnotatedResource, counter: " + counter + ", now: " + new Date(System.currentTimeMillis()));
 
         return Response
                 .ok("cacheable " + (counter++))
@@ -168,5 +167,39 @@ public class HttpTestResource {
         System.out.println("got json: " + json);
         return Response.ok(json).build();
     }
+
+    @Path("/printcookies")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response printcookies(@Context HttpServletRequest request) throws URISyntaxException {
+        Cookie[] cookies = request.getCookies();
+        String result = "";
+        for (Cookie cookie : cookies) {
+            result += ""+cookie.getName()+"="+cookie.getValue()+"(" +
+                    "|domain:"+cookie.getDomain()+"" +
+                    "|path:"+cookie.getPath() +
+                    "|maxage:"+cookie.getMaxAge() +
+                    ")\n";
+        }
+        return Response.ok(result)
+                .header("sessionid", request.getSession(true).getId())
+                .build();
+    }
+
+    @Path("/buildversion.txt")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response j_spring_cas_security_check(@Context HttpServletRequest request) throws URISyntaxException {
+        String ticket = request.getParameter("ticket");
+        //System.out.println("HttpTestResource.j_spring_cas_security_check, ticket: "+ ticket);
+        HttpSession sess = request.getSession(true); // synnyttää JSESSIONID:n
+        String ticketCookie = ticket.replaceAll(":|/", "_");
+//        String ticketCookie = "asdasd";
+        return Response.ok("sessionid: "+sess.getId())
+                .header("sessionid", sess.getId())
+                .cookie(new NewCookie("TIKETTICOOKIE", ticketCookie))
+                .build();
+    }
+
 
 }

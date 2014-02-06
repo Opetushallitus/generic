@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * 
  * User: wuoti Date: 3.9.2013 Time: 14.00
  */
+@Deprecated // korvattava httpsessio/cookie pohjaisella ratkaisulla, esim: SessionBasedCxfAuthInterceptor
 public class AbstractSecurityTicketOutInterceptor<T extends Message> extends AbstractPhaseInterceptor<T> {
 
     private final static Logger log = LoggerFactory.getLogger(AbstractSecurityTicketOutInterceptor.class);

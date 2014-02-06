@@ -15,6 +15,7 @@ import java.util.Set;
  *
  * @author Eetu Blomqvist
  */
+@Deprecated // korvattava httpsessio/cookie pohjaisella ratkaisulla, esim: SessionBasedCxfAuthInterceptor
 public class SecurityTicketOutInterceptor extends AbstractSecurityTicketOutInterceptor<SoapMessage> implements SoapInterceptor {
     public SecurityTicketOutInterceptor() {
         super();

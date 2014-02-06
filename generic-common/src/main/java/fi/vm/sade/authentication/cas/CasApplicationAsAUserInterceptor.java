@@ -23,6 +23,7 @@ import java.util.Set;
  *
  * @author Antti Salonen
  */
+@Deprecated // korvattava httpsessio/cookie pohjaisella ratkaisulla, esim: SessionBasedCxfAuthInterceptor
 public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private static final Logger logger = LoggerFactory.getLogger(CasApplicationAsAUserInterceptor.class);
