@@ -16,6 +16,7 @@ import java.io.IOException;
  * @author Antti Salonen
  * @author Riku Karjalainen
  */
+@Deprecated // korvattava httpsessio/cookie pohjaisella ratkaisulla, esim: SessionBasedCxfAuthInterceptor - kun tehty niin tästä custom luokasta pääsee eroon
 public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
 
     public static final String CAS_SECURITY_TICKET = "CasSecurityTicket";
