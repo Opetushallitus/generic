@@ -79,25 +79,28 @@ public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
         http error 412 - TicketGrantingTicket already generated for this ServiceTicket. Cannot grant more than one TGT for ServiceTicket
         ym virhe näyttäisi johtuvan siitä, että:
 
-        1. samalla ticketillä tehdään kutsu backendiin monessa säikeessä -> yhtäaikaset http kutsut
-        2. samaan aikaan sisääntulevat kutsut aiheuttavat CAS:ssa CentralAuthenticationService.delegateTicketGrantingTicket kutsumisen yhtä aikaa
-        3. tämä failaa ServiceTicketImpl :ssä ym erroriin
-        4.
+        1. samalla uudella ticketillä tehdään kaksi (tai enemmän) yhtäaikaista http kutsua kohdepalveluun
+        2. kohdepalveluun samaan aikaan sisääntulevat kutsut aiheuttavat CAS:n kutsumisen ticket validoinnin merkeissä, koska casfiltterin ticketcachessa ei ole ko tikettiä
+        3. CAS:ssa tämä johtaa CAS:ssa CentralAuthenticationService.delegateTicketGrantingTicket kutsumisen yhtä aikaa
+        4. tämä failaa ServiceTicketImpl :ssä ym erroriin koska servicetiketillä voi vain kerran luoda PGT:n
 
         HUOM! CentralAuthenticationService.delegateTicketGrantingTicket :ssa tehdystä http haxorista on silti syytä päästä eroon
-
+        HUOM! CasJettyTest.test_usingSameTicketFromDifferentConcurrentSessions -testissä tämä korjasti ongelman, mutta ei ilm oikeassa ympäristössä
+        HUOM! Tämä ei eniwei ratkaise 100% varmasti koko ongelmaa, koska ei ota huomioon klusterointia
+        ===> Disabloitu ratkaisu koska on vain osittainen
         */
 
-        String ticket = obtainArtifact(request);
-        if (ticket != null) {
-            synchronized (ticket.intern()) {
-                return atttempAuthenticationInternal(request, response);
-            }
-        }
+        // otetaan pois kuitenkin, koska luult hajottaa proxyautentikoinnin muille paitsi yhdelle yhtäaikaselle requesteista, tämän sijaan CAS:iin lisätty WARN näissä tilanteissa
+//        String ticket = obtainArtifact(request);
+//        if (ticket != null) {
+//            synchronized (ticket.intern()) {
+//                return atttempAuthenticationInternal(request, response);
+//            }
+//        }
 
-        else {
+//        else {
             return atttempAuthenticationInternal(request, response);
-        }
+//        }
 
     }
 
