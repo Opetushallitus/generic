@@ -15,7 +15,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * DefaultHttpClient enhanced with CAS specific CasRedirectStrategy and
- * HttpRequestInterceptor (to catch and store the original request and params). 
+ * HttpRequestInterceptor (to catch and store the original request and params).
+ * CasRedirectStrategy is where all the magic happens.
  * @author Jouni Stam
  *
  */
@@ -24,11 +25,17 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
 	private static final Logger log = LoggerFactory.getLogger(CasFriendlyHttpClient.class);
 	public static CasRedirectStrategy casRedirectStrategy = new CasRedirectStrategy();
 	
-	private AttributePrincipal principal = null;
-	
-	private String proxyTicket = null;
-	
+	/**
+	 * Constructor sets CasRedirectStategy and adds request interceptor which sets
+	 * CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST and CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST_PARAMS
+	 * attributes to the HttpContext. 
+	 */
 	public CasFriendlyHttpClient() {
+		
+		// Let the super constructor do its work first
+		super();
+		
+		// Set redirect strategy
 		this.setRedirectStrategy(casRedirectStrategy);
 		
 		// Adds an interceptor
@@ -40,39 +47,32 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
 			@Override
 			public void process(HttpRequest request, HttpContext context)
 					throws HttpException, IOException {
-				log.debug("REQUESTING: " + request.getRequestLine().getUri());
 				if(context.getAttribute(CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST) == null) {
-					log.debug("Setting the original request: " + request.getRequestLine().getUri());
-					if(principal != null)
-						context.setAttribute(CasRedirectStrategy.ATTRIBUTE_PRINCIPAL, principal);
-					if(proxyTicket != null)
-						context.setAttribute(CasRedirectStrategy.ATTRIBUTE_PROXYTICKET, proxyTicket);
+					log.debug("Started with original request: " + request.getRequestLine().getUri());
 					context.setAttribute(CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST, request);
 					context.setAttribute(CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST_PARAMS, request.getParams());
 				}
 			}
 		});
 
-		// Not really necessary
+		// Not really necessary, only for logging purposes
 		this.addResponseInterceptor(new HttpResponseInterceptor() {
 			@Override
 			public void process(HttpResponse response, HttpContext context)
 					throws HttpException, IOException {
-				log.debug("RESPONSE: " + response.getStatusLine().getStatusCode());
+				log.debug("Response: " + response.getStatusLine().getStatusCode());
 			}
 		});
 	}
 
 	/**
-	 * Sets the principal if available. Can be taken from Spring context or request.
+	 * Helper method to set given principal to given Http context. AttributePrincipal
+	 * is used to get the proxy ticket when needed.
+	 * @param context
 	 * @param principal
 	 */
-	public void setAttributePrincipal(AttributePrincipal principal) {
-		this.principal = principal;
-	}
-	
-	public void setProxyTicket(String proxyTicket) {
-		this.proxyTicket = proxyTicket;
+	public static void setAttributePrincipal(HttpContext context, AttributePrincipal principal) {
+		context.setAttribute(CasRedirectStrategy.ATTRIBUTE_PRINCIPAL, principal);
 	}
 	
 }

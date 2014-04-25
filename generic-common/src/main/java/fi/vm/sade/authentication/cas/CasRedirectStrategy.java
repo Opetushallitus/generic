@@ -45,10 +45,13 @@ public class CasRedirectStrategy implements RedirectStrategy {
 
 	private static final Logger log = LoggerFactory.getLogger(CasRedirectStrategy.class);
 
+	// REST interface for CAS services
 	public static final String CAS_TICKET_URL = "/cas/v1/tickets";
+	public static final String CAS_PROXYTICKET_URL = "/cas/proxy";
 	
 	public static final String ATTRIBUTE_PRINCIPAL = "principal";
-	public static final String ATTRIBUTE_PROXYTICKET = "proxyTicket";
+	public static final String ATTRIBUTE_CAS_TGT = "casTgt";
+//	public static final String ATTRIBUTE_PROXYGRANTINGTICKET = "proxyGrantingTicket";
 	public static final String ATTRIBUTE_ORIGINAL_REQUEST = "originalRequest";
 	public static final String ATTRIBUTE_ORIGINAL_REQUEST_PARAMS = "originalRequestParams";
 	public static final String ATTRIBUTE_SERVICE_URL = "serviceUrl";
@@ -90,8 +93,31 @@ public class CasRedirectStrategy implements RedirectStrategy {
 	    		if(service != null)
 	    			context.setAttribute(ATTRIBUTE_SERVICE_URL, service);
 
-	    		// Request for TGT
-	    		return createTGTRequest(request, response, context, url);
+	    		// TGT can be used instead of username+password
+	    		String tgt = 
+	    				(String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_TGT);
+	    		if(tgt != null) {
+	    			// Use existing TGT to get ST
+	    			String tgtUrl = resolveCasTicketUrl(url) + "/" + tgt; 
+	    			return createSTRequest(request, response, context, tgtUrl + "/cas/v1/tickets/" + tgt);
+	    		} 
+
+	    		// Figure out if PGT is available and use that
+	    		String casPgt = resolveProxyGrantingTicket(context, service);
+	    		if(casPgt != null)
+	    			log.debug("Found proxy granting ticket: " + casPgt);
+	    		else
+	    			log.debug("Not able to get proxy ticket (" + CasRedirectStrategy.ATTRIBUTE_PRINCIPAL + ")");
+	    		
+	    		if(casPgt != null) {
+	    			// Use PGT to get ST
+	    			return createSTRequestWithPGT(request, response, context, url, casPgt);
+	    		} else {
+		    		// FIXME Get from context!!!
+		    		String login = "ophadmin";
+		    		String password = "ilonkautta!";
+		    		return createTGTRequest(request, response, context, url, login, password);
+	    		}
 
 	    	} else if(path.startsWith("/cas/v1/tickets")) {
 	    		
@@ -174,46 +200,68 @@ public class CasRedirectStrategy implements RedirectStrategy {
 	 * @throws Exception
 	 */
 	public static HttpUriRequest createTGTRequest(HttpRequest request, HttpResponse response,
-			HttpContext context, URL locationUrl) throws UnsupportedEncodingException {
+			HttpContext context, URL locationUrl, String login, String password) throws UnsupportedEncodingException {
 
 		String service = (String)context.getAttribute(ATTRIBUTE_SERVICE_URL);
 		
-		// TODO Figure out if PGT is already available and use that
-		String casPgt = resolveProxyTicket(context, service);
-		log.debug("PGT: " + casPgt);
+		// Gets the /cas/v1/tickets full URL
+		String url = resolveCasTicketUrl(locationUrl);
 		
-		String suffix = CAS_TICKET_URL;
-		if(casPgt != null)
-			suffix = "/cas/proxy";
-		
-		String url = locationUrl.getProtocol() + "://" + 
-				locationUrl.getHost() + ":" + locationUrl.getPort() + suffix;
 		HttpPost casRequest = new HttpPost(url);
 
 		// Set state attribute
-		log.debug("Setting CAS state to: " + CasRedirectStrategy.CAS_REQUEST_STATE_TGT);
 		context.setAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_REQUEST_STATE, CasRedirectStrategy.CAS_REQUEST_STATE_TGT);
+		log.debug("CAS state set to: " + context.getAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_REQUEST_STATE));
 		
 		ArrayList<BasicNameValuePair> postParameters = new ArrayList<BasicNameValuePair>();
-		if(casPgt == null) {
-			// Login with service's own credentials
-			// FIXME Fix to get the credentials from properties!!!
-			postParameters.add(new BasicNameValuePair("service", service));
-		    postParameters.add(new BasicNameValuePair("username", "ophadmin"));
-		    postParameters.add(new BasicNameValuePair("password", "ilonkautta!"));
-		} else {
-			// Use PGT
-//			service = "https://localhost:8443/organisaatio-ui/j_spring_cas_security_check";
-			postParameters.add(new BasicNameValuePair("targetService", service));
-			postParameters.add(new BasicNameValuePair("pgt", casPgt));
-		}
+		// Login with service's own credentials
+		// FIXME Fix to get the credentials from properties!!!
+		postParameters.add(new BasicNameValuePair("service", service));
+	    postParameters.add(new BasicNameValuePair("username", login));
+	    postParameters.add(new BasicNameValuePair("password", password));
 		casRequest.setEntity(new UrlEncodedFormEntity(postParameters));
 		
 		return casRequest;
 	}
 
 	/**
+	 * Creates ST request with PGT /cas/proxy.
+	 * @param request
+	 * @param response
+	 * @param context
+	 * @param locationUrl
+	 * @return
+	 * @throws UnsupportedEncodingException 
+	 * @throws Exception
+	 */
+	public static HttpUriRequest createSTRequestWithPGT(HttpRequest request, HttpResponse response,
+			HttpContext context, URL locationUrl, String casPgt) throws UnsupportedEncodingException {
+
+		String service = (String)context.getAttribute(ATTRIBUTE_SERVICE_URL);
+		
+		String url = locationUrl.getProtocol() + "://" + 
+				locationUrl.getHost() + ":" + locationUrl.getPort() + CAS_PROXYTICKET_URL;
+		HttpPost casRequest = new HttpPost(url);
+
+		// Set state attribute
+		context.setAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_REQUEST_STATE, CasRedirectStrategy.CAS_REQUEST_STATE_ST);
+		log.debug("CAS state set to: " + context.getAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_REQUEST_STATE));
+		
+		ArrayList<BasicNameValuePair> postParameters = new ArrayList<BasicNameValuePair>();
+		// Use PGT
+		service = "https://localhost:8443/organisaatio-ui";
+		postParameters.add(new BasicNameValuePair("targetService", service));
+		postParameters.add(new BasicNameValuePair("pgt", casPgt));
+//		postParameters.add(new BasicNameValuePair("service", service));
+//		postParameters.add(new BasicNameValuePair("ticket", casPgt));
+		casRequest.setEntity(new UrlEncodedFormEntity(postParameters));
+		
+		return casRequest;
+	}
+	
+	/**
 	 * Creates ST request back to /cas/v1/tickets with service parameter and TGT.
+	 * Expects locationHeader to be like https://localhost:8443/cas/
 	 * @param request
 	 * @param response
 	 * @param context
@@ -226,9 +274,15 @@ public class CasRedirectStrategy implements RedirectStrategy {
 			HttpContext context, String locationHeader) throws UnsupportedEncodingException {
 		String service = (String)context.getAttribute(ATTRIBUTE_SERVICE_URL);
 		HttpPost casRequest = new HttpPost(locationHeader);
+
+		String tgt = StringUtils.substringAfterLast(locationHeader, "/");
+		if(tgt != null) {
+			context.setAttribute(ATTRIBUTE_CAS_TGT, tgt);
+			log.debug("Stored TGT to context: " + tgt);
+		}
 		
-		log.debug("Setting CAS state to: " + CasRedirectStrategy.CAS_REQUEST_STATE_ST);
 		context.setAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_REQUEST_STATE, CasRedirectStrategy.CAS_REQUEST_STATE_ST);
+		log.debug("CAS state set to: " + context.getAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_REQUEST_STATE));
 		
 		ArrayList<BasicNameValuePair> postParameters = new ArrayList<BasicNameValuePair>();
 	    postParameters.add(new BasicNameValuePair("service", service));
@@ -328,20 +382,27 @@ public class CasRedirectStrategy implements RedirectStrategy {
 	}
 
 	/**
-	 * Resolves proxy ticket from context.
+	 * Resolves proxy granting ticket from context that can be used for requesting 
+	 * new serviceticket on behalf of the user without login and password.
 	 * @param context
 	 * @return
 	 */
-	private static String resolveProxyTicket(HttpContext context, String service) {
-		String proxyTicket = 
-				(String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_PROXYTICKET);
-		if(proxyTicket != null)
-			return proxyTicket;
+	private static String resolveProxyGrantingTicket(HttpContext context, String service) {
 		AttributePrincipal principal = 
 				(AttributePrincipal)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_PRINCIPAL);
 		if(principal != null) {
 			return principal.getProxyTicketFor(service);
 		} else
 			return null;
+	}
+	
+	/**
+	 * Resolves CAS tickets REST URL based on requested URL.
+	 * @param locationUrl
+	 * @return
+	 */
+	private static String resolveCasTicketUrl(URL locationUrl) {
+		return locationUrl.getProtocol() + "://" + 
+				locationUrl.getHost() + ":" + locationUrl.getPort() + CAS_TICKET_URL;
 	}
 }
