@@ -50,8 +50,9 @@ public class CasRedirectStrategy implements RedirectStrategy {
 	public static final String CAS_PROXYTICKET_URL = "/cas/proxy";
 	
 	public static final String ATTRIBUTE_PRINCIPAL = "principal";
+	public static final String ATTRIBUTE_LOGIN = "login";
+	public static final String ATTRIBUTE_PASSWORD = "password";
 	public static final String ATTRIBUTE_CAS_TGT = "casTgt";
-//	public static final String ATTRIBUTE_PROXYGRANTINGTICKET = "proxyGrantingTicket";
 	public static final String ATTRIBUTE_ORIGINAL_REQUEST = "originalRequest";
 	public static final String ATTRIBUTE_ORIGINAL_REQUEST_PARAMS = "originalRequestParams";
 	public static final String ATTRIBUTE_SERVICE_URL = "serviceUrl";
@@ -81,15 +82,16 @@ public class CasRedirectStrategy implements RedirectStrategy {
 			// Use service URL
 			location = (String)context.getAttribute(ATTRIBUTE_SERVICE_URL);
 		}
-		log.debug("REDIRECT TO: " + location);
+		log.debug("Redirect location is: " + location);
 		try {
-			// Must have location for redirect, otherwise okay to fail
+			// Must have location for redirect, otherwise let it fail
 			URL url = new URL(location);
 	    	String path = url.getPath();
 	    	if(path.startsWith("/cas/login")) {
 	        	// Case redirect to /cas/login ("user" must authenticate)
 	    		String service = resolveService(location);
 	    		
+	    		// Set the service URL to context
 	    		if(service != null)
 	    			context.setAttribute(ATTRIBUTE_SERVICE_URL, service);
 
@@ -98,11 +100,13 @@ public class CasRedirectStrategy implements RedirectStrategy {
 	    				(String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_TGT);
 	    		if(tgt != null) {
 	    			// Use existing TGT to get ST
-	    			String tgtUrl = resolveCasTicketUrl(url) + "/" + tgt; 
+	    			log.debug("Using TGT from HttpContext: " + tgt);
+	    			String tgtUrl = resolveCasTicketUrl(url) + "/" + tgt;
+	    			// Continue with session ticket request
 	    			return createSTRequest(request, response, context, tgtUrl + "/cas/v1/tickets/" + tgt);
 	    		} 
 
-	    		// Figure out if PGT is available and use that
+	    		// Figure out if PGT is available and use that (expects principal in HttpContext)
 	    		String casPgt = resolveProxyGrantingTicket(context, service);
 	    		if(casPgt != null)
 	    			log.debug("Found proxy granting ticket: " + casPgt);
@@ -113,9 +117,9 @@ public class CasRedirectStrategy implements RedirectStrategy {
 	    			// Use PGT to get ST
 	    			return createSTRequestWithPGT(request, response, context, url, casPgt);
 	    		} else {
-		    		// FIXME Get from context!!!
-		    		String login = "ophadmin";
-		    		String password = "ilonkautta!";
+	    			// Last resort, use login and password from HttpContext
+		    		String login = (String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_LOGIN);
+		    		String password = (String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_PASSWORD);
 		    		return createTGTRequest(request, response, context, url, login, password);
 	    		}
 
@@ -138,12 +142,14 @@ public class CasRedirectStrategy implements RedirectStrategy {
 	    		// Not interesting, continue as any other redirect
 	    	}
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.warn("Failed to process redirect as CAS redirect. Stopping redirect.", e);
+			return null;
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.warn("Failed to process redirect as CAS redirect. Stopping redirect.", e);
+			return null;
 		}
+		
+		// The "normal" case, just continues as a normal redirect
 		return new HttpGet(location);
 	}
 
@@ -215,7 +221,6 @@ public class CasRedirectStrategy implements RedirectStrategy {
 		
 		ArrayList<BasicNameValuePair> postParameters = new ArrayList<BasicNameValuePair>();
 		// Login with service's own credentials
-		// FIXME Fix to get the credentials from properties!!!
 		postParameters.add(new BasicNameValuePair("service", service));
 	    postParameters.add(new BasicNameValuePair("username", login));
 	    postParameters.add(new BasicNameValuePair("password", password));
@@ -252,8 +257,6 @@ public class CasRedirectStrategy implements RedirectStrategy {
 		service = "https://localhost:8443/organisaatio-ui";
 		postParameters.add(new BasicNameValuePair("targetService", service));
 		postParameters.add(new BasicNameValuePair("pgt", casPgt));
-//		postParameters.add(new BasicNameValuePair("service", service));
-//		postParameters.add(new BasicNameValuePair("ticket", casPgt));
 		casRequest.setEntity(new UrlEncodedFormEntity(postParameters));
 		
 		return casRequest;
