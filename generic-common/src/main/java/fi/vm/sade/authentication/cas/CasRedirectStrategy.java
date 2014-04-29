@@ -226,6 +226,8 @@ public class CasRedirectStrategy implements RedirectStrategy {
 	    postParameters.add(new BasicNameValuePair("password", password));
 		casRequest.setEntity(new UrlEncodedFormEntity(postParameters));
 		
+		log.debug("Authenticating to: " + service + " using login: " + login);
+		
 		return casRequest;
 	}
 
