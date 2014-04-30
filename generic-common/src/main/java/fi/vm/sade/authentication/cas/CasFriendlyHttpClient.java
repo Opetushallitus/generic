@@ -1,12 +1,25 @@
 package fi.vm.sade.authentication.cas;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.cxf.helpers.IOUtils;
+import org.apache.cxf.io.CachedOutputStream;
+import org.apache.cxf.message.Message;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.HttpContext;
 import org.jasig.cas.client.authentication.AttributePrincipal;
@@ -66,6 +79,60 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
 	}
 
 	/**
+	 * Creates a CAS client request based on intercepted CXF message.
+	 * @param message
+	 * @throws IOException 
+	 */
+	public static HttpUriRequest createRequest(Message message) throws IOException {
+		// Original out message (request)
+		Message outMessage = message.getExchange().getOutMessage();
+		String method = (String)outMessage.get(Message.HTTP_REQUEST_METHOD);
+		String url = (String)outMessage.get(Message.ENDPOINT_ADDRESS);
+		String encoding = (String)outMessage.get(Message.ENCODING);
+		if(StringUtils.isEmpty(encoding))
+			encoding = "UTF-8";
+		
+		// Get headers
+		@SuppressWarnings ("unchecked")
+		Map<String, List<String>> headers = (Map<String, List<String>>)outMessage.get(Message.PROTOCOL_HEADERS);
+		
+		// Get the body of request
+		String body = null;
+		InputStream is = outMessage.getContent(InputStream.class);
+		if(is != null) {
+			CachedOutputStream bos = new CachedOutputStream();
+			IOUtils.copy(is, bos);
+			body = new String(bos.getBytes(), encoding);
+		}
+		
+		// Create request based on method
+		HttpUriRequest uriRequest = null;
+		if(method.equalsIgnoreCase("POST")) {
+			uriRequest = new HttpPost(url);
+			if(body != null)
+				((HttpPost)uriRequest).setEntity(new StringEntity(body));
+		} else if(method.equalsIgnoreCase("GET")) {
+			uriRequest = new HttpGet(url);
+		} else if(method.equalsIgnoreCase("DELETE")) {
+			uriRequest = new HttpDelete(url);
+		} else if(method.equalsIgnoreCase("PUT")) {
+			uriRequest = new HttpPut(url);
+			if(body != null)
+				((HttpPost)uriRequest).setEntity(new StringEntity(body));
+		}
+
+		// Set headers to request
+		for(String one:headers.keySet()) {
+			List<String> values = headers.get(one);
+			// Just add the first value
+			uriRequest.addHeader(one, values.get(0));
+		}
+		
+		return uriRequest;
+		
+	}
+	
+	/**
 	 * Helper method to set given principal to given Http context. AttributePrincipal
 	 * is used to get the proxy ticket when needed.
 	 * @param context
@@ -74,5 +141,5 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
 	public static void setAttributePrincipal(HttpContext context, AttributePrincipal principal) {
 		context.setAttribute(CasRedirectStrategy.ATTRIBUTE_PRINCIPAL, principal);
 	}
-	
+
 }

@@ -221,6 +221,7 @@ public class CasRedirectStrategy implements RedirectStrategy {
 		
 		ArrayList<BasicNameValuePair> postParameters = new ArrayList<BasicNameValuePair>();
 		// Login with service's own credentials
+		// TODO Do we need URLEncoding for the values?
 		postParameters.add(new BasicNameValuePair("service", service));
 	    postParameters.add(new BasicNameValuePair("username", login));
 	    postParameters.add(new BasicNameValuePair("password", password));
@@ -246,8 +247,9 @@ public class CasRedirectStrategy implements RedirectStrategy {
 
 		String service = (String)context.getAttribute(ATTRIBUTE_SERVICE_URL);
 		
+		String port = ((locationUrl.getPort() > 0)?(":" + locationUrl.getPort()):"");
 		String url = locationUrl.getProtocol() + "://" + 
-				locationUrl.getHost() + ":" + locationUrl.getPort() + CAS_PROXYTICKET_URL;
+				locationUrl.getHost() + port + CAS_PROXYTICKET_URL;
 		HttpPost casRequest = new HttpPost(url);
 
 		// Set state attribute
@@ -407,7 +409,8 @@ public class CasRedirectStrategy implements RedirectStrategy {
 	 * @return
 	 */
 	private static String resolveCasTicketUrl(URL locationUrl) {
+		String port = ((locationUrl.getPort() > 0)?(":" + locationUrl.getPort()):"");
 		return locationUrl.getProtocol() + "://" + 
-				locationUrl.getHost() + ":" + locationUrl.getPort() + CAS_TICKET_URL;
+				locationUrl.getHost() + port + CAS_TICKET_URL;
 	}
 }
