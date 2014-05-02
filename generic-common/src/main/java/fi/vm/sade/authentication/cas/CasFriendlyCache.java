@@ -19,6 +19,15 @@ public class CasFriendlyCache {
 
 	public static final String CACHE_NAME = "sessionCache";
 	CacheManager cacheManager;
+	private int ttlInSeconds = 3600;
+
+	public CasFriendlyCache() {
+		this(3600);
+	}
+	
+	public CasFriendlyCache(int ttlInSeconds) {
+		this.ttlInSeconds = ttlInSeconds;
+	}
 	
 	/**
 	 * Sets sessionId for caching.
@@ -34,7 +43,6 @@ public class CasFriendlyCache {
 			return;
 		Element element = new Element(createKey(callerService, targetServiceUrl, userName), sessionId);
 		this.getCache().put(element);
-		System.out.println(this.getCache().getKeys());
 	}
 	
 	/**
@@ -47,11 +55,20 @@ public class CasFriendlyCache {
 		if(StringUtils.isEmpty(callerService) || StringUtils.isEmpty(targetServiceUrl) || StringUtils.isEmpty(userName))
 			return null;
 		Element element = this.getCache().get(createKey(callerService, targetServiceUrl, userName));
-		System.out.println(this.getCache().getKeys());
 		if(element != null)
 			return (String)element.getObjectValue();
 		else
 			return null;
+	}
+	
+	/**
+	 * Removes from cache.
+	 * @param callerService
+	 * @param targetServiceUrl
+	 * @param userName
+	 */
+	public void removeSessionId(String callerService, String targetServiceUrl, String userName) {
+		this.getCache().remove(createKey(callerService, targetServiceUrl, userName));
 	}
 	
 	/**
@@ -69,12 +86,12 @@ public class CasFriendlyCache {
 	 * Gets cache manager. Creates if not available.
 	 * @return
 	 */
-	private Cache getCache() {
+	protected Cache getCache() {
 		if(cacheManager == null) {
 			cacheManager = CacheManager.create();
 			// This is where cache is configured, currently memory only, can be configured from xml as well with minor changes
 			// Cache(String name, int maxElementsInMemory, boolean overflowToDisk, boolean eternal, long timeToLiveSeconds, long timeToIdleSeconds) 
-			Cache memoryOnlyCache = new Cache(CACHE_NAME, 50000, false, false, 3600, 3600);
+			Cache memoryOnlyCache = new Cache(CACHE_NAME, 50000, false, false, ttlInSeconds, 3600);
 			
 			cacheManager.addCacheIfAbsent(memoryOnlyCache);
 		}

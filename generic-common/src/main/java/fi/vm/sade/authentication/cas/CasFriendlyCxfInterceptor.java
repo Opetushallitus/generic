@@ -20,6 +20,9 @@ import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.cookie.CookieSpec;
 import org.apache.http.impl.cookie.BrowserCompatSpec;
 import org.apache.http.protocol.HttpContext;
@@ -81,7 +84,6 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 	 */
 	public void handleOutbound(Message message) throws Fault {
 		log.debug("Outbound message intercepted.");
-		// TODO Get and set necessary tokens if available
 		HttpURLConnection conn = resolveConnection(message);
 		Authentication auth = this.getAuthentication();
 		try {
@@ -143,7 +145,8 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 					fillMessage(message, response);
 					
 					// Set session ids
-					String sessionId = resolveSessionId(response);
+					CookieStore cookieStore = (CookieStore)context.getAttribute(ClientContext.COOKIE_STORE);
+					String sessionId = resolveSessionId(cookieStore);
 					if(sessionId != null) {
 						String targetServiceUrl = (String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_SERVICE_URL);
 						String userName = (auth != null)?auth.getName():login;
@@ -209,15 +212,11 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 	 * @param response
 	 * @return Returns session Id or null if not set.
 	 */
-	private String resolveSessionId(HttpResponse response) {
-		Header cookies = response.getFirstHeader("Set-Cookie");
-		if(cookies != null) {
-			HeaderElement[] elements = cookies.getElements();
-			for(HeaderElement one:elements) {
-				if(this.getSessionCookieName().equals(one.getName())) {
-					return one.getValue();
-				}
-			}
+	private String resolveSessionId(CookieStore cookieStore) {
+		// Get from cookie store
+		for(Cookie cookie:cookieStore.getCookies()) {
+			if(cookie.getName().equals(this.getSessionCookieName()))
+				return cookie.getValue();
 		}
 		return null;
 	}
@@ -287,6 +286,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 		}
 		cookies.add(new HttpCookie(this.getSessionCookieName(), id));
 		cookieHeader = toCookieString(cookies);
+		log.debug("Injecting cached session id: " + id);
 		conn.setRequestProperty(HEADER_COOKIE, cookieHeader);
 	}
 	
