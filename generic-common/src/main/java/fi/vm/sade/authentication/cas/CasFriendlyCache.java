@@ -26,11 +26,15 @@ public class CasFriendlyCache {
 	 * @param userName
 	 * @param sessionId
 	 */
-	public void setSessionId(String serviceUrl, String userName, String sessionId) {
-		if(StringUtils.isEmpty(serviceUrl) || StringUtils.isEmpty(userName) || StringUtils.isEmpty(sessionId))
+	public void setSessionId(String callerService, String targetServiceUrl, String userName, String sessionId) {
+		if(StringUtils.isEmpty(callerService) || 
+				StringUtils.isEmpty(targetServiceUrl) || 
+				StringUtils.isEmpty(userName) || 
+				StringUtils.isEmpty(sessionId))
 			return;
-		Element element = new Element(createKey(serviceUrl, userName), sessionId);
+		Element element = new Element(createKey(callerService, targetServiceUrl, userName), sessionId);
 		this.getCache().put(element);
+		System.out.println(this.getCache().getKeys());
 	}
 	
 	/**
@@ -39,10 +43,11 @@ public class CasFriendlyCache {
 	 * @param userName
 	 * @return
 	 */
-	public String getSessionId(String serviceUrl, String userName) {
-		if(StringUtils.isEmpty(serviceUrl) || StringUtils.isEmpty(userName))
+	public String getSessionId(String callerService, String targetServiceUrl, String userName) {
+		if(StringUtils.isEmpty(callerService) || StringUtils.isEmpty(targetServiceUrl) || StringUtils.isEmpty(userName))
 			return null;
-		Element element = this.getCache().get(createKey(serviceUrl, userName));
+		Element element = this.getCache().get(createKey(callerService, targetServiceUrl, userName));
+		System.out.println(this.getCache().getKeys());
 		if(element != null)
 			return (String)element.getObjectValue();
 		else
@@ -55,8 +60,9 @@ public class CasFriendlyCache {
 	 * @param userName
 	 * @return
 	 */
-	private static String createKey(String serviceUrl, String userName) {
-		return userName + "@" + serviceUrl;
+	private static String createKey(String callerService, String targetServiceUrl, String userName) {
+		// Key does not include more than folder
+		return callerService + ":" + userName + "@" + StringUtils.substringBeforeLast(targetServiceUrl, "/") + "/";
 	}
 
 	/**
@@ -67,7 +73,8 @@ public class CasFriendlyCache {
 		if(cacheManager == null) {
 			cacheManager = CacheManager.create();
 			// This is where cache is configured, currently memory only, can be configured from xml as well with minor changes
-			Cache memoryOnlyCache = new Cache(CACHE_NAME, 5000, false, false, 5, 2);
+			// Cache(String name, int maxElementsInMemory, boolean overflowToDisk, boolean eternal, long timeToLiveSeconds, long timeToIdleSeconds) 
+			Cache memoryOnlyCache = new Cache(CACHE_NAME, 50000, false, false, 3600, 3600);
 			
 			cacheManager.addCacheIfAbsent(memoryOnlyCache);
 		}

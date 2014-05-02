@@ -9,6 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Message;
+import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
@@ -60,6 +61,7 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
 			@Override
 			public void process(HttpRequest request, HttpContext context)
 					throws HttpException, IOException {
+				logHeaders(request);
 				if(context.getAttribute(CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST) == null) {
 					log.debug("Started with original request: " + request.getRequestLine().getUri());
 					context.setAttribute(CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST, request);
@@ -133,13 +135,34 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
 	}
 	
 	/**
-	 * Helper method to set given principal to given Http context. AttributePrincipal
-	 * is used to get the proxy ticket when needed.
-	 * @param context
+	 * Creates a context with principal set.
 	 * @param principal
+	 * @return
 	 */
-	public static void setAttributePrincipal(HttpContext context, AttributePrincipal principal) {
+	public HttpContext createHttpContext(AttributePrincipal principal, CasFriendlyCache cache) {
+		HttpContext context = super.createHttpContext();
+		// Add principal attribute
 		context.setAttribute(CasRedirectStrategy.ATTRIBUTE_PRINCIPAL, principal);
+		return context;
 	}
 
+	/**
+	 * Creates a context with principal mock from given login and password.
+	 * @param principal
+	 * @return
+	 */
+	public HttpContext createHttpContext(String login, String password, CasFriendlyCache cache) {
+		HttpContext context = super.createHttpContext();
+		// Add credentials
+		context.setAttribute(CasRedirectStrategy.ATTRIBUTE_LOGIN, login);
+		context.setAttribute(CasRedirectStrategy.ATTRIBUTE_PASSWORD, password);
+		return context;
+	}
+
+	private static void logHeaders(HttpRequest request) {
+		log.debug("Request headers: ");
+		for(Header one:request.getAllHeaders()) {
+			log.debug(one.getName() + ": " + one.getValue());
+		}
+	}
 }

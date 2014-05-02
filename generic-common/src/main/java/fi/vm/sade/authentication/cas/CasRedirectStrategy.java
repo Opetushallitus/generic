@@ -24,6 +24,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.EntityEnclosingRequestWrapper;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.jasig.cas.client.authentication.AttributePrincipal;
@@ -49,6 +50,7 @@ public class CasRedirectStrategy implements RedirectStrategy {
 	public static final String CAS_TICKET_URL = "/cas/v1/tickets";
 	public static final String CAS_PROXYTICKET_URL = "/cas/proxy";
 	
+	public static final String ATTRIBUTE_CACHE = "cache";
 	public static final String ATTRIBUTE_PRINCIPAL = "principal";
 	public static final String ATTRIBUTE_LOGIN = "login";
 	public static final String ATTRIBUTE_PASSWORD = "password";
@@ -225,7 +227,7 @@ public class CasRedirectStrategy implements RedirectStrategy {
 		postParameters.add(new BasicNameValuePair("service", service));
 	    postParameters.add(new BasicNameValuePair("username", login));
 	    postParameters.add(new BasicNameValuePair("password", password));
-		casRequest.setEntity(new UrlEncodedFormEntity(postParameters));
+		casRequest.setEntity(new UrlEncodedFormEntity(postParameters, "UTF-8"));
 		
 		log.debug("Authenticating to: " + service + " using login: " + login);
 		
@@ -370,6 +372,9 @@ public class CasRedirectStrategy implements RedirectStrategy {
 		if(locationHeader.contains("service=")) {
 			String service = StringUtils.substringAfter(locationHeader, "service=");
 			service = URLDecoder.decode(service,"UTF-8");
+			// Get rid of session id in URL
+			if(service.indexOf(";") > 0)
+				service = StringUtils.substringBeforeLast(service, ";");
 			return service;
 		} else
 			return null;
