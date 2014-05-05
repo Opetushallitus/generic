@@ -62,8 +62,16 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
 			public void process(HttpRequest request, HttpContext context)
 					throws HttpException, IOException {
 				logHeaders(request);
+				
 				if(context.getAttribute(CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST) == null) {
 					log.debug("Started with original request: " + request.getRequestLine().getUri());
+					
+					// TODO Add session Id cookie from cache if available
+					CasFriendlyCache cache = (CasFriendlyCache)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_CACHE);
+					if(cache != null) {
+//						String sessionId = cache.getSessionId("any", targetServiceUrl, userName);
+					}
+					
 					context.setAttribute(CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST, request);
 					context.setAttribute(CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST_PARAMS, request.getParams());
 				}
@@ -143,6 +151,7 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
 		HttpContext context = super.createHttpContext();
 		// Add principal attribute
 		context.setAttribute(CasRedirectStrategy.ATTRIBUTE_PRINCIPAL, principal);
+		context.setAttribute(CasRedirectStrategy.ATTRIBUTE_CACHE, cache);
 		return context;
 	}
 

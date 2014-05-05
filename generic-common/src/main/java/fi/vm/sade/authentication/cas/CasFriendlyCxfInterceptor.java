@@ -59,6 +59,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 	private String callerService = "any";
 	private String login = null;
 	private String password = null;
+	private long maxWaitTimeMillis = 3000; 
 	
 	public CasFriendlyCxfInterceptor() {
 		// Intercept in receive phase
@@ -91,6 +92,12 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 			String sessionId = null;
 			String userName = (auth != null)?auth.getName():login;
 			sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
+			if(sessionId == null) {
+				// Block multiple requests if necessary
+				this.cache.waitOrFlagForRunningRequest(callerService, targetServiceUrl, userName, this.getMaxWaitTimeMillis());
+				// Might be available now
+				sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
+			}
 			// Set sessionId if possible before making the request
 			if(sessionId != null) 
 				setSessionCookie(conn, sessionId);
@@ -120,6 +127,8 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 			location = locationHeader.get(0);
 		if(location != null) {
 			log.debug("Redirect proposed: " + location);
+			String targetServiceUrl = null;
+			String userName = null;
 			try {
 				URL url = new URL(location);
 		    	String path = url.getPath();
@@ -148,8 +157,8 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 					CookieStore cookieStore = (CookieStore)context.getAttribute(ClientContext.COOKIE_STORE);
 					String sessionId = resolveSessionId(cookieStore);
 					if(sessionId != null) {
-						String targetServiceUrl = (String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_SERVICE_URL);
-						String userName = (auth != null)?auth.getName():login;
+						targetServiceUrl = (String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_SERVICE_URL);
+						userName = (auth != null)?auth.getName():login;
 						setSessionIdToCache(this.getCallerService(), targetServiceUrl, userName, sessionId);
 						log.debug("Session cached: " + cache.getSessionId(this.getCallerService(), targetServiceUrl, userName));
 					}
@@ -157,6 +166,9 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 				}
 			} catch(Exception ex) {
 				log.warn("Error while calling for CAS.", ex);
+				// Release request for someone else
+				if(targetServiceUrl != null && userName != null)
+					this.cache.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
 			}
 		}
 	}
@@ -227,6 +239,15 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 	@Override
 	public void handleFault(Message message) {
 		log.debug("Handle fault: " + message);
+		try {
+			String targetServiceUrl = resolveTargetServiceUrl(message);
+			Authentication auth = this.getAuthentication();
+			String userName = (auth != null)?auth.getName():login;
+			if(targetServiceUrl != null && userName != null)
+				this.cache.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
+		} catch(Exception ex) {
+			log.warn("Unable to release request in handleFault.", ex);
+		}
 		super.handleFault((T)message);
 	}
 
@@ -356,6 +377,18 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 
 	public void setCache(CasFriendlyCache cache) {
 		this.cache = cache;
+	}
+
+	/**
+	 * Maximum wait time for concurrent requests. No blocking if <= 0.
+	 * @return
+	 */
+	public long getMaxWaitTimeMillis() {
+		return maxWaitTimeMillis;
+	}
+
+	public void setMaxWaitTimeMillis(long maxWaitTimeMillis) {
+		this.maxWaitTimeMillis = maxWaitTimeMillis;
 	}
 
 }
