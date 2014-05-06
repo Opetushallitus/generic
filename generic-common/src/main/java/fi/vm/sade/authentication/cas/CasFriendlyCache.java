@@ -4,6 +4,8 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.inject.Singleton;
+
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
@@ -13,6 +15,7 @@ import net.sf.ehcache.event.CacheEventListener;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 /**
@@ -20,8 +23,9 @@ import org.springframework.stereotype.Service;
  * @author Jouni Stam
  *
  */
-@Service
-@Scope ("singleton")
+@Component
+//@Scope ("singleton")
+@Singleton
 public class CasFriendlyCache {
 
 	public static final String CACHE_SESSIONS = CasFriendlyCache.class.getName() + "/sessionCache";
@@ -103,11 +107,12 @@ public class CasFriendlyCache {
 	 * @param targetServiceUrl
 	 * @param userName
 	 * @param millis
+	 * @param lock Lock request if no concurrent request.
 	 */
-	public void waitOrFlagForRunningRequest(String callerService, String targetServiceUrl, String userName, long millis) {
+	public void waitOrFlagForRunningRequest(String callerService, String targetServiceUrl, String userName, long millis, boolean lock) {
 		String key = createKey(callerService, targetServiceUrl, userName);
-		// Waits if concurrent, otherwise locks
-		if(this.isConcurrentRequest(callerService, targetServiceUrl, userName, true)) {
+		// Waits if concurrent, otherwise locks (if lock true)
+		if(this.isConcurrentRequest(callerService, targetServiceUrl, userName, lock)) {
 			InterruptingCacheEventListener icel = new InterruptingCacheEventListener(Thread.currentThread(), key);
 			this.getSessionCache().getCacheEventNotificationService().registerListener(icel);			
 			try {

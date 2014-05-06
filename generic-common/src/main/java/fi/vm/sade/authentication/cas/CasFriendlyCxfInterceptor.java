@@ -2,6 +2,7 @@ package fi.vm.sade.authentication.cas;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -17,14 +18,9 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
 import org.apache.cxf.transport.http.HTTPConduit;
-import org.apache.http.Header;
-import org.apache.http.HeaderElement;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.CookieStore;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.protocol.ClientContext;
-import org.apache.http.cookie.Cookie;
-import org.apache.http.cookie.CookieSpec;
-import org.apache.http.impl.cookie.BrowserCompatSpec;
 import org.apache.http.protocol.HttpContext;
 import org.jasig.cas.client.authentication.AttributePrincipal;
 import org.slf4j.Logger;
@@ -50,16 +46,15 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
     
 	private static final String SPRING_CAS_SUFFIX = "j_spring_cas_security_check";
 
-	CookieSpec cookieSpec = new BrowserCompatSpec();
-	
 	@Autowired
-	CasFriendlyCache cache;
+	CasFriendlyCache sessionCache;
 
 	private String sessionCookieName = "JSESSIONID";
 	private String callerService = "any";
 	private String login = null;
 	private String password = null;
-	private long maxWaitTimeMillis = 3000; 
+	private long maxWaitTimeMillis = 3000;
+	private boolean sessionRequired = true;
 	
 	public CasFriendlyCxfInterceptor() {
 		// Intercept in receive phase
@@ -93,14 +88,28 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 			String userName = (auth != null)?auth.getName():login;
 			sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
 			if(sessionId == null) {
-				// Block multiple requests if necessary
-				this.cache.waitOrFlagForRunningRequest(callerService, targetServiceUrl, userName, this.getMaxWaitTimeMillis());
+				// Block multiple requests if necessary, lock if no concurrent running
+				this.sessionCache.waitOrFlagForRunningRequest(callerService, targetServiceUrl, userName, this.getMaxWaitTimeMillis(), true);
 				// Might be available now
 				sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
 			}
 			// Set sessionId if possible before making the request
 			if(sessionId != null) 
 				setSessionCookie(conn, sessionId);
+			else if(this.isSessionRequired()) {
+				// Do this proactively only if session is required.
+				
+	    		// Do CAS authentication request (multiple requests)
+				this.doCasAuthentication(message);
+				
+				// Might be available now
+				sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
+				
+				// Set sessionId if possible before making the request
+				if(sessionId != null) 
+					setSessionCookie(conn, sessionId);
+				
+			}
 		} catch(Exception ex) {
 			log.error("Unable process outbound message in interceptor.", ex);
 			throw new Fault(ex);
@@ -127,49 +136,70 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 			location = locationHeader.get(0);
 		if(location != null) {
 			log.debug("Redirect proposed: " + location);
-			String targetServiceUrl = null;
-			String userName = null;
 			try {
 				URL url = new URL(location);
 		    	String path = url.getPath();
 		    	// We are only interested in CAS redirects
 		    	if(path.startsWith("/cas/login")) {
-					// TODO Currently resends the first request as well, can be optimized to go to /cas/login directly,
-					// which would require some additional logic to get the original request from message  
-					
-					// Follow redirects in a separate CasFriendlyHttpClient request chain
-					CasFriendlyHttpClient casClient = new CasFriendlyHttpClient();
-					HttpContext context = null;
-
-					Authentication auth = this.getAuthentication();
-					
-					if(auth != null)
-						context = casClient.createHttpContext((AttributePrincipal)auth.getPrincipal(), this.cache);
-					else
-						context = casClient.createHttpContext(login, password, this.cache);
-			    	
-					HttpResponse response = casClient.execute(CasFriendlyHttpClient.createRequest(message), context);
+		    		// Do CAS authentication request (multiple requests)
+					HttpResponse response = this.doCasAuthentication(message);
 					
 					// Set values back to message from response
 					fillMessage(message, response);
 					
-					// Set session ids
-					CookieStore cookieStore = (CookieStore)context.getAttribute(ClientContext.COOKIE_STORE);
-					String sessionId = resolveSessionId(cookieStore);
-					if(sessionId != null) {
-						targetServiceUrl = (String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_SERVICE_URL);
-						userName = (auth != null)?auth.getName():login;
-						setSessionIdToCache(this.getCallerService(), targetServiceUrl, userName, sessionId);
-						log.debug("Session cached: " + cache.getSessionId(this.getCallerService(), targetServiceUrl, userName));
-					}
-					
 				}
 			} catch(Exception ex) {
 				log.warn("Error while calling for CAS.", ex);
-				// Release request for someone else
-				if(targetServiceUrl != null && userName != null)
-					this.cache.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
 			}
+		}
+	}
+	
+	/**
+	 * Does CAS authentication procedure and goes back to the original request after that
+	 * to get the response from original source after authentication.
+	 * @param message
+	 * @return
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
+	private HttpResponse doCasAuthentication(Message message) throws ClientProtocolException, IOException {
+		// TODO Currently resends the first request as well, can be optimized to go to /cas/login directly,
+		// which would require some additional logic to get the original request from message  
+
+		String targetServiceUrl = null;
+		String userName = null;
+		
+		try {
+			// Follow redirects in a separate CasFriendlyHttpClient request chain
+			CasFriendlyHttpClient casClient = new CasFriendlyHttpClient();
+	
+			Authentication auth = this.getAuthentication();
+			
+			HttpContext context = null;
+			
+			if(auth != null)
+				context = casClient.createHttpContext((AttributePrincipal)auth.getPrincipal(), this.sessionCache);
+			else
+				context = casClient.createHttpContext(login, password, this.sessionCache);
+	    	
+			HttpResponse response = casClient.execute(CasFriendlyHttpClient.createRequest(message), context);
+	
+			targetServiceUrl = (String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_SERVICE_URL);
+			userName = (auth != null)?auth.getName():login;
+			
+			// Set session ids
+			CookieStore cookieStore = (CookieStore)context.getAttribute(ClientContext.COOKIE_STORE);
+			String sessionId = resolveSessionId(cookieStore);
+			if(sessionId != null) {
+				setSessionIdToCache(this.getCallerService(), targetServiceUrl, userName, sessionId);
+				log.debug("Session cached: " + sessionCache.getSessionId(this.getCallerService(), targetServiceUrl, userName));
+			}
+			
+			return response;
+		} finally {
+			// Release request for someone else
+			if(targetServiceUrl != null && userName != null)
+				this.sessionCache.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
 		}
 	}
 	
@@ -208,7 +238,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 	 * @param sessionId
 	 */
 	protected void setSessionIdToCache(String callerService, String targetServiceUrl, String userName, String sessionId) {
-		cache.setSessionId(callerService, targetServiceUrl, userName, sessionId);
+		sessionCache.setSessionId(callerService, targetServiceUrl, userName, sessionId);
 	}
 
 	/**
@@ -216,7 +246,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 	 * @return
 	 */
 	protected String getSessionIdFromCache(String callerService, String targetServiceUrl, String userName) {
-		return cache.getSessionId(callerService, targetServiceUrl, userName);
+		return sessionCache.getSessionId(callerService, targetServiceUrl, userName);
 	}
 	
 	/**
@@ -226,7 +256,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 	 */
 	private String resolveSessionId(CookieStore cookieStore) {
 		// Get from cookie store
-		for(Cookie cookie:cookieStore.getCookies()) {
+		for(HttpCookie cookie:cookieStore.getCookies()) {
 			if(cookie.getName().equals(this.getSessionCookieName()))
 				return cookie.getValue();
 		}
@@ -244,7 +274,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 			Authentication auth = this.getAuthentication();
 			String userName = (auth != null)?auth.getName():login;
 			if(targetServiceUrl != null && userName != null)
-				this.cache.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
+				this.sessionCache.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
 		} catch(Exception ex) {
 			log.warn("Unable to release request in handleFault.", ex);
 		}
@@ -372,11 +402,11 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 	 * @return
 	 */
 	public CasFriendlyCache getCache() {
-		return cache;
+		return sessionCache;
 	}
 
 	public void setCache(CasFriendlyCache cache) {
-		this.cache = cache;
+		this.sessionCache = cache;
 	}
 
 	/**
@@ -389,6 +419,19 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 
 	public void setMaxWaitTimeMillis(long maxWaitTimeMillis) {
 		this.maxWaitTimeMillis = maxWaitTimeMillis;
+	}
+
+	/**
+	 * If session is required, it is proactively fetched in the outbound phase already. Otherwise only 
+	 * fetched in case of /cas/login redirect.
+	 * @return
+	 */
+	public boolean isSessionRequired() {
+		return sessionRequired;
+	}
+
+	public void setSessionRequired(boolean sessionRequired) {
+		this.sessionRequired = sessionRequired;
 	}
 
 }
