@@ -24,7 +24,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.EntityEnclosingRequestWrapper;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.jasig.cas.client.authentication.AttributePrincipal;
@@ -260,7 +259,6 @@ public class CasRedirectStrategy implements RedirectStrategy {
 		
 		ArrayList<BasicNameValuePair> postParameters = new ArrayList<BasicNameValuePair>();
 		// Use PGT
-		service = "https://localhost:8443/organisaatio-ui";
 		postParameters.add(new BasicNameValuePair("targetService", service));
 		postParameters.add(new BasicNameValuePair("pgt", casPgt));
 		casRequest.setEntity(new UrlEncodedFormEntity(postParameters));
