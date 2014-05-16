@@ -1,28 +1,22 @@
 package fi.vm.sade.authentication.cas;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpCookie;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
-import org.apache.cxf.helpers.IOUtils;
+import javax.ws.rs.core.Cookie;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.Provider;
+
 import org.apache.cxf.interceptor.Fault;
-import org.apache.cxf.io.CachedOutputStream;
-import org.apache.cxf.message.Message;
-import org.apache.cxf.phase.AbstractPhaseInterceptor;
-import org.apache.cxf.phase.Phase;
-import org.apache.cxf.transport.http.HTTPConduit;
+import org.apache.http.Header;
+import org.apache.http.HeaderIterator;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.ClientContext;
-import org.apache.http.cookie.Cookie;
 import org.apache.http.protocol.HttpContext;
 import org.jasig.cas.client.authentication.AttributePrincipal;
 import org.slf4j.Logger;
@@ -31,17 +25,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import com.sun.jersey.spi.container.ContainerRequest;
+import com.sun.jersey.spi.container.ContainerRequestFilter;
+import com.sun.jersey.spi.container.ContainerResponse;
+import com.sun.jersey.spi.container.ContainerResponseFilter;
+
 /**
- * Interceptor for handling CAS redirects and authentication transparently when needed.
+ * Filter to intercept Jersey requests for handling CAS redirects and authentication transparently when needed.
+ * Acts like an interceptor (which would require JAX-RS 2.0).
  * @author Jouni Stam
  *
- * !!! THREAD SAFETY !!!
- * !!! http://cxf.apache.org/docs/jax-rs-client-api.html !!!
- *
  */
-public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseInterceptor<T> {
+@Provider
+public class CasFriendlyJerseyFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
-	private static final Logger log = LoggerFactory.getLogger(CasFriendlyCxfInterceptor.class);
+	private static final Logger log = LoggerFactory.getLogger(CasFriendlyJerseyFilter.class);
 
 	public static final String HEADER_COOKIE = "Cookie";
     public static final String HEADER_COOKIE_SEPARATOR = "; ";
@@ -58,34 +56,16 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 	private long maxWaitTimeMillis = 3000;
 	private boolean sessionRequired = true;
 	
-	public CasFriendlyCxfInterceptor() {
-		// Intercept in receive phase
-		super(Phase.PRE_PROTOCOL);
-	}
-
 	/**
-	 * Invoked on in- and outbound (if interceptor is registered for both). 
+	 * Request filter.
 	 */
 	@Override
-	public void handleMessage(Message message) throws Fault {
-		boolean inbound = (Boolean)message.get(Message.INBOUND_MESSAGE);
-		if(inbound) 
-			this.handleInbound(message);
-		else
-			this.handleOutbound(message);
-	}
-
-	/**
-	 * Invoked on outbound (request).
-	 * @param message
-	 * @throws Fault
-	 */
-	public void handleOutbound(Message message) throws Fault {
+	public ContainerRequest filter(ContainerRequest request) {
 		log.debug("Outbound message intercepted.");
-		HttpURLConnection conn = resolveConnection(message);
+//		HttpURLConnection conn = resolveConnection(message);
 		Authentication auth = this.getAuthentication();
 		try {
-			String targetServiceUrl = resolveTargetServiceUrl(message);
+			String targetServiceUrl = resolveTargetServiceUrl(request);
 			String sessionId = null;
 			String userName = (auth != null)?auth.getName():login;
 			sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
@@ -97,45 +77,45 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 			}
 			// Set sessionId if possible before making the request
 			if(sessionId != null) 
-				setSessionCookie(conn, sessionId);
+				setSessionCookie(request, sessionId);
 			else if(this.isSessionRequired()) {
 				// Do this proactively only if session is required.
 				
 	    		// Do CAS authentication request (multiple requests)
-				this.doCasAuthentication(message);
+				this.doCasAuthentication(request);
 				
 				// Might be available now
 				sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
 				
 				// Set sessionId if possible before making the request
 				if(sessionId != null) 
-					setSessionCookie(conn, sessionId);
+					setSessionCookie(request, sessionId);
 				
 			}
 		} catch(Exception ex) {
 			log.error("Unable process outbound message in interceptor.", ex);
 			throw new Fault(ex);
 		}
+		return request;
 	}
-	
+
 	/**
-	 * Invoked on inbound (response).
-	 * @param message
-	 * @throws Fault
+	 * Response filter.
 	 */
-	public void handleInbound(Message message) throws Fault {
+	@Override
+	public ContainerResponse filter(ContainerRequest request,
+			ContainerResponse response) {
 		log.debug("Inbound message intercepted.");		
 		
-		@SuppressWarnings("unchecked")
-		Map<String, List<String>> headers = (Map<String, List<String>>)message.get(Message.PROTOCOL_HEADERS);
+		MultivaluedMap<String, Object> headers = (MultivaluedMap<String, Object>)response.getHttpHeaders();
 		
-		Integer responseCode = (Integer)message.get(Message.RESPONSE_CODE);
+		Integer responseCode = response.getStatus();
 		log.debug("Original response code: " + responseCode);
 		
-		List<String> locationHeader = headers.get("Location");
+		Object locationHeader = headers.get("Location");
 		String location = null;
 		if(locationHeader != null) 
-			location = locationHeader.get(0);
+			location = locationHeader.toString();
 		if(location != null) {
 			log.debug("Redirect proposed: " + location);
 			try {
@@ -144,17 +124,19 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 		    	// We are only interested in CAS redirects
 		    	if(path.startsWith("/cas/login")) {
 		    		// Do CAS authentication request (multiple requests)
-					HttpResponse response = this.doCasAuthentication(message);
+					HttpResponse httpResponse = this.doCasAuthentication(request);
 					
 					// Set values back to message from response
-					fillMessage(message, response);
+					fillMessage(request, response, httpResponse);
 					
 				}
 			} catch(Exception ex) {
 				log.warn("Error while calling for CAS.", ex);
 			}
 		}
+		return response;
 	}
+
 	
 	/**
 	 * Does CAS authentication procedure and goes back to the original request after that
@@ -164,7 +146,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	private HttpResponse doCasAuthentication(Message message) throws Exception {
+	private HttpResponse doCasAuthentication(ContainerRequest request) throws Exception {
 		// TODO Currently resends the first request as well, can be optimized to go to /cas/login directly,
 		// which would require some additional logic to get the original request from message  
 
@@ -186,8 +168,8 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 			else
 				return null;
 	    	
-			HttpUriRequest request = CasFriendlyHttpClient.createRequest(message);
-			HttpResponse response = casClient.execute(request, context);
+			HttpUriRequest uriRequest = CasFriendlyHttpClient.createRequest(request);
+			HttpResponse response = casClient.execute(uriRequest, context);
 	
 			targetServiceUrl = (String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_SERVICE_URL);
 			userName = (login != null)?login:auth.getName();
@@ -220,22 +202,25 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 	 * @throws IOException 
 	 * @throws IllegalStateException 
 	 */
-	private static void fillMessage(Message message, HttpResponse response) throws IllegalStateException, IOException {
+	private static void fillMessage(ContainerRequest request, ContainerResponse response, HttpResponse httpResponse) throws IllegalStateException, IOException {
 		// Set body from final request. Overwrites the original response body.
- 		Message inMessage = message.getExchange().getInMessage();
-		InputStream is = response.getEntity().getContent();
-		CachedOutputStream bos = new CachedOutputStream();
-		IOUtils.copy(is,bos);
-        bos.flush();
-        bos.close();
-        inMessage.setContent(InputStream.class, bos.getInputStream());
+//		InputStream is = httpResponse.getEntity().getContent();
+//		CachedOutputStream bos = new CachedOutputStream();
+//		IOUtils.copy(is,bos);
+//        bos.flush();
+//        bos.close();
+        response.setEntity(httpResponse.getEntity());
         
         // Set status code from final request.
-        message.getExchange().put(Message.RESPONSE_CODE, new Integer(response.getStatusLine().getStatusCode()));
+        response.setStatus(httpResponse.getStatusLine().getStatusCode());
         
-        // TODO Set headers?
-        // Not able to set headers so that WebClient would not overwrite them
-        // Would have to fake them on HttpUrlConnection level
+        // Set headers
+        response.getHttpHeaders().clear();
+        HeaderIterator iter = httpResponse.headerIterator();
+        while(iter.hasNext()) {
+        	Header one = iter.nextHeader();
+        	response.getHttpHeaders().add(one.getName(), one.getValue());
+        }
                 
 	}
 
@@ -265,31 +250,13 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 	 */
 	private String resolveSessionId(CookieStore cookieStore) {
 		// Get from cookie store
-		for(Cookie cookie:cookieStore.getCookies()) {
+		for(org.apache.http.cookie.Cookie cookie:cookieStore.getCookies()) {
 			if(cookie.getName().equals(this.getSessionCookieName()))
 				return cookie.getValue();
 		}
 		return null;
 	}
 	
-	/**
-	 * Invoked on error.
-	 */
-	@Override
-	public void handleFault(Message message) {
-		log.debug("Handle fault: " + message);
-		try {
-			String targetServiceUrl = resolveTargetServiceUrl(message);
-			Authentication auth = this.getAuthentication();
-			String userName = (auth != null)?auth.getName():login;
-			if(targetServiceUrl != null && userName != null)
-				this.sessionCache.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
-		} catch(Exception ex) {
-			log.warn("Unable to release request in handleFault.", ex);
-		}
-		super.handleFault((T)message);
-	}
-
 	/**
 	 * Gets authentication object if available, otherwise returns null.
 	 * @return
@@ -303,23 +270,13 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 	}
 	
 	/**
-	 * Gets the connection from given message.
-	 * @param message
-	 * @return
-	 */
-	private static HttpURLConnection resolveConnection(Message message) {
-		HttpURLConnection conn = (HttpURLConnection)message.getExchange().getOutMessage().get(HTTPConduit.KEY_HTTP_CONNECTION);
-		return conn;
-	}
-
-	/**
 	 * Resolves target service URL from message's endpoint address.
 	 * @param message
 	 * @return
 	 * @throws MalformedURLException
 	 */
-	private String resolveTargetServiceUrl(Message message) throws MalformedURLException {
-		String targetUrl = (String)message.get(Message.ENDPOINT_ADDRESS);
+	private String resolveTargetServiceUrl(ContainerRequest request) throws MalformedURLException {
+		String targetUrl = request.getBaseUri().toString();
 		URL url = new URL(targetUrl);
 		String port = ((url.getPort() > 0)?(":" + url.getPort()):"");
 		String[] folders = url.getPath().split("/");
@@ -331,32 +288,18 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 		return finalUrl.toString();
 	}
 
-	private void setSessionCookie(HttpURLConnection conn, String id) {
-		String cookieHeader = conn.getRequestProperty(HEADER_COOKIE);
-		List<HttpCookie> cookies = null;
-		if(cookieHeader != null)
-			cookies = HttpCookie.parse(cookieHeader);
-		else
-			cookies = new ArrayList<HttpCookie>();
-		for(HttpCookie one:cookies) {
-			if(this.getSessionCookieName().equals(one.getName())) {
-				cookies.remove(one);
-				break;
-			}	
-		}
-		cookies.add(new HttpCookie(this.getSessionCookieName(), id));
-		cookieHeader = toCookieString(cookies);
-		log.debug("Injecting cached session id: " + id);
-		conn.setRequestProperty(HEADER_COOKIE, cookieHeader);
+	/**
+	 * Sets the session cookie.
+	 * @param request
+	 * @param id
+	 */
+	private void setSessionCookie(ContainerRequest request, String id) {
+		Map<String, Cookie> cookies = request.getCookies();
+		cookies.remove(this.getSessionCookieName());
+		javax.ws.rs.core.Cookie one = new Cookie(this.getSessionCookieName(), id);
+		cookies.put(this.getSessionCookieName(), one);
+		log.debug("Injected cached session id: " + id);
 	}
-	
-	private static String toCookieString(List<HttpCookie> cookies) {
-        StringBuilder cookieString = new StringBuilder();
-        for (HttpCookie httpCookie : cookies) {
-            cookieString.append(cookieString.length() > 0 ? HEADER_COOKIE_SEPARATOR : "").append(httpCookie.getName()).append("=").append(httpCookie.getValue());
-        }
-        return cookieString.toString();
-    }
 	
 	/**
 	 * Caller service is the distinctive name of the service. Used to keep sessions service specific if needed.  

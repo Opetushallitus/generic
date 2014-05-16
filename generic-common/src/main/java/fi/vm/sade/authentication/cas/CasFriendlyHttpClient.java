@@ -27,6 +27,9 @@ import org.jasig.cas.client.authentication.AttributePrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sun.jersey.api.client.ClientRequest;
+import com.sun.jersey.spi.container.ContainerRequest;
+
 /**
  * DefaultHttpClient enhanced with CAS specific CasRedirectStrategy and
  * HttpRequestInterceptor (to catch and store the original request and params).
@@ -136,6 +139,114 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
 			List<String> values = headers.get(one);
 			// Just add the first value
 			uriRequest.addHeader(one, values.get(0));
+		}
+		
+		return uriRequest;
+		
+	}
+	
+	/**
+	 * Creates a CAS client request based on intercepted Jersey request.
+	 * @param message
+	 * @throws IOException 
+	 */
+	public static HttpUriRequest createRequest(ContainerRequest request) throws IOException {
+		// Original out message (request)
+		String method = request.getMethod();
+		String url = request.getBaseUri().toURL().toString();
+		String encoding = request.getHeaderValue("Content-Encoding");
+		if(StringUtils.isEmpty(encoding))
+			encoding = "UTF-8";
+		
+		// Get headers
+		@SuppressWarnings ("unchecked")
+		Map<String, List<String>> headers = (Map<String, List<String>>)request.getRequestHeaders();
+		
+		// Get the body of request
+		String body = null;
+		InputStream is = request.getEntityInputStream();
+		if(is != null) {
+			CachedOutputStream bos = new CachedOutputStream();
+			IOUtils.copy(is, bos);
+			body = new String(bos.getBytes(), encoding);
+		}
+		
+		// Create request based on method
+		HttpUriRequest uriRequest = null;
+		if(method.equalsIgnoreCase("POST")) {
+			uriRequest = new HttpPost(url);
+			if(body != null)
+				((HttpPost)uriRequest).setEntity(new StringEntity(body));
+		} else if(method.equalsIgnoreCase("GET")) {
+			uriRequest = new HttpGet(url);
+		} else if(method.equalsIgnoreCase("DELETE")) {
+			uriRequest = new HttpDelete(url);
+		} else if(method.equalsIgnoreCase("PUT")) {
+			uriRequest = new HttpPut(url);
+			if(body != null)
+				((HttpPost)uriRequest).setEntity(new StringEntity(body));
+		}
+
+		// Set headers to request
+		for(String one:headers.keySet()) {
+			List<String> values = headers.get(one);
+			// Just add the first value
+			uriRequest.addHeader(one, values.get(0));
+		}
+		
+		return uriRequest;
+		
+	}
+	
+	/**
+	 * Creates a CAS client request based on intercepted Jersey request.
+	 * @param message
+	 * @throws IOException 
+	 */
+	public static HttpUriRequest createRequest(ClientRequest request) throws IOException {
+		// Original out message (request)
+		String method = request.getMethod();
+		String url = request.getURI().toString();
+		String encoding = (String)request.getHeaders().getFirst("Content-Encoding");
+		if(StringUtils.isEmpty(encoding))
+			encoding = "UTF-8";
+		
+		// Get headers
+		@SuppressWarnings ("unchecked")
+		Map<String, List<Object>> headers = (Map<String, List<Object>>)request.getHeaders();
+		
+		// Get the body of request
+		// FIXME Not sure how to get body yet
+		String body = null;
+//		InputStream is = request.getEntity().getEntityInputStream();
+//		if(is != null) {
+//			CachedOutputStream bos = new CachedOutputStream();
+//			IOUtils.copy(is, bos);
+//			body = new String(bos.getBytes(), encoding);
+//		}
+		
+		// Create request based on method
+		HttpUriRequest uriRequest = null;
+		if(method.equalsIgnoreCase("POST")) {
+			uriRequest = new HttpPost(url);
+			if(body != null)
+				((HttpPost)uriRequest).setEntity(new StringEntity(body));
+		} else if(method.equalsIgnoreCase("GET")) {
+			uriRequest = new HttpGet(url);
+		} else if(method.equalsIgnoreCase("DELETE")) {
+			uriRequest = new HttpDelete(url);
+		} else if(method.equalsIgnoreCase("PUT")) {
+			uriRequest = new HttpPut(url);
+			if(body != null)
+				((HttpPost)uriRequest).setEntity(new StringEntity(body));
+		}
+
+		// Set headers to request
+		for(String one:headers.keySet()) {
+			String value = (String)request.getHeaders().getFirst(one);
+			// Just add the first value
+			if(value != null)
+				uriRequest.addHeader(one, value);
 		}
 		
 		return uriRequest;
