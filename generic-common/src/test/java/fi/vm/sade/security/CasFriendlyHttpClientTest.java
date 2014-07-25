@@ -1,18 +1,9 @@
 package fi.vm.sade.security;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
 
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.cxf.helpers.IOUtils;
-import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.message.Message;
 import org.apache.http.HttpResponse;
@@ -22,26 +13,17 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.mortbay.log.Log;
-
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 
 import fi.vm.sade.authentication.cas.CasFriendlyCache;
 import fi.vm.sade.authentication.cas.CasFriendlyCxfInterceptor;
 import fi.vm.sade.authentication.cas.CasFriendlyHttpClient;
-import fi.vm.sade.authentication.cas.CasFriendlyJerseyFilter;
-import fi.vm.sade.authentication.cas.CasRedirectStrategy;
 
 /**
  * JUST FOR TEMPORARY LOCAL TESTING!!
