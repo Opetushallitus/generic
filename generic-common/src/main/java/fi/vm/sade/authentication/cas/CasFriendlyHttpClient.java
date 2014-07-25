@@ -70,7 +70,7 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
                     log.debug("Started with original request: " + request.getRequestLine().getUri());
 
                     // TODO Add session Id cookie from cache if available
-                    CasFriendlyCache cache = (CasFriendlyCache)context.getAttribute(CasRedirlectStrategy.ATTRIBUTE_CACHE);
+                    CasFriendlyCache cache = (CasFriendlyCache)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_CACHE);
                     if(cache != null) {
                         //						String sessionId = cache.getSessionId("any", targetServiceUrl, userName);
                     }
