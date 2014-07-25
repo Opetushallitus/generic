@@ -4,8 +4,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.inject.Singleton;
-
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
@@ -14,9 +12,7 @@ import net.sf.ehcache.Element;
 import net.sf.ehcache.event.CacheEventListener;
 
 import org.apache.commons.lang.StringUtils;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 /**
  * A cache implementation to keep service and user specific session ids. Currently hardcoded to use memory only for caching.
@@ -24,23 +20,27 @@ import org.springframework.stereotype.Service;
  *
  */
 @Component
-@Singleton
+//@Singleton
 public class CasFriendlyCache {
 
     public static final String CACHE_SESSIONS = CasFriendlyCache.class.getName() + "/sessionCache";
     CacheManager cacheManager;
     private int ttlInSeconds = 3600;
     private int maxWaitTimeSeconds = 3;
+    private String distinctiveName = "";
 
     // Synchronized map of request start times 
     Map<String, Date> runningRequests = new ConcurrentHashMap<String, Date>();
 
     public CasFriendlyCache() {
-        this(3600);
+        this(3600, "");
     }
 
-    public CasFriendlyCache(int ttlInSeconds) {
+    public CasFriendlyCache(int ttlInSeconds, String distinctiveName) {
         this.ttlInSeconds = ttlInSeconds;
+        this.distinctiveName = distinctiveName;
+        if(this.distinctiveName == null)
+            this.distinctiveName = "";
     }
 
     /**
@@ -180,14 +180,14 @@ public class CasFriendlyCache {
      * @return
      */
     protected Cache getSessionCache() {
-        if(!this.getCacheManager().cacheExists(CACHE_SESSIONS)) {
+        if(!this.getCacheManager().cacheExists(CACHE_SESSIONS + "/" + distinctiveName)) {
             // This is where cache is configured, currently memory only, can be configured from xml as well with minor changes
             // Cache(String name, int maxElementsInMemory, boolean overflowToDisk, boolean eternal, long timeToLiveSeconds, long timeToIdleSeconds) 
-            Cache memoryOnlyCache = new Cache(CACHE_SESSIONS, 50000, false, false, ttlInSeconds, ttlInSeconds);
+            Cache memoryOnlyCache = new Cache(CACHE_SESSIONS + "/" + distinctiveName, 50000, false, false, ttlInSeconds, ttlInSeconds);
 
             cacheManager.addCacheIfAbsent(memoryOnlyCache);
         }
-        return cacheManager.getCache(CACHE_SESSIONS);
+        return cacheManager.getCache(CACHE_SESSIONS + "/" + distinctiveName);
     }
 
     /**
