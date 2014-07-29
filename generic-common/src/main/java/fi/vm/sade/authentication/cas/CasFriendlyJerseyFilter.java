@@ -1,22 +1,32 @@
 package fi.vm.sade.authentication.cas;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.Provider;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.io.CachedOutputStream;
 import org.apache.http.Header;
 import org.apache.http.HeaderIterator;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HttpContext;
 import org.jasig.cas.client.authentication.AttributePrincipal;
 import org.slf4j.Logger;
@@ -168,7 +178,7 @@ public class CasFriendlyJerseyFilter implements ContainerRequestFilter, Containe
             else
                 return null;
 
-            HttpUriRequest uriRequest = CasFriendlyHttpClient.createRequest(request);
+            HttpUriRequest uriRequest = createRequest(request);
             HttpResponse response = casClient.execute(uriRequest, context);
 
             targetServiceUrl = (String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_SERVICE_URL);
@@ -222,6 +232,58 @@ public class CasFriendlyJerseyFilter implements ContainerRequestFilter, Containe
             response.getHttpHeaders().add(one.getName(), one.getValue());
         }
 
+    }
+
+    /**
+     * Creates a CAS client request based on intercepted Jersey request.
+     * @param message
+     * @throws IOException 
+     */
+    public static HttpUriRequest createRequest(ContainerRequest request) throws IOException {
+        // Original out message (request)
+        String method = request.getMethod();
+        String url = request.getBaseUri().toURL().toString();
+        String encoding = request.getHeaderValue("Content-Encoding");
+        if(StringUtils.isEmpty(encoding))
+            encoding = "UTF-8";
+
+        // Get headers
+        @SuppressWarnings ("unchecked")
+        Map<String, List<String>> headers = (Map<String, List<String>>)request.getRequestHeaders();
+
+        // Get the body of request
+        String body = null;
+        InputStream is = request.getEntityInputStream();
+        if(is != null) {
+            CachedOutputStream bos = new CachedOutputStream();
+            IOUtils.copy(is, bos);
+            body = new String(bos.getBytes(), encoding);
+        }
+
+        // Create request based on method
+        HttpUriRequest uriRequest = null;
+        if(method.equalsIgnoreCase("POST")) {
+            uriRequest = new HttpPost(url);
+            if(body != null)
+                ((HttpPost)uriRequest).setEntity(new StringEntity(body));
+        } else if(method.equalsIgnoreCase("GET")) {
+            uriRequest = new HttpGet(url);
+        } else if(method.equalsIgnoreCase("DELETE")) {
+            uriRequest = new HttpDelete(url);
+        } else if(method.equalsIgnoreCase("PUT")) {
+            uriRequest = new HttpPut(url);
+            if(body != null)
+                ((HttpPost)uriRequest).setEntity(new StringEntity(body));
+        }
+
+        // Set headers to request
+        for(String one:headers.keySet()) {
+            List<String> values = headers.get(one);
+            // Just add the first value
+            uriRequest.addHeader(one, values.get(0));
+        }
+
+        return uriRequest;
     }
 
     /**

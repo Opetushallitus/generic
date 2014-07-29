@@ -276,6 +276,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      * Invoked on error.
      */
     @Override
+    @SuppressWarnings ("unchecked")
     public void handleFault(Message message) {
         log.debug("Handle fault: " + message);
         try {
