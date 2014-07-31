@@ -75,10 +75,8 @@ public class ConfigurableCorsServletFilterTest {
     @Test
     public void copiesHeadersFromRequestToResponse() throws Exception {
         String headerValue = "value";
-        when(request.getHeaders("access-control-request-method")).thenReturn(new Enumerator<String>(Arrays.asList(headerValue)));
         when(request.getHeaders("access-control-request-headers")).thenReturn(new Enumerator<String>(Arrays.asList(headerValue)));
         filter.doFilter(request, response, chain);
-        verify(response).addHeader("Access-Control-Allow-Methods", headerValue);
         verify(response).addHeader("Access-Control-Allow-Headers", headerValue);
     }
 

@@ -87,10 +87,9 @@ public class ConfigurableCorsFilterTest {
     @Test
     public void copiesHeadersFromRequestToResponse()  {
         String headerValue = "value", headerValue2 = "va";
-        when(request.getRequestHeader("access-control-request-method")).thenReturn(Arrays.asList(headerValue));
-        when(request.getRequestHeader("access-control-request-headers")).thenReturn(Arrays.asList(headerValue2));
+        when(request.getRequestHeader("access-control-request-headers")).thenReturn(Arrays.asList(headerValue, headerValue2));
         filter.filter(request, response);
-        verify(responseMap).add("Access-Control-Allow-Methods", headerValue);
+        verify(responseMap).add("Access-Control-Allow-Headers", headerValue);
         verify(responseMap).add("Access-Control-Allow-Headers", headerValue2);
     }
     

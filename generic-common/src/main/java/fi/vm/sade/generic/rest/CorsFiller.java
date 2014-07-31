@@ -57,14 +57,12 @@ abstract class CorsFiller<R, Q> {
     }
 
     protected void setHeadersToResponse(Q request, R response) {
-        for (String value : getHeaders("access-control-request-method", request)) {
-            setHeader("Access-Control-Allow-Methods", value, response);
-        }
         for (String value : getHeaders("access-control-request-headers", request)) {
             setHeader("Access-Control-Allow-Headers", value, response);
         }
         setHeader("Access-Control-Allow-Credentials", "true", response);
         setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, HEAD", response);
+        setHeader("Access-Control-Max-Age", "60", response);
     }
 
     private String getMatchingDomain(Q request) {
