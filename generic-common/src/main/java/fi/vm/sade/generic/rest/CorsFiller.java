@@ -62,7 +62,7 @@ abstract class CorsFiller<R, Q> {
         }
         setHeader("Access-Control-Allow-Credentials", "true", response);
         setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, HEAD", response);
-        setHeader("Access-Control-Max-Age", "60", response);
+        setHeader("Access-Control-Max-Age", "604800", response);
     }
 
     private String getMatchingDomain(Q request) {

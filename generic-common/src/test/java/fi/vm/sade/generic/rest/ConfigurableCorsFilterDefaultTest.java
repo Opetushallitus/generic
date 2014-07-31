@@ -63,5 +63,11 @@ public class ConfigurableCorsFilterDefaultTest {
         verify(responseMap).add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, HEAD");
     }
     
+    @Test
+    public void setsSevenDaysToMaxAgeHeader() {
+        filter.filter(request, response);
+        verify(responseMap).add("Access-Control-Max-Age", String.valueOf(60 * 60 * 24 * 7));
+    }
+    
 }
 
