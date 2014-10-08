@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.io.CachedOutputStream;
@@ -28,11 +29,15 @@ import org.jasig.cas.client.authentication.AttributePrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * Interceptor for handling CAS redirects and authentication transparently when needed.
+ * Development mode provided that Spring Security's authentication manager has
+ * erase-credientals = false: <authentication-manager alias = "authenticationManager"  erase-credentials = "false">
  * @author Jouni Stam
  *
  * !!! THREAD SAFETY !!!
@@ -51,10 +56,18 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
     @Autowired
     CasFriendlyCache sessionCache;
 
+    @Value("${auth.mode:cas}")
+    private String authMode;
+    
     private String sessionCookieName = "JSESSIONID";
     private String callerService = "any";
-    private String login = null;
-    private String password = null;
+
+    private boolean useBasicAuthentication = false;
+
+    // Application as a user
+    private String appClientUsername;
+    private String appClientPassword;
+    
     private long maxWaitTimeMillis = 3000;
     private boolean sessionRequired = true;
 
@@ -87,7 +100,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
         try {
             String targetServiceUrl = resolveTargetServiceUrl(message);
             String sessionId = null;
-            String userName = (auth != null)?auth.getName():login;
+            String userName = (auth != null)?auth.getName():this.getAppClientUsername();
             sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
             if(sessionId == null) {
                 // Block multiple requests if necessary, lock if no concurrent running
@@ -101,8 +114,8 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             else if(this.isSessionRequired()) {
                 // Do this proactively only if session is required.
 
-                // Do CAS authentication request (multiple requests)
-                this.doCasAuthentication(message);
+                // Do CAS or DEV authentication
+                this.doAuthentication(message, targetServiceUrl);
 
                 // Might be available now
                 sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
@@ -124,7 +137,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      * @throws Fault
      */
     public void handleInbound(Message message) throws Fault {
-        log.debug("Inbound message intercepted.");		
+        log.debug("Inbound message intercepted.");
 
         @SuppressWarnings("unchecked")
         Map<String, List<String>> headers = (Map<String, List<String>>)message.get(Message.PROTOCOL_HEADERS);
@@ -144,10 +157,12 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
                 // We are only interested in CAS redirects
                 if(path.startsWith("/cas/login")) {
                     // Do CAS authentication request (multiple requests)
-                    HttpResponse response = this.doCasAuthentication(message);
+                    String targetServiceUrl = resolveTargetServiceUrl(message);
+                    HttpResponse response = this.doAuthentication(message, targetServiceUrl);
 
                     // Set values back to message from response
-                    fillMessage(message, response);
+                    if(response != null)
+                        fillMessage(message, response);
 
                 }
             } catch(Exception ex) {
@@ -164,7 +179,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      * @throws ClientProtocolException
      * @throws IOException
      */
-    private HttpResponse doCasAuthentication(Message message) throws Exception {
+    private HttpResponse doCasAuthentication(Message message, String login, String password) throws Exception {
         // TODO Currently resends the first request as well, can be optimized to go to /cas/login directly,
         // which would require some additional logic to get the original request from message  
 
@@ -180,7 +195,8 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             HttpContext context = null;
 
             if(login != null && password != null)
-                context = casClient.createHttpContext(login, password, this.sessionCache);
+                context = casClient.createHttpContext(
+                        login, password, this.sessionCache);
             else if(auth != null && auth.getPrincipal() instanceof AttributePrincipal)
                 context = casClient.createHttpContext((AttributePrincipal)auth.getPrincipal(), this.sessionCache);
             else
@@ -197,7 +213,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             String sessionId = resolveSessionId(cookieStore);
             if(sessionId != null) {
                 // Set Authentication
-                auth.setAuthenticated(true);
+//                auth.setAuthenticated(true);
                 //				SecurityContextHolder.getContext().setAuthentication(auth);
                 // Set to cache
                 setSessionIdToCache(this.getCallerService(), targetServiceUrl, userName, sessionId);
@@ -211,9 +227,82 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
                 this.sessionCache.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
         }
     }
+    
+    /**
+     * Do authentication, DEV or CAS.
+     * @param message
+     * @param targetServiceUrl
+     * @throws Exception
+     */
+    private HttpResponse doAuthentication(Message message, String targetServiceUrl) throws Exception {
+        if("dev".equalsIgnoreCase(authMode)) {
+            this.doDevAuthentication(message, targetServiceUrl, this.getAppClientUsername(), this.getAppClientPassword());
+            return null;
+        } else {
+            return this.doCasAuthentication(message, this.getAppClientUsername(), this.getAppClientPassword());
+        }
+    }
+    
+    /**
+     * Does DEV mode authentication. In practice sets Basic authentication headers to intercepted message.
+     * ONLY FOR DEV MODE!!!
+     * @param message
+     * @return
+     * @throws ClientProtocolException
+     * @throws IOException
+     */
+    private void doDevAuthentication(Message message, String targetServiceUrl, String login, String password) throws Exception {
+        String userName = null;
+
+        try {
+            Authentication auth = this.getAuthentication();
+            
+            UsernamePasswordAuthenticationToken token = null;
+
+            if(login == null && password == null) {
+                // Take from authentication credentials
+                if(auth instanceof UsernamePasswordAuthenticationToken) {
+                    token = (UsernamePasswordAuthenticationToken) auth;
+                    login = token.getName();
+                    password = token.getCredentials().toString();
+//                } else if(auth instanceof Cas) {)
+                }
+            }
+            
+            if(this.isUseBasicAuthentication()) {
+                HttpURLConnection conn = ((HttpURLConnection) message.get("http.connection"));
+                // Applies to outbound only
+                if(conn != null && login != null && password != null) {
+                    // Set to Authorization header
+                    conn.setRequestProperty("Authorization", "Basic "
+                            + getBasicAuthenticationEncoding(login, password));
+                }
+            } else {
+                // Do "normal" cas login with login and password
+                this.doCasAuthentication(message, login, password);
+            }
+        } finally {
+            // Release request for someone else
+            if(targetServiceUrl != null && userName != null)
+                this.sessionCache.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
+        }
+    }
 
     /**
-     * Recreates message based on response.
+     * Base64 encoding for basic authentication.
+     * @param username
+     * @param password
+     * @return
+     */
+    private String getBasicAuthenticationEncoding(String username, String password) {
+        String userPassword = username + ":" + password;
+        return new String(Base64.encodeBase64(userPassword.getBytes()));
+    }
+
+    
+    /**
+     * Recreates message based on response. The response may still be a redirect to cas login if login
+     * was not accepted. This will be the final result in any case.
      * @param message
      * @param response
      * @return
@@ -223,12 +312,14 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
     private static void fillMessage(Message message, HttpResponse response) throws IllegalStateException, IOException {
         // Set body from final request. Overwrites the original response body.
         Message inMessage = message.getExchange().getInMessage();
-        InputStream is = response.getEntity().getContent();
-        CachedOutputStream bos = new CachedOutputStream();
-        IOUtils.copy(is,bos);
-        bos.flush();
-        bos.close();
-        inMessage.setContent(InputStream.class, bos.getInputStream());
+        if(response.getEntity() != null) {
+            InputStream is = response.getEntity().getContent();
+            CachedOutputStream bos = new CachedOutputStream();
+            IOUtils.copy(is,bos);
+            bos.flush();
+            bos.close();
+            inMessage.setContent(InputStream.class, bos.getInputStream());
+        }
 
         // Set status code from final request.
         message.getExchange().put(Message.RESPONSE_CODE, new Integer(response.getStatusLine().getStatusCode()));
@@ -282,7 +373,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
         try {
             String targetServiceUrl = resolveTargetServiceUrl(message);
             Authentication auth = this.getAuthentication();
-            String userName = (auth != null)?auth.getName():login;
+            String userName = (auth != null)?auth.getName():this.getAppClientUsername();
             if(targetServiceUrl != null && userName != null)
                 this.sessionCache.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
         } catch(Exception ex) {
@@ -321,6 +412,8 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      */
     private String resolveTargetServiceUrl(Message message) throws MalformedURLException {
         String targetUrl = (String)message.get(Message.ENDPOINT_ADDRESS);
+        if(targetUrl == null)
+            targetUrl = (String)message.getExchange().getOutMessage().get(Message.ENDPOINT_ADDRESS);
         URL url = new URL(targetUrl);
         String port = ((url.getPort() > 0)?(":" + url.getPort()):"");
         String[] folders = url.getPath().split("/");
@@ -372,30 +465,6 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
     }
 
     /**
-     * Login for authenticate as a service.
-     * @return
-     */
-    public String getLogin() {
-        return login;
-    }
-
-    public void setLogin(String login) {
-        this.login = login;
-    }
-
-    /**
-     * Password for authenticate as a service.
-     * @return
-     */	
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    /**
      * Cookie name for sessionId.
      * @return
      */
@@ -442,6 +511,36 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 
     public void setSessionRequired(boolean sessionRequired) {
         this.sessionRequired = sessionRequired;
+    }
+
+    public String getAppClientUsername() {
+        return appClientUsername;
+    }
+
+    public void setAppClientUsername(String appClientUsername) {
+        if(appClientUsername != null && appClientUsername.length() > 0)
+            this.appClientUsername = appClientUsername;
+        else
+            this.appClientUsername = null;
+    }
+
+    public String getAppClientPassword() {
+        return appClientPassword;
+    }
+
+    public void setAppClientPassword(String appClientPassword) {
+        if(appClientPassword != null && appClientPassword.length() > 0)
+            this.appClientPassword = appClientPassword;
+        else
+            this.appClientPassword = null;
+    }
+
+    public boolean isUseBasicAuthentication() {
+        return useBasicAuthentication;
+    }
+
+    public void setUseBasicAuthentication(boolean useBasicAuthentication) {
+        this.useBasicAuthentication = useBasicAuthentication;
     }
 
 }
