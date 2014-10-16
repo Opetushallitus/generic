@@ -60,6 +60,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
     private String authMode;
     
     private String sessionCookieName = "JSESSIONID";
+    private String casSessionCookieName = "CASTGC";
     private String callerService = "any";
 
     private boolean useBasicAuthentication = false;
@@ -70,6 +71,8 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
     
     private long maxWaitTimeMillis = 3000;
     private boolean sessionRequired = true;
+    
+    private boolean useBlockingConcurrent = false;
 
     public CasFriendlyCxfInterceptor() {
         // Intercept in receive phase
@@ -102,7 +105,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             String sessionId = null;
             String userName = (auth != null)?auth.getName():this.getAppClientUsername();
             sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
-            if(sessionId == null) {
+            if(sessionId == null && this.isUseBlockingConcurrent()) {
                 // Block multiple requests if necessary, lock if no concurrent running
                 this.sessionCache.waitOrFlagForRunningRequest(callerService, targetServiceUrl, userName, this.getMaxWaitTimeMillis(), true);
                 // Might be available now
@@ -210,7 +213,9 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 
             // Set session ids
             CookieStore cookieStore = (CookieStore)context.getAttribute(ClientContext.COOKIE_STORE);
-            String sessionId = resolveSessionId(cookieStore);
+            String sessionId = resolveSessionId(cookieStore, this.getSessionCookieName());
+            // Not available with REST service
+//            String casSessionId = resolveSessionId(cookieStore, this.getCasSessionCookieName());
             if(sessionId != null) {
                 // Set Authentication
 //                auth.setAuthenticated(true);
@@ -354,10 +359,10 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      * @param response
      * @return Returns session Id or null if not set.
      */
-    private String resolveSessionId(CookieStore cookieStore) {
+    private String resolveSessionId(CookieStore cookieStore, String cookieName) {
         // Get from cookie store
         for(Cookie cookie:cookieStore.getCookies()) {
-            if(cookie.getName().equals(this.getSessionCookieName()))
+            if(cookie.getName().equals(cookieName))
                 return cookie.getValue();
         }
         return null;
@@ -541,6 +546,30 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 
     public void setUseBasicAuthentication(boolean useBasicAuthentication) {
         this.useBasicAuthentication = useBasicAuthentication;
+    }
+
+    /**
+     * If true, tries to block concurrent requests to the same target with same user.
+     * @return
+     */
+    public boolean isUseBlockingConcurrent() {
+        return useBlockingConcurrent;
+    }
+
+    public void setUseBlockingConcurrent(boolean useBlockingConcurrent) {
+        this.useBlockingConcurrent = useBlockingConcurrent;
+    }
+
+    /**
+     * Cookie name for CAS.
+     * @return
+     */
+    public String getCasSessionCookieName() {
+        return casSessionCookieName;
+    }
+
+    public void setCasSessionCookieName(String casSessionCookieName) {
+        this.casSessionCookieName = casSessionCookieName;
     }
 
 }
