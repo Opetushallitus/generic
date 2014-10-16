@@ -12,6 +12,8 @@ import net.sf.ehcache.Element;
 import net.sf.ehcache.event.CacheEventListener;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -23,7 +25,10 @@ import org.springframework.stereotype.Component;
 //@Singleton
 public class CasFriendlyCache {
 
+    private static final Logger log = LoggerFactory.getLogger(CasFriendlyCache.class);
+    
     public static final String CACHE_SESSIONS = CasFriendlyCache.class.getName() + "/sessionCache";
+    public static final String CAS_SERVICE_KEY = "CAS";
     CacheManager cacheManager;
     private int ttlInSeconds = 3600;
     private int maxWaitTimeSeconds = 3;
@@ -41,6 +46,37 @@ public class CasFriendlyCache {
         this.distinctiveName = distinctiveName;
         if(this.distinctiveName == null)
             this.distinctiveName = "";
+    }
+
+    /**
+     * Sets sessionId given by CAS to cache.
+     * @param serviceUrl
+     * @param userName
+     * @param sessionId
+     */
+    public void setCASSessionId(String callerService, String userName, String sessionId) {
+        // Sets sessionId given by CAS, uses "CAS" as the distinctive key
+        this.setSessionId(callerService, CAS_SERVICE_KEY, userName, sessionId);
+    }
+
+    /**
+     * Gets sessionId given by CAS from cache.
+     * @param serviceUrl
+     * @param userName
+     * @return
+     */
+    public String getCASSessionId(String callerService, String userName) {
+        return this.getSessionId(callerService, CAS_SERVICE_KEY, userName);
+    }
+
+    /**
+     * Removes CAS sessionId from cache.
+     * @param callerService
+     * @param targetServiceUrl
+     * @param userName
+     */
+    public void removeCASSessionId(String callerService, String userName) {
+        this.removeSessionId(callerService, CAS_SERVICE_KEY, userName);
     }
 
     /**
@@ -112,6 +148,7 @@ public class CasFriendlyCache {
         String key = createKey(callerService, targetServiceUrl, userName);
         // Waits if concurrent, otherwise locks (if lock true)
         if(this.isConcurrentRequest(callerService, targetServiceUrl, userName, lock)) {
+            log.debug("Waiting: " + callerService + ": " + targetServiceUrl + ": " + userName);
             InterruptingCacheEventListener icel = new InterruptingCacheEventListener(Thread.currentThread(), key);
             this.getSessionCache().getCacheEventNotificationService().registerListener(icel);			
             try {
@@ -162,6 +199,7 @@ public class CasFriendlyCache {
     public void lockRequest(String callerService, String targetServiceUrl, String userName) {
         String key = createKey(callerService, targetServiceUrl, userName);
         this.runningRequests.put(key, new Date());
+        log.debug("Locked: " + key);
     }
 
     /**
@@ -173,6 +211,7 @@ public class CasFriendlyCache {
     public void releaseRequest(String callerService, String targetServiceUrl, String userName) {
         String key = createKey(callerService, targetServiceUrl, userName);
         this.runningRequests.remove(key);
+        log.debug("Released: " + key);
     }
 
     /**
@@ -224,6 +263,14 @@ public class CasFriendlyCache {
         this.maxWaitTimeSeconds = maxWaitTimeSeconds;
     }
 
+    /**
+     * Number of active distinctive requests marked.
+     * @return
+     */
+    public int getActiveCount() {
+        return this.runningRequests.size();
+    }
+    
     class InterruptingCacheEventListener implements CacheEventListener {
 
         Thread t;
