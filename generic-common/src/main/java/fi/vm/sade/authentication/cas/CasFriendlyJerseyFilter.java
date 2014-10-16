@@ -46,7 +46,7 @@ import com.sun.jersey.spi.container.ContainerResponseFilter;
  * @author Jouni Stam
  *
  */
-@Provider
+//@Provider
 public class CasFriendlyJerseyFilter implements ContainerRequestFilter, ContainerResponseFilter {
 
     private static final Logger log = LoggerFactory.getLogger(CasFriendlyJerseyFilter.class);
