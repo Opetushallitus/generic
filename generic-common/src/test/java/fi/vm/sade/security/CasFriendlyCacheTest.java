@@ -81,7 +81,10 @@ public class CasFriendlyCacheTest {
         Assert.assertNull(tId);
     }
 
-//    @Test
+    /**
+     * Trivial tests for concurrent access with same key.
+     */
+    @Test
     public void testConcurrentRequests() {
         final String callerService = "any";
         final String targetUrl = "https://localhost:8443/organisaatio-ui";
@@ -90,39 +93,42 @@ public class CasFriendlyCacheTest {
 
         Thread t1 = new Thread() {
             public void run() {
-                System.out.println("Started 1.");
                 cache.waitOrFlagForRunningRequest(callerService, targetUrl, userName, 10000, true);
+                try { Thread.sleep(500); } catch(Exception ex) {}
                 cache.releaseRequest(callerService, targetUrl, userName);
-                System.out.println("1 out");
             }
         };
 
         Thread t2 = new Thread() {
             public void run() {
-                System.out.println("Started 2.");
                 cache.waitOrFlagForRunningRequest(callerService, targetUrl, userName, 10000, true);
                 cache.releaseRequest(callerService, targetUrl, userName);
-                System.out.println("2 out");
             }
         };
 
         Thread t3 = new Thread() {
             public void run() {
-                System.out.println("Started 3.");
                 cache.waitOrFlagForRunningRequest(callerService, targetUrl, userName, 10000, true);
                 cache.releaseRequest(callerService, targetUrl, userName);
-                System.out.println("3 out");
             }
         };
 
-        t1.start();
-        try { Thread.sleep(100); } catch(Exception ex) {}
-        t2.start();
-        t3.start();
-
+        Assert.assertTrue("Active count must be == 0 after release.", cache.getActiveCount() == 0);
         cache.waitOrFlagForRunningRequest(callerService, targetUrl, userName, 1000, true);
+        Assert.assertTrue("Active count must be > 0 before release.", cache.getActiveCount() > 0);
+        cache.waitOrFlagForRunningRequest(callerService, targetUrl, userName, 100, true);
         cache.releaseRequest(callerService, targetUrl, userName);
-        System.out.println("Set value: " + id);
+        Assert.assertTrue("Active count must be == 0 after release.", cache.getActiveCount() == 0);
+
+        // Test with threads
+//        t1.start();
+//        try { Thread.sleep(100); } catch(Exception ex) {}
+//        t2.start();
+//        t3.start();
+//        Assert.assertTrue("Active count must be > 0 before release.", cache.getActiveCount() > 0);
+//        cache.releaseRequest(callerService, targetUrl, userName);
+
+        // Set sessionId
         cache.setSessionId(callerService, targetUrl, userName, id);
 
         try {
