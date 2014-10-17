@@ -108,14 +108,14 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             String sessionId = null;
             String userName = (auth != null)?auth.getName():this.getAppClientUsername();
             log.debug("Outbound username: " + userName);
-//            sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
+            sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
             log.debug("Outbound sessionId from cache: " + sessionId);
             if(sessionId == null && this.isUseBlockingConcurrent()) {
                 log.debug("Outbound uses blocking (useBlockingConcurrent == true).");
                 // Block multiple requests if necessary, lock if no concurrent running
                 this.sessionCache.waitOrFlagForRunningRequest(callerService, targetServiceUrl, userName, this.getMaxWaitTimeMillis(), true);
                 // Might be available now
-//                sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
+                sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
                 log.debug("Outbound sessionId from cache after blocking: " + sessionId);
             }
             // Set sessionId if possible before making the request
