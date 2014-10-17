@@ -49,6 +49,13 @@ public class CasFriendlyCache {
     }
 
     /**
+     * Clears all from cache.
+     */
+    public void clearAll() {
+        this.cacheManager.clearAll();
+    }
+    
+    /**
      * Sets sessionId given by CAS to cache.
      * @param serviceUrl
      * @param userName
