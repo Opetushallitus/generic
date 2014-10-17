@@ -7,6 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +19,7 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
 import org.apache.cxf.transport.http.HTTPConduit;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
@@ -102,26 +104,34 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
         Authentication auth = this.getAuthentication();
         try {
             String targetServiceUrl = resolveTargetServiceUrl(message);
+            log.debug("Outbound target URL: " + targetServiceUrl);
             String sessionId = null;
             String userName = (auth != null)?auth.getName():this.getAppClientUsername();
-            sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
+            log.debug("Outbound username: " + userName);
+//            sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
+            log.debug("Outbound sessionId from cache: " + sessionId);
             if(sessionId == null && this.isUseBlockingConcurrent()) {
+                log.debug("Outbound uses blocking (useBlockingConcurrent == true).");
                 // Block multiple requests if necessary, lock if no concurrent running
                 this.sessionCache.waitOrFlagForRunningRequest(callerService, targetServiceUrl, userName, this.getMaxWaitTimeMillis(), true);
                 // Might be available now
-                sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
+//                sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
+                log.debug("Outbound sessionId from cache after blocking: " + sessionId);
             }
             // Set sessionId if possible before making the request
             if(sessionId != null) 
                 setSessionCookie(conn, sessionId);
             else if(this.isSessionRequired()) {
                 // Do this proactively only if session is required.
+                log.debug("Outbound requiring sessionId, doing proactive authentication.");
 
                 // Do CAS or DEV authentication
                 this.doAuthentication(message, targetServiceUrl);
 
                 // Might be available now
                 sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
+                
+                log.debug("Outbound sessionId after authentication process: " + sessionId);
 
                 // Set sessionId if possible before making the request
                 if(sessionId != null) 
@@ -241,8 +251,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      */
     private HttpResponse doAuthentication(Message message, String targetServiceUrl) throws Exception {
         if("dev".equalsIgnoreCase(authMode)) {
-            this.doDevAuthentication(message, targetServiceUrl, this.getAppClientUsername(), this.getAppClientPassword());
-            return null;
+            return this.doDevAuthentication(message, targetServiceUrl, this.getAppClientUsername(), this.getAppClientPassword());
         } else {
             return this.doCasAuthentication(message, this.getAppClientUsername(), this.getAppClientPassword());
         }
@@ -256,7 +265,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      * @throws ClientProtocolException
      * @throws IOException
      */
-    private void doDevAuthentication(Message message, String targetServiceUrl, String login, String password) throws Exception {
+    private HttpResponse doDevAuthentication(Message message, String targetServiceUrl, String login, String password) throws Exception {
         String userName = null;
 
         try {
@@ -282,9 +291,10 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
                     conn.setRequestProperty("Authorization", "Basic "
                             + getBasicAuthenticationEncoding(login, password));
                 }
+                return null;
             } else {
                 // Do "normal" cas login with login and password
-                this.doCasAuthentication(message, login, password);
+                return this.doCasAuthentication(message, login, password);
             }
         } finally {
             // Release request for someone else
@@ -327,11 +337,16 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
         }
 
         // Set status code from final request.
+        inMessage.put(Message.RESPONSE_CODE, new Integer(response.getStatusLine().getStatusCode()));
         message.getExchange().put(Message.RESPONSE_CODE, new Integer(response.getStatusLine().getStatusCode()));
 
-        // TODO Set headers?
-        // Not able to set headers so that WebClient would not overwrite them
-        // Would have to fake them on HttpUrlConnection level
+        // Set headers
+        Header[] headers = response.getAllHeaders();
+        @SuppressWarnings ("unchecked")
+        Map<String, List<String>> protocolHeaders = (Map<String, List<String>>)inMessage.get(Message.PROTOCOL_HEADERS);
+        for(Header one:headers) {
+            protocolHeaders.put(one.getName(), Arrays.asList(one.getValue()));
+        }
 
     }
 
