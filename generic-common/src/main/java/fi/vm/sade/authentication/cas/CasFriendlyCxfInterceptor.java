@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.cas.authentication.CasAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -210,9 +211,12 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             if(login != null && password != null)
                 context = casClient.createHttpContext(
                         login, password, this.sessionCache);
-            else if(auth != null && auth.getPrincipal() instanceof AttributePrincipal)
-                context = casClient.createHttpContext((AttributePrincipal)auth.getPrincipal(), this.sessionCache);
-            else
+            else if(auth != null && auth instanceof CasAuthenticationToken) {
+                CasAuthenticationToken token = (CasAuthenticationToken)auth;
+                AttributePrincipal principal = token.getAssertion().getPrincipal();
+                if(principal != null)
+                    context = casClient.createHttpContext(principal, this.sessionCache);
+            } else
                 return null;
 
             HttpUriRequest request = CasFriendlyHttpClient.createRequest(message);

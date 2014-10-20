@@ -104,19 +104,23 @@ public class CasRedirectStrategy implements RedirectStrategy {
                     log.debug("Using TGT from HttpContext: " + tgt);
                     String tgtUrl = resolveCasTicketUrl(url) + "/" + tgt;
                     // Continue with session ticket request
-                    return createSTRequest(request, response, context, tgtUrl + "/cas/v1/tickets/" + tgt);
+                    return createSTRequest(request, response, context, tgtUrl);
                 } 
 
                 // Figure out if PGT is available and use that (expects principal in HttpContext)
-                String casPgt = resolveProxyGrantingTicket(context, service);
-                if(casPgt != null)
-                    log.debug("Found proxy granting ticket: " + casPgt);
+                String casPgtSt = resolveProxyGrantingTicket(context, service);
+                if(casPgtSt != null)
+                    log.debug("Found proxy granting ticket: " + casPgtSt);
                 else
                     log.debug("Not able to get proxy ticket (" + CasRedirectStrategy.ATTRIBUTE_PRINCIPAL + ")");
 
-                if(casPgt != null) {
-                    // Use PGT to get ST
-                    return createSTRequestWithPGT(request, response, context, url, casPgt);
+                if(casPgtSt != null) {
+                    // Use ST by PGT
+//                    return createSTRequestWithPGT(request, response, context, url, casPgt);
+                    // Set ST to context
+                    context.setAttribute(ATTRIBUTE_CAS_SERVICE_TICKET, casPgtSt);
+                    // Continue to get session open for service
+                    return createSessionRequest(request, response, context);
                 } else {
                     // Last resort, use login and password from HttpContext
                     String login = (String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_LOGIN);
@@ -384,7 +388,7 @@ public class CasRedirectStrategy implements RedirectStrategy {
      * @return
      */
     private static String resolveUrl(HttpRequest request) {
-        String protocol = "https";
+        String protocol = request.getProtocolVersion().getProtocol().toLowerCase();
         String url = protocol + 
                 "://" + request.getFirstHeader("Host").getValue() +
                 request.getRequestLine().getUri();
