@@ -36,6 +36,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.cas.authentication.CasAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
 /**
  * Interceptor for handling CAS redirects and authentication transparently when needed.
@@ -76,6 +77,8 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
     private boolean sessionRequired = true;
     
     private boolean useBlockingConcurrent = false;
+    
+    private boolean useSessionPerUser = true;
 
     public CasFriendlyCxfInterceptor() {
         // Intercept in receive phase
@@ -107,7 +110,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             String targetServiceUrl = resolveTargetServiceUrl(message);
             log.debug("Outbound target URL: " + targetServiceUrl);
             String sessionId = null;
-            String userName = (auth != null)?auth.getName():this.getAppClientUsername();
+            String userName = (this.getAppClientUsername() != null)?this.getAppClientUsername():auth.getName();
             log.debug("Outbound username: " + userName);
             sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
             log.debug("Outbound sessionId from cache: " + sessionId);
@@ -127,7 +130,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
                 log.debug("Outbound requiring sessionId, doing proactive authentication.");
 
                 // Do CAS or DEV authentication
-                this.doAuthentication(message, targetServiceUrl);
+                this.doAuthentication(message, targetServiceUrl, false);
 
                 // Might be available now
                 sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
@@ -172,7 +175,8 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
                 if(path.startsWith("/cas/login")) {
                     // Do CAS authentication request (multiple requests)
                     String targetServiceUrl = resolveTargetServiceUrl(message);
-                    HttpResponse response = this.doAuthentication(message, targetServiceUrl);
+                    // CAS auth is the only option as redirect is to cas/login
+                    HttpResponse response = this.doAuthentication(message, targetServiceUrl, true);
 
                     // Set values back to message from response
                     if(response != null)
@@ -193,7 +197,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      * @throws ClientProtocolException
      * @throws IOException
      */
-    private HttpResponse doCasAuthentication(Message message, String login, String password) throws Exception {
+   private HttpResponse doCasAuthentication(Message message, String login, String password) throws Exception {
         // TODO Currently resends the first request as well, can be optimized to go to /cas/login directly,
         // which would require some additional logic to get the original request from message  
 
@@ -208,10 +212,10 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 
             HttpContext context = null;
 
-            if(login != null && password != null)
+            if(login != null && password != null) {
                 context = casClient.createHttpContext(
                         login, password, this.sessionCache);
-            else if(auth != null && auth instanceof CasAuthenticationToken) {
+            } else if(auth != null && auth instanceof CasAuthenticationToken) {
                 CasAuthenticationToken token = (CasAuthenticationToken)auth;
                 AttributePrincipal principal = token.getAssertion().getPrincipal();
                 if(principal != null)
@@ -242,25 +246,25 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             return response;
         } finally {
             // Release request for someone else
-            if(targetServiceUrl != null && userName != null)
-                this.sessionCache.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
+            this.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
         }
     }
-    
+
     /**
      * Do authentication, DEV or CAS.
      * @param message
      * @param targetServiceUrl
+     * @param casRedirect True means response was cas/login redirect, false otherwise.
      * @throws Exception
      */
-    private HttpResponse doAuthentication(Message message, String targetServiceUrl) throws Exception {
-        if("dev".equalsIgnoreCase(authMode)) {
-            return this.doDevAuthentication(message, targetServiceUrl, this.getAppClientUsername(), this.getAppClientPassword());
+    private HttpResponse doAuthentication(Message message, String targetServiceUrl, boolean casRedirect) throws Exception {
+        if(this.isDevMode()) {
+            return this.doDevAuthentication(message, targetServiceUrl, this.getAppClientUsername(), this.getAppClientPassword(), casRedirect);
         } else {
             return this.doCasAuthentication(message, this.getAppClientUsername(), this.getAppClientPassword());
         }
     }
-    
+
     /**
      * Does DEV mode authentication. In practice sets Basic authentication headers to intercepted message.
      * ONLY FOR DEV MODE!!!
@@ -269,12 +273,12 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      * @throws ClientProtocolException
      * @throws IOException
      */
-    private HttpResponse doDevAuthentication(Message message, String targetServiceUrl, String login, String password) throws Exception {
-        String userName = null;
+    private HttpResponse doDevAuthentication(Message message, String targetServiceUrl, String login, String password, boolean casRedirect) throws Exception {
+        String userName = login;
 
         try {
             Authentication auth = this.getAuthentication();
-            
+
             UsernamePasswordAuthenticationToken token = null;
 
             if(login == null && password == null) {
@@ -283,11 +287,10 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
                     token = (UsernamePasswordAuthenticationToken) auth;
                     login = token.getName();
                     password = token.getCredentials().toString();
-//                } else if(auth instanceof Cas) {)
                 }
             }
-            
-            if(this.isUseBasicAuthentication()) {
+
+            if(!casRedirect && this.isUseBasicAuthentication()) {
                 HttpURLConnection conn = ((HttpURLConnection) message.get("http.connection"));
                 // Applies to outbound only
                 if(conn != null && login != null && password != null) {
@@ -302,8 +305,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             }
         } finally {
             // Release request for someone else
-            if(targetServiceUrl != null && userName != null)
-                this.sessionCache.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
+            this.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
         }
     }
 
@@ -318,7 +320,6 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
         return new String(Base64.encodeBase64(userPassword.getBytes()));
     }
 
-    
     /**
      * Recreates message based on response. The response may still be a redirect to cas login if login
      * was not accepted. This will be the final result in any case.
@@ -362,7 +363,11 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      * @param sessionId
      */
     protected void setSessionIdToCache(String callerService, String targetServiceUrl, String userName, String sessionId) {
-        sessionCache.setSessionId(callerService, targetServiceUrl, userName, sessionId);
+        // Use userName or sessionId as key for session cache
+        String keyForSessionCache = userName;
+        if(!this.isUseSessionPerUser())
+            keyForSessionCache = this.getClientSessionId();
+        sessionCache.setSessionId(callerService, targetServiceUrl, keyForSessionCache, sessionId);
     }
 
     /**
@@ -370,7 +375,26 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      * @return
      */
     protected String getSessionIdFromCache(String callerService, String targetServiceUrl, String userName) {
-        return sessionCache.getSessionId(callerService, targetServiceUrl, userName);
+        // Use userName or sessionId as key for session cache
+        String keyForSessionCache = userName;
+        if(!this.isUseSessionPerUser())
+            keyForSessionCache = this.getClientSessionId();
+        return sessionCache.getSessionId(callerService, targetServiceUrl, keyForSessionCache);
+    }
+
+    /**
+     * Releases concurrent requests. 
+     * @param callerService
+     * @param targetServiceUrl
+     * @param userName
+     */
+    protected void releaseRequest(String callerService, String targetServiceUrl, String userName) {
+        // Use userName or sessionId as key for session cache
+        String keyForSessionCache = userName;
+        if(!this.isUseSessionPerUser())
+            keyForSessionCache = this.getClientSessionId();
+        if(targetServiceUrl != null && keyForSessionCache != null)
+            this.sessionCache.releaseRequest(callerService, targetServiceUrl, keyForSessionCache);
     }
 
     /**
@@ -398,8 +422,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             String targetServiceUrl = resolveTargetServiceUrl(message);
             Authentication auth = this.getAuthentication();
             String userName = (auth != null)?auth.getName():this.getAppClientUsername();
-            if(targetServiceUrl != null && userName != null)
-                this.sessionCache.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
+            this.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
         } catch(Exception ex) {
             log.warn("Unable to release request in handleFault.", ex);
         }
@@ -476,6 +499,30 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
         return cookieString.toString();
     }
 
+    /**
+     * True if authentication is set to be in dev mode, false otherwise.
+     */
+    public boolean isDevMode() {
+        return "dev".equalsIgnoreCase(authMode);
+    }
+
+    /**
+     * Gets client's sessionId from request context holder.
+     * @return
+     */
+    private String getClientSessionId() {
+        try {
+            
+//          return RequestContextHolder.currentRequestAttributes().getSessionId();
+            return ((WebAuthenticationDetails) SecurityContextHolder.getContext().getAuthentication().getDetails())
+            .getSessionId();
+        } catch(Exception ex) {
+            log.error("Unable to get session ID for caching and 'useSessionPerUser' is true.", ex);
+            return null;
+        }
+
+    }
+    
     /**
      * Caller service is the distinctive name of the service. Used to keep sessions service specific if needed.  
      * @return
@@ -589,6 +636,19 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 
     public void setCasSessionCookieName(String casSessionCookieName) {
         this.casSessionCookieName = casSessionCookieName;
+    }
+
+    /**
+     * Uses session per user if true, otherwise session per client session. If true, all services
+     * must be stateless and sessionId must only be used for authentication. True by default.
+     * @return
+     */
+    public boolean isUseSessionPerUser() {
+        return useSessionPerUser;
+    }
+
+    public void setUseSessionPerUser(boolean useSessionPerUser) {
+        this.useSessionPerUser = useSessionPerUser;
     }
 
 }
