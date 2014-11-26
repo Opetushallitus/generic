@@ -42,6 +42,10 @@ import org.springframework.security.web.authentication.WebAuthenticationDetails;
  * Interceptor for handling CAS redirects and authentication transparently when needed.
  * Development mode provided that Spring Security's authentication manager has
  * erase-credientals = false: <authentication-manager alias = "authenticationManager"  erase-credentials = "false">
+ * NOTE! If configured to use proxy authentication, re-authentication can only happen as long as the TGT is alive
+ * (by default 2h, max 8h). Sessions can outlive this, but re-authentication will fail in case it is needed.
+ * If using given username and password, there is no "timeout" for re-authentication.
+ * CallerService should be set to give Caller-Id for logging purposes.
  * @author Jouni Stam
  *
  * !!! THREAD SAFETY !!!
