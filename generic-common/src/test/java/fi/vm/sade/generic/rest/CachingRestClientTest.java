@@ -166,7 +166,7 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         try {
             get("/httptest/pingSecured401Unauthorized");
             Assert.fail("should fail");
-        } catch (CachingRestClient.HttpException e) {
+        } catch (HttpException e) {
             Assert.assertEquals(401, e.getStatusCode());
         }
     }

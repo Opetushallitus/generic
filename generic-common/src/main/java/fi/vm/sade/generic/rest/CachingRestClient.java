@@ -429,10 +429,10 @@ public class CachingRestClient implements HealthChecker {
         return response;
     }
 
-    private void logAndThrowHttpEcxception(HttpRequestBase req, HttpResponse response, final String msg) throws CachingRestClient.HttpException {
+    private void logAndThrowHttpEcxception(HttpRequestBase req, HttpResponse response, final String msg) throws HttpException {
         String message = msg + ", url: " + req.getURI() + ", status: " + response.getStatusLine()+", userinfo: "+getUserInfo(req);
         logger.error(message);
-        throw new CachingRestClient.HttpException(req, response, message);
+        throw new HttpException(req, response, message);
     }
 
     private String getUserInfo(HttpRequestBase req) {
@@ -639,35 +639,5 @@ public class CachingRestClient implements HealthChecker {
 
     public void setReuseConnections(boolean reuseConnections) {
         this.reuseConnections = reuseConnections;
-    }
-
-    public static class HttpException extends IOException {
-
-        private int statusCode;
-        private String statusMsg;
-        private String errorContent;
-
-        public HttpException(HttpRequestBase req, HttpResponse response, String message) {
-            super(message);
-            this.statusCode = response.getStatusLine().getStatusCode();
-            this.statusMsg = response.getStatusLine().getReasonPhrase();
-            try {
-                this.errorContent = IOUtils.toString(response.getEntity().getContent());
-            } catch (IOException e) {
-                CachingRestClient.logger.error("error reading errorContent: "+e, e);
-            }
-        }
-
-        public int getStatusCode() {
-            return statusCode;
-        }
-
-        public String getStatusMsg() {
-            return statusMsg;
-        }
-
-        public String getErrorContent() {
-            return errorContent;
-        }
     }
 }
