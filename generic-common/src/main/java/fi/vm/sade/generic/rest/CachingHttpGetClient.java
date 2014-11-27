@@ -101,7 +101,7 @@ public class CachingHttpGetClient {
         return get(url,(HttpContext) null);
     }
 
-    public InputStream get(String url, HttpContext context) throws IOException {
+    InputStream get(String url, HttpContext context) throws IOException {
         HttpGet request = new HttpGet(url);
         final HttpResponse response = cachingClient.execute(request, context);
         if(response.getStatusLine().getStatusCode() == SC_FORBIDDEN) {
