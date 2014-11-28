@@ -23,6 +23,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.cookie.Cookie;
@@ -189,11 +190,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
                     // Do CAS authentication request (multiple requests)
                     String targetServiceUrl = resolveTargetServiceUrl(message);
                     // CAS auth is the only option as redirect is to cas/login
-                    HttpResponse response = this.doAuthentication(message, targetServiceUrl, true);
-
-                    // Set values back to message from response
-                    if(response != null)
-                        fillMessage(message, response);
+                    this.doAuthentication(message, targetServiceUrl, true);
 
                 }
             } catch(Exception ex) {
@@ -206,16 +203,17 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      * Does CAS authentication procedure and goes back to the original request after that
      * to get the response from original source after authentication.
      * @param message
-     * @return
+     * @return Returns true if message was filled with the response, false otherwise.
      * @throws ClientProtocolException
      * @throws IOException
      */
-   private HttpResponse doCasAuthentication(Message message, String login, String password) throws Exception {
+   private boolean doCasAuthentication(Message message, String login, String password) throws Exception {
         // TODO Currently resends the first request as well, can be optimized to go to /cas/login directly,
         // which would require some additional logic to get the original request from message  
 
         String targetServiceUrl = null;
         String userName = null;
+        HttpUriRequest request = null;
 
         try {
             // Follow redirects in a separate CasFriendlyHttpClient request chain
@@ -234,9 +232,9 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
                 if(principal != null)
                     context = casClient.createHttpContext(principal, this.sessionCache);
             } else
-                return null;
+                return false;
 
-            HttpUriRequest request = CasFriendlyHttpClient.createRequest(message);
+            request = CasFriendlyHttpClient.createRequest(message);
             HttpResponse response = casClient.execute(request, context);
 
             targetServiceUrl = (String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_SERVICE_URL);
@@ -248,16 +246,22 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             // Not available with REST service
 //            String casSessionId = resolveSessionId(cookieStore, this.getCasSessionCookieName());
             if(sessionId != null) {
-                // Set Authentication
-//                auth.setAuthenticated(true);
-                //				SecurityContextHolder.getContext().setAuthentication(auth);
                 // Set to cache
                 setSessionIdToCache(this.getCallerService(), targetServiceUrl, userName, sessionId);
                 log.debug("Session cached: " + sessionCache.getSessionId(this.getCallerService(), targetServiceUrl, userName));
             }
 
-            return response;
+            // Set values back to message from response
+            if(response != null) {
+                fillMessage(message, response);
+                return true;
+            } else
+                return false;
+
         } finally {
+            // Release connection
+            if(request != null && request instanceof HttpRequestBase)
+                ((HttpRequestBase)request).releaseConnection();
             // Release request for someone else
             this.releaseRequest(this.getCallerService(), targetServiceUrl, userName);
         }
@@ -270,7 +274,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      * @param casRedirect True means response was cas/login redirect, false otherwise.
      * @throws Exception
      */
-    private HttpResponse doAuthentication(Message message, String targetServiceUrl, boolean casRedirect) throws Exception {
+    private boolean doAuthentication(Message message, String targetServiceUrl, boolean casRedirect) throws Exception {
         if(this.isDevMode()) {
             return this.doDevAuthentication(message, targetServiceUrl, this.getAppClientUsername(), this.getAppClientPassword(), casRedirect);
         } else {
@@ -286,7 +290,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      * @throws ClientProtocolException
      * @throws IOException
      */
-    private HttpResponse doDevAuthentication(Message message, String targetServiceUrl, String login, String password, boolean casRedirect) throws Exception {
+    private boolean doDevAuthentication(Message message, String targetServiceUrl, String login, String password, boolean casRedirect) throws Exception {
         String userName = login;
 
         try {
@@ -311,7 +315,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
                     conn.setRequestProperty("Authorization", "Basic "
                             + getBasicAuthenticationEncoding(login, password));
                 }
-                return null;
+                return false;
             } else {
                 // Do "normal" cas login with login and password
                 return this.doCasAuthentication(message, login, password);
