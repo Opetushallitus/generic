@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -129,6 +130,36 @@ public class CachingHttpGetClient {
             return JsonSupport.gson.fromJson(new InputStreamReader(response, UTF8), resultType);
         } catch (JsonSyntaxException e) {
             throw new IOException("failed to parse object from (json) response, type: "+resultType.getSimpleName()+", reason: "+e.getCause()+", response:\n"+response);
+        }
+    }
+
+    public static class HttpException extends IOException {
+
+        private int statusCode;
+        private String statusMsg;
+        private String errorContent;
+
+        public HttpException(HttpRequestBase req, HttpResponse response, String message) {
+            super(message);
+            this.statusCode = response.getStatusLine().getStatusCode();
+            this.statusMsg = response.getStatusLine().getReasonPhrase();
+            try {
+                this.errorContent = IOUtils.toString(response.getEntity().getContent());
+            } catch (IOException e) {
+                CachingRestClient.logger.error("error reading errorContent: "+e, e);
+            }
+        }
+
+        public int getStatusCode() {
+            return statusCode;
+        }
+
+        public String getStatusMsg() {
+            return statusMsg;
+        }
+
+        public String getErrorContent() {
+            return errorContent;
         }
     }
 }
