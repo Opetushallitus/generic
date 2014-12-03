@@ -349,27 +349,30 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
     private static void fillMessage(Message message, HttpResponse response) throws IllegalStateException, IOException {
         // Set body from final request. Overwrites the original response body.
         Message inMessage = message.getExchange().getInMessage();
-        if(response.getEntity() != null) {
-            InputStream is = response.getEntity().getContent();
-            CachedOutputStream bos = new CachedOutputStream();
-            IOUtils.copy(is,bos);
-            bos.flush();
-            bos.close();
-            inMessage.setContent(InputStream.class, bos.getInputStream());
+        if (inMessage != null) {
+            if (response.getEntity() != null) {
+                InputStream is = response.getEntity().getContent();
+                CachedOutputStream bos = new CachedOutputStream();
+                IOUtils.copy(is, bos);
+                bos.flush();
+                bos.close();
+                inMessage.setContent(InputStream.class, bos.getInputStream());
+            }
+
+            // Set status code from final request.
+            inMessage.put(Message.RESPONSE_CODE, new Integer(response.getStatusLine().getStatusCode()));
+
+            // Set headers
+            Header[] headers = response.getAllHeaders();
+            @SuppressWarnings("unchecked")
+            Map<String, List<String>> protocolHeaders = (Map<String, List<String>>) inMessage.get(Message.PROTOCOL_HEADERS);
+            for (Header one : headers) {
+                protocolHeaders.put(one.getName(), Arrays.asList(one.getValue()));
+            }
         }
 
         // Set status code from final request.
-        inMessage.put(Message.RESPONSE_CODE, new Integer(response.getStatusLine().getStatusCode()));
         message.getExchange().put(Message.RESPONSE_CODE, new Integer(response.getStatusLine().getStatusCode()));
-
-        // Set headers
-        Header[] headers = response.getAllHeaders();
-        @SuppressWarnings ("unchecked")
-        Map<String, List<String>> protocolHeaders = (Map<String, List<String>>)inMessage.get(Message.PROTOCOL_HEADERS);
-        for(Header one:headers) {
-            protocolHeaders.put(one.getName(), Arrays.asList(one.getValue()));
-        }
-
     }
 
     /**
