@@ -2,6 +2,8 @@ package fi.vm.sade.authentication.cas;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +39,7 @@ import org.slf4j.LoggerFactory;
 public class CasFriendlyHttpClient extends DefaultHttpClient {
 
     private static final Logger log = LoggerFactory.getLogger(CasFriendlyHttpClient.class);
+    private static final String SPRING_CAS_SUFFIX = "j_spring_cas_security_check";
     public static CasRedirectStrategy casRedirectStrategy = new CasRedirectStrategy();
 
     /**
@@ -72,6 +75,11 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
                         //						String sessionId = cache.getSessionId("any", targetServiceUrl, userName);
                     }
 
+                    // Target service URL is the service name used for authentication
+                    String targetUrl = CasRedirectStrategy.resolveUrl(request);
+                    String targetServiceUrl = resolveTargetServiceUrl(targetUrl);
+                    
+                    context.setAttribute(CasRedirectStrategy.ATTRIBUTE_SERVICE_URL, targetServiceUrl);
                     context.setAttribute(CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST, request);
                     context.setAttribute(CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST_PARAMS, request.getParams());
                 }
@@ -93,49 +101,61 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
      * @param message
      * @throws IOException 
      */
-    public static HttpUriRequest createRequest(Message message) throws IOException {
+    public static HttpUriRequest createRequest(Message message, boolean authenticateOnly, HttpContext context) throws IOException {
         // Original out message (request)
         Message outMessage = message.getExchange().getOutMessage();
         String method = (String)outMessage.get(Message.HTTP_REQUEST_METHOD);
         String url = (String)outMessage.get(Message.ENDPOINT_ADDRESS);
-        String encoding = (String)outMessage.get(Message.ENCODING);
-        if(StringUtils.isEmpty(encoding))
-            encoding = "UTF-8";
 
-        // Get headers
-        @SuppressWarnings ("unchecked")
-        Map<String, List<String>> headers = (Map<String, List<String>>)outMessage.get(Message.PROTOCOL_HEADERS);
-
-        // Get the body of request
-        String body = null;
-        InputStream is = outMessage.getContent(InputStream.class);
-        if(is != null) {
-            CachedOutputStream bos = new CachedOutputStream();
-            IOUtils.copy(is, bos);
-            body = new String(bos.getBytes(), encoding);
-        }
-
-        // Create request based on method
         HttpUriRequest uriRequest = null;
-        if(method.equalsIgnoreCase("POST")) {
-            uriRequest = new HttpPost(url);
-            if(body != null)
-                ((HttpPost)uriRequest).setEntity(new StringEntity(body));
-        } else if(method.equalsIgnoreCase("GET")) {
-            uriRequest = new HttpGet(url);
-        } else if(method.equalsIgnoreCase("DELETE")) {
-            uriRequest = new HttpDelete(url);
-        } else if(method.equalsIgnoreCase("PUT")) {
-            uriRequest = new HttpPut(url);
-            if(body != null)
-                ((HttpPost)uriRequest).setEntity(new StringEntity(body));
-        }
 
-        // Set headers to request
-        for(String one:headers.keySet()) {
-            List<String> values = headers.get(one);
-            // Just add the first value
-            uriRequest.addHeader(one, values.get(0));
+        if(authenticateOnly) {
+            // Authenticate only, original URL must not be requested!
+            context.setAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_AUTHENTICATE_ONLY, new Boolean(authenticateOnly));
+            // Using j_spring_cas_security_check as the starting point
+            url = resolveTargetServiceUrl(url);
+            // Just the authentication request
+            uriRequest = new HttpGet(url);
+        } else {
+            // Create request based on given message
+            String encoding = (String)outMessage.get(Message.ENCODING);
+            if(StringUtils.isEmpty(encoding))
+                encoding = "UTF-8";
+    
+            // Get headers
+            @SuppressWarnings ("unchecked")
+            Map<String, List<String>> headers = (Map<String, List<String>>)outMessage.get(Message.PROTOCOL_HEADERS);
+    
+            // Get the body of request
+            String body = null;
+            InputStream is = outMessage.getContent(InputStream.class);
+            if(is != null) {
+                CachedOutputStream bos = new CachedOutputStream();
+                IOUtils.copy(is, bos);
+                body = new String(bos.getBytes(), encoding);
+            }
+    
+            // Create request based on method
+            if(method.equalsIgnoreCase("POST")) {
+                uriRequest = new HttpPost(url);
+                if(body != null)
+                    ((HttpPost)uriRequest).setEntity(new StringEntity(body));
+            } else if(method.equalsIgnoreCase("GET")) {
+                uriRequest = new HttpGet(url);
+            } else if(method.equalsIgnoreCase("DELETE")) {
+                uriRequest = new HttpDelete(url);
+            } else if(method.equalsIgnoreCase("PUT")) {
+                uriRequest = new HttpPut(url);
+                if(body != null)
+                    ((HttpPost)uriRequest).setEntity(new StringEntity(body));
+            }
+    
+            // Set headers to request
+            for(String one:headers.keySet()) {
+                List<String> values = headers.get(one);
+                // Just add the first value
+                uriRequest.addHeader(one, values.get(0));
+            }
         }
 
         return uriRequest;
@@ -173,5 +193,23 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
         for(Header one:request.getAllHeaders()) {
             log.debug(one.getName() + ": " + one.getValue());
         }
+    }
+    
+    /**
+     * Resolves target service URL from message's endpoint address.
+     * @param message
+     * @return
+     * @throws MalformedURLException
+     */
+    public static String resolveTargetServiceUrl(String targetUrl) throws MalformedURLException {
+        URL url = new URL(targetUrl);
+        String port = ((url.getPort() > 0)?(":" + url.getPort()):"");
+        String[] folders = url.getPath().split("/");
+        String path = "/";
+        if(folders.length > 0)
+            path += folders[1] + "/";
+        String finalUrl = url.getProtocol() + "://" + 
+                url.getHost() + port + path + SPRING_CAS_SUFFIX;
+        return finalUrl.toString();
     }
 }
