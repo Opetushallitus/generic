@@ -59,7 +59,10 @@ public class CasRedirectStrategy implements RedirectStrategy {
     public static final String ATTRIBUTE_SERVICE_URL = "serviceUrl";
     public static final String ATTRIBUTE_CAS_REQUEST_STATE = "casRequestState";
     public static final String ATTRIBUTE_CAS_SERVICE_TICKET = "casServicetTicket";
+    public static final String ATTRIBUTE_CAS_AUTHENTICATE_ONLY = "authenticateOnly";
 
+    // Pre authenticate state
+    public static final String CAS_REQUEST_STATE_PREAUTH = "PRE";
     // First state when redirected to request for TGT
     public static final String CAS_REQUEST_STATE_TGT = "TGT";
     // Second state when redirected to request for ST with TGT
@@ -81,20 +84,30 @@ public class CasRedirectStrategy implements RedirectStrategy {
             location = redirectLocation.getValue();
         } else {
             // Use service URL
-            location = (String)context.getAttribute(ATTRIBUTE_SERVICE_URL);
+//            location = (String)context.getAttribute(ATTRIBUTE_SERVICE_URL);
         }
         log.debug("Redirect location is: " + location);
         try {
-            // Must have location for redirect, otherwise let it fail
-            URL url = new URL(location);
-            String path = url.getPath();
-            if(path.startsWith("/cas/login")) {
-                // Case redirect to /cas/login ("user" must authenticate)
-                String service = resolveService(location);
+            // Has location unless "redirecting" to original source
+            String path = "";
+            URL url = null;
+            if(location != null) {
+                url = new URL(location);
+                path = url.getPath();
+            }
+            if(path.startsWith("/cas/login") || CasRedirectStrategy.CAS_REQUEST_STATE_PREAUTH.equals(context.getAttribute(ATTRIBUTE_CAS_REQUEST_STATE))) {
+                String service = null;
+                // Only if actually redirected
+                if(location != null) {
+                    // Case redirect to /cas/login ("user" must authenticate)
+                    service = resolveService(location);
 
-                // Set the service URL to context
-                if(service != null)
-                    context.setAttribute(ATTRIBUTE_SERVICE_URL, service);
+                    // Set the service URL to context
+                    if(service != null)
+                        context.setAttribute(ATTRIBUTE_SERVICE_URL, service);
+                } else {
+                    service = (String)context.getAttribute(ATTRIBUTE_SERVICE_URL);
+                }
 
                 // TGT can be used instead of username+password
                 String tgt = 
@@ -165,7 +178,11 @@ public class CasRedirectStrategy implements RedirectStrategy {
     @Override
     public boolean isRedirected(HttpRequest request, HttpResponse response,
             HttpContext context) throws ProtocolException {
-        // Continue with original request after ST 
+        
+        Boolean authenticateOnly = (Boolean)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_AUTHENTICATE_ONLY);
+        if(authenticateOnly == null)
+            authenticateOnly = false;
+        // Continue with original request after ST, only if not authenticateOnly request
         if(CasRedirectStrategy.CAS_REQUEST_STATE_ST.equals(context.getAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_REQUEST_STATE)) &&
                 response.getStatusLine().getStatusCode() == 200) {
             // We are redirecting only because of CAS process (response code is 200) not 301
@@ -174,6 +191,7 @@ public class CasRedirectStrategy implements RedirectStrategy {
                 String serviceTicket = EntityUtils.toString(response.getEntity());
                 log.debug("Service ticket is: " + serviceTicket);
                 // Reset
+                // Deciding redirection based on service ticket, state is not needed
                 context.removeAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_REQUEST_STATE);
                 // Continue back to service with serviceTicket
                 context.setAttribute(ATTRIBUTE_CAS_SERVICE_TICKET, serviceTicket);
@@ -188,6 +206,16 @@ public class CasRedirectStrategy implements RedirectStrategy {
             }
             log.warn("CAS redirecting strategy confused. Cancelling further redirects.");
             return false;
+        } else if(!authenticateOnly && CasRedirectStrategy.CAS_REQUEST_STATE_SESSION.equals(context.getAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_REQUEST_STATE)) &&
+                response.getStatusLine().getStatusCode() == 200) {
+            // "Redirecting" back to original request
+            return true;
+        } else if(authenticateOnly && context.getAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_REQUEST_STATE) == null &&
+                response.getStatusLine().getStatusCode() == 401) {
+            // CAS login required, same situation as /cas/login redirect response
+            // PRE auth state
+            context.setAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_REQUEST_STATE, CasRedirectStrategy.CAS_REQUEST_STATE_PREAUTH);
+            return true;
         } else {
             // Otherwise only interested in responses with location header
             Header redirectLocation = response.getFirstHeader("Location");
@@ -208,15 +236,20 @@ public class CasRedirectStrategy implements RedirectStrategy {
      * @param locationUrl
      * @return
      * @throws UnsupportedEncodingException 
+     * @throws MalformedURLException 
      * @throws Exception
      */
     public static HttpUriRequest createTGTRequest(HttpRequest request, HttpResponse response,
-            HttpContext context, URL locationUrl, String login, String password) throws UnsupportedEncodingException {
+            HttpContext context, URL locationUrl, String login, String password) throws UnsupportedEncodingException, MalformedURLException {
 
         String service = (String)context.getAttribute(ATTRIBUTE_SERVICE_URL);
 
         // Gets the /cas/v1/tickets full URL
-        String url = resolveCasTicketUrl(locationUrl);
+        String url = null;
+        if(locationUrl != null)
+            url = resolveCasTicketUrl(locationUrl);
+        else
+            url = resolveCasTicketUrl(new URL(service));
 
         HttpPost casRequest = new HttpPost(url);
 
@@ -387,7 +420,7 @@ public class CasRedirectStrategy implements RedirectStrategy {
      * @param request
      * @return
      */
-    private static String resolveUrl(HttpRequest request) {
+    protected static String resolveUrl(HttpRequest request) {
         String protocol = request.getProtocolVersion().getProtocol().toLowerCase();
         String url = protocol + 
                 "://" + request.getFirstHeader("Host").getValue() +
