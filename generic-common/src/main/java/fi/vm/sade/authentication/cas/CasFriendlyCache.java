@@ -52,7 +52,11 @@ public class CasFriendlyCache {
      * Clears all from cache.
      */
     public void clearAll() {
-        this.cacheManager.clearAll();
+        this.getCacheManager().clearAll();
+    }
+    
+    public long getSize() {
+        return this.getSessionCache().getSize();
     }
     
     /**
