@@ -60,8 +60,6 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
     public static final String HEADER_COOKIE = "Cookie";
     public static final String HEADER_COOKIE_SEPARATOR = "; ";
 
-    private static final String SPRING_CAS_SUFFIX = "j_spring_cas_security_check";
-
     @Autowired
     CasFriendlyCache sessionCache;
 
@@ -207,11 +205,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
      * @throws ClientProtocolException
      * @throws IOException
      */
-   private boolean doCasAuthentication(Message message, String login, String password) throws Exception {
-        // TODO Currently resends the first request as well, can be optimized to go to /cas/login directly,
-        // which would require some additional logic to get the original request from message  
-
-        String targetServiceUrl = null;
+   private boolean doCasAuthentication(Message message, String targetServiceUrl, String login, String password, boolean casRedirect) throws Exception {
         String userName = null;
         HttpUriRequest request = null;
 
@@ -234,10 +228,10 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             } else
                 return false;
 
-            request = CasFriendlyHttpClient.createRequest(message);
+            request = CasFriendlyHttpClient.createRequest(message, !casRedirect, context);
+
             HttpResponse response = casClient.execute(request, context);
 
-            targetServiceUrl = (String)context.getAttribute(CasRedirectStrategy.ATTRIBUTE_SERVICE_URL);
             userName = (login != null)?login:auth.getName();
 
             // Set session ids
@@ -278,7 +272,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
         if(this.isDevMode()) {
             return this.doDevAuthentication(message, targetServiceUrl, this.getAppClientUsername(), this.getAppClientPassword(), casRedirect);
         } else {
-            return this.doCasAuthentication(message, this.getAppClientUsername(), this.getAppClientPassword());
+            return this.doCasAuthentication(message, targetServiceUrl, this.getAppClientUsername(), this.getAppClientPassword(), casRedirect);
         }
     }
 
@@ -318,7 +312,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
                 return false;
             } else {
                 // Do "normal" cas login with login and password
-                return this.doCasAuthentication(message, login, password);
+                return this.doCasAuthentication(message, targetServiceUrl, login, password, !casRedirect);
             }
         } finally {
             // Release request for someone else
@@ -481,15 +475,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
         String targetUrl = (String)message.get(Message.ENDPOINT_ADDRESS);
         if(targetUrl == null)
             targetUrl = (String)message.getExchange().getOutMessage().get(Message.ENDPOINT_ADDRESS);
-        URL url = new URL(targetUrl);
-        String port = ((url.getPort() > 0)?(":" + url.getPort()):"");
-        String[] folders = url.getPath().split("/");
-        String path = "/";
-        if(folders.length > 0)
-            path += folders[1] + "/";
-        String finalUrl = url.getProtocol() + "://" + 
-                url.getHost() + port + path + SPRING_CAS_SUFFIX;
-        return finalUrl.toString();
+        return CasFriendlyHttpClient.resolveTargetServiceUrl(targetUrl);
     }
 
     private void setSessionCookie(HttpURLConnection conn, String id) {
