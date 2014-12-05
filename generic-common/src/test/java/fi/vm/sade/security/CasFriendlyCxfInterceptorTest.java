@@ -89,7 +89,7 @@ public class CasFriendlyCxfInterceptorTest {
             CasFriendlyCxfInterceptor<Message> interceptor = this.createInterceptor(
                     wrongLogin, password, true, true, false);
             WebClient cxfClient = createClient(protectedTargetUrl, interceptor);
-            Assert.assertTrue("Must not end up with (400), got: " + cxfClient.getResponse().getStatus(), cxfClient.getResponse().getStatus() == 400);
+            Assert.assertTrue("Response must be empty, got: " + cxfClient.getResponse(), cxfClient.getResponse() == null);
             Assert.assertTrue("Session count should be 0, but is: " + interceptor.getCache().getSize(), interceptor.getCache().getSize() == 0);
         } catch(Exception ex) {
             ex.printStackTrace();
