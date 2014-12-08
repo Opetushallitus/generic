@@ -11,7 +11,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Interceptor for adding Caller-Id header to all requests.
+ * Interceptor for adding Caller-Id header to all requests. Interceptor must be registered for all 
+ * services, in xml like following:
+ * <bean id="callerIdInterceptor" class="fi.vm.sade.generic.rest.CallerIdCxfInterceptor">
+ *   <property name="headerValue" value="${caller.id}"/>
+ * </bean>
+ *  <cxf:bus>
+ *      <cxf:outInterceptors>
+ *          <ref bean="callerIdInterceptor"/>
+ *     </cxf:outInterceptors>
+ *  </cxf:bus>
  */
 public class CallerIdCxfInterceptor<T extends Message> extends AbstractPhaseInterceptor<T> {
 
