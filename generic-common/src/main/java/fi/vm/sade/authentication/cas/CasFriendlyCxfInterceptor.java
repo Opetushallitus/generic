@@ -110,26 +110,24 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
         HttpURLConnection conn = resolveConnection(message);
         Authentication auth = this.getAuthentication();
         try {
-            // Uses caller service as the caller Id
-            String callerId = this.getCallerService();
+            String callerService = this.getCallerService();
             
-            if(callerId == null || callerId.trim().length() <= 0) {
-                log.warn("CallerService is not set! Set callerService property to a distinctive name for this service.");
-            } else
-                conn.setRequestProperty("Caller-Id", callerId);
+            if(callerService == null || callerService.trim().length() <= 0) {
+                log.warn("CallerService is not set. Set callerService property to a distinctive name for this service.");
+            }
             String targetServiceUrl = resolveTargetServiceUrl(message);
             log.debug("Outbound target URL: " + targetServiceUrl);
             String sessionId = null;
             String userName = (this.getAppClientUsername() != null)?this.getAppClientUsername():auth.getName();
             log.debug("Outbound username: " + userName);
-            sessionId = this.getSessionIdFromCache(callerId, targetServiceUrl, userName);
+            sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
             log.debug("Outbound sessionId from cache: " + sessionId);
             if(sessionId == null && this.isUseBlockingConcurrent()) {
                 log.debug("Outbound uses blocking (useBlockingConcurrent == true).");
                 // Block multiple requests if necessary, lock if no concurrent running
-                this.sessionCache.waitOrFlagForRunningRequest(callerId, targetServiceUrl, userName, this.getMaxWaitTimeMillis(), true);
+                this.sessionCache.waitOrFlagForRunningRequest(callerService, targetServiceUrl, userName, this.getMaxWaitTimeMillis(), true);
                 // Might be available now
-                sessionId = this.getSessionIdFromCache(callerId, targetServiceUrl, userName);
+                sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
                 log.debug("Outbound sessionId from cache after blocking: " + sessionId);
             }
             // Set sessionId if possible before making the request
@@ -143,7 +141,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
                 this.doAuthentication(message, targetServiceUrl, false);
 
                 // Might be available now
-                sessionId = this.getSessionIdFromCache(callerId, targetServiceUrl, userName);
+                sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
                 
                 log.debug("Outbound sessionId after authentication process: " + sessionId);
 
