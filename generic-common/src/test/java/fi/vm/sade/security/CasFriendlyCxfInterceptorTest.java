@@ -1,11 +1,15 @@
 package fi.vm.sade.security;
 
 import java.io.InputStream;
+import java.util.Arrays;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.apache.cxf.jaxrs.ext.form.Form;
 import org.apache.cxf.message.Message;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -14,6 +18,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.security.core.context.SecurityContextHolder;
+
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 
 import fi.vm.sade.authentication.cas.CasFriendlyCache;
 import fi.vm.sade.authentication.cas.CasFriendlyCxfInterceptor;
@@ -67,6 +73,31 @@ public class CasFriendlyCxfInterceptorTest {
                     login, password, true, true, false);
             WebClient cxfClient = createClient(protectedTargetUrl, interceptor);
             String response = IOUtils.toString((InputStream) cxfClient.get().getEntity());
+            Assert.assertTrue("Response should be: ok 1, but is: " + response, response.equals("ok 1"));
+            Assert.assertTrue("Session count should be 1, but is: " + interceptor.getCache().getSize(), interceptor.getCache().getSize() == 1);
+        } catch(Exception ex) {
+            ex.printStackTrace();
+            Assert.assertTrue(false);
+        }
+    }
+    
+    /**
+     * PALVELUTUNNUKSELLA POST
+     *  CASE:
+     *  - ei olemassa olevaa sessiota, 
+     *  - sessionRequired,
+     *  - vaatii kirjautumista
+     */
+    @Test
+    public void testProtectedWithLoginNoSessionRequestPost() {
+        try {
+            CasFriendlyCxfInterceptor<Message> interceptor = this.createInterceptor(
+                    login, password, true, true, false);
+            WebClient cxfClient = createClient(protectedTargetUrl, interceptor);
+            Form form = new Form();
+            form.set("TESTNAME", "TESTVALUE");
+            Response resp = cxfClient.form(form);
+            String response = IOUtils.toString((InputStream) resp.getEntity());
             Assert.assertTrue("Response should be: ok 1, but is: " + response, response.equals("ok 1"));
             Assert.assertTrue("Session count should be 1, but is: " + interceptor.getCache().getSize(), interceptor.getCache().getSize() == 1);
         } catch(Exception ex) {
@@ -140,7 +171,32 @@ public class CasFriendlyCxfInterceptorTest {
             Assert.assertTrue(false);
         }
     }
-    
+
+    /**
+     * PALVELUTUNNUKSELLA POST
+     *  CASE:
+     *  - ei olemassa olevaa sessiota, 
+     *  - no sessionRequired,
+     *  - vaatii kirjautumista
+     */
+    @Test
+    public void testProtectedWithNoSessionRequiredRequestPost() {
+        try {
+            CasFriendlyCxfInterceptor<Message> interceptor = this.createInterceptor(
+                    login, password, false, true, false);
+            WebClient cxfClient = createClient(protectedTargetUrl, interceptor);
+            Form form = new Form();
+            form.set("TESTNAME", "TESTVALUE");
+            Response resp = cxfClient.form(form);
+            String response = IOUtils.toString((InputStream) resp.getEntity());
+            Assert.assertTrue("Response should be: ok 1, but is: " + response, response.equals("ok 1"));
+            Assert.assertTrue("Session count should be 1, but is: " + interceptor.getCache().getSize(), interceptor.getCache().getSize() == 1);
+        } catch(Exception ex) {
+            ex.printStackTrace();
+            Assert.assertTrue(false);
+        }
+    }
+
     private WebClient createClient(String url, CasFriendlyCxfInterceptor<Message> interceptor) {
         String testCaseId = interceptor.toString();
         WebClient c = WebClient.create(getUrl(url)).accept(MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON).header("Testcase-Id", testCaseId);

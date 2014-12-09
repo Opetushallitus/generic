@@ -2,6 +2,7 @@ package fi.vm.sade.authentication.cas;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -14,7 +15,9 @@ import java.util.Map;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.io.CacheAndWriteOutputStream;
 import org.apache.cxf.io.CachedOutputStream;
+import org.apache.cxf.io.CachedOutputStreamCallback;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
@@ -56,6 +59,9 @@ import org.springframework.security.web.authentication.WebAuthenticationDetails;
 public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseInterceptor<T> {
 
     private static final Logger log = LoggerFactory.getLogger(CasFriendlyCxfInterceptor.class);
+
+    public static final String ORIGINAL_POST_BODY_INPUTSTREAM = CasFriendlyCxfInterceptor.class.getName() + ".postBodyStream";
+    public static final String ORIGINAL_POST_BODY_LENGTH = CasFriendlyCxfInterceptor.class.getName() + ".postBodyLength";
 
     public static final String HEADER_COOKIE = "Cookie";
     public static final String HEADER_COOKIE_SEPARATOR = "; ";
@@ -100,6 +106,35 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             this.handleOutbound(message);
     }
 
+    private void prepareOutMessage(final Message message) throws Fault {
+        try {
+            OutputStream os = message.getContent ( OutputStream.class );
+            CacheAndWriteOutputStream cwos = new CacheAndWriteOutputStream (os);
+            message.setContent ( OutputStream.class, cwos );
+            
+            cwos.registerCallback ( new CachedOutputStreamCallback() {
+                @Override
+                public void onClose ( CachedOutputStream cos ) {
+                    try {
+                        if ( cos != null ) {
+//                            System.out.println ("Response XML in out Interceptor : " + IOUtils.toString ( cos.getInputStream ( ) ));
+                            message.getExchange().put(CasFriendlyCxfInterceptor.ORIGINAL_POST_BODY_INPUTSTREAM, cos.getInputStream());
+                            message.getExchange().put(CasFriendlyCxfInterceptor.ORIGINAL_POST_BODY_LENGTH, cos.size());
+                        }
+                    } catch ( Exception e ) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onFlush ( CachedOutputStream cos ) {
+                }    
+            });
+        } catch(Exception ex) {
+            throw new Fault(ex);
+        }
+    }
+    
     /**
      * Invoked on outbound (request).
      * @param message
@@ -148,8 +183,10 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
                 // Set sessionId if possible before making the request
                 if(sessionId != null) 
                     setSessionCookie(conn, sessionId);
-
             }
+
+            prepareOutMessage(message);
+
         } catch(Exception ex) {
             log.error("Unable process outbound message in interceptor.", ex);
             throw new Fault(ex);
@@ -244,7 +281,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             }
 
             // Set values back to message from response
-            if(response != null) {
+            if(casRedirect && response != null) {
                 fillMessage(message, response);
                 return true;
             } else

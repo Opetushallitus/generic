@@ -1,5 +1,6 @@
 package fi.vm.sade.generic.rest;
 
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -7,13 +8,17 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+
+import org.apache.commons.io.IOUtils;
 
 import fi.vm.sade.security.CasFriendlyCxfInterceptorTest;
 
@@ -46,6 +51,32 @@ public class CasFriendlyTestResource {
         }
     }
 
+    @Path("/protected")
+    @POST
+    @Produces("text/plain")
+    public Response protectedPost(@Context HttpServletRequest request,
+            @FormParam (value="TESTNAME") String name,
+            @HeaderParam (value="Testcase-Id") String testCaseId,
+            @QueryParam (value="ticket") String ticket) {
+        try {
+            if(!"TESTVALUE".equals(name)) {
+                System.err.println("BODY MISSING!");
+                throw new Exception("Post body missing.");
+            }
+            HttpSession session = request.getSession(false);
+            if(session == null && ticket == null)
+                return Response.status(301).location(new URI(CasFriendlyCxfInterceptorTest.getUrl("/cas/login"))).build();
+            else {
+                session = request.getSession(true);
+                return Response
+                    .ok("ok " + getAndIncreaseTestCaseCount(request.getRequestURI() + testCaseId))
+                    .build();
+            }
+        } catch (Exception e) {
+            return Response.serverError().build();
+        }
+    }
+    
     @Path("/unprotected")
     @GET
     @Produces("text/plain")

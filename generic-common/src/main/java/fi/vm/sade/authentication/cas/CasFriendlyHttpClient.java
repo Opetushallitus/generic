@@ -127,8 +127,9 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
             Map<String, List<String>> headers = (Map<String, List<String>>)outMessage.get(Message.PROTOCOL_HEADERS);
     
             // Get the body of request
+            InputStream is = (InputStream)message.getExchange().get(CasFriendlyCxfInterceptor.ORIGINAL_POST_BODY_INPUTSTREAM);
+            Long length = (Long)message.getExchange().get(CasFriendlyCxfInterceptor.ORIGINAL_POST_BODY_LENGTH);
             String body = null;
-            InputStream is = outMessage.getContent(InputStream.class);
             if(is != null) {
                 CachedOutputStream bos = new CachedOutputStream();
                 IOUtils.copy(is, bos);
@@ -138,6 +139,8 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
             // Create request based on method
             if(method.equalsIgnoreCase("POST")) {
                 uriRequest = new HttpPost(url);
+//                if(is != null && length != null)
+//                    ((HttpPost)uriRequest).setEntity(new InputStreamEntity(is, length.longValue()));
                 if(body != null)
                     ((HttpPost)uriRequest).setEntity(new StringEntity(body));
             } else if(method.equalsIgnoreCase("GET")) {
@@ -146,6 +149,8 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
                 uriRequest = new HttpDelete(url);
             } else if(method.equalsIgnoreCase("PUT")) {
                 uriRequest = new HttpPut(url);
+//                if(is != null && length != null)
+//                    ((HttpPost)uriRequest).setEntity(new InputStreamEntity(is, length.longValue()));
                 if(body != null)
                     ((HttpPost)uriRequest).setEntity(new StringEntity(body));
             }
