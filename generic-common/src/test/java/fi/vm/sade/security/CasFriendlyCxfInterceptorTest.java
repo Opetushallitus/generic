@@ -120,7 +120,8 @@ public class CasFriendlyCxfInterceptorTest {
             CasFriendlyCxfInterceptor<Message> interceptor = this.createInterceptor(
                     wrongLogin, password, true, true, false);
             WebClient cxfClient = createClient(protectedTargetUrl, interceptor);
-            Assert.assertTrue("Response must be empty, got: " + cxfClient.getResponse(), cxfClient.getResponse() == null);
+            cxfClient.get();
+            Assert.assertTrue("Response status must be <> 200, got: " + cxfClient.getResponse().getStatus(), cxfClient.getResponse().getStatus() != 200);
             Assert.assertTrue("Session count should be 0, but is: " + interceptor.getCache().getSize(), interceptor.getCache().getSize() == 0);
         } catch(Exception ex) {
             ex.printStackTrace();
@@ -144,6 +145,50 @@ public class CasFriendlyCxfInterceptorTest {
             String response = IOUtils.toString((InputStream) cxfClient.get().getEntity());
             Assert.assertTrue("Response should be: ok 1, but is: " + response, response.equals("ok 1"));
             Assert.assertTrue("Session count should be 1, but is: " + interceptor.getCache().getSize(), interceptor.getCache().getSize() == 1);
+        } catch(Exception ex) {
+            ex.printStackTrace();
+            Assert.assertTrue(false);
+        }
+    }
+
+    /**
+     * EI PALVELUTUNNUSTA
+     *  CASE:
+     *  - ei olemassa olevaa sessiota, 
+     *  - sessionRequired,
+     *  - vaatii kirjautumista
+     */
+    @Test
+    public void testProtectedWithoutLoginSessionRequiredRequestGet() {
+        try {
+            CasFriendlyCxfInterceptor<Message> interceptor = this.createInterceptor(
+                    null, null, true, true, false);
+            WebClient cxfClient = createClient(protectedTargetUrl, interceptor);
+            cxfClient.get();
+            Assert.assertTrue("Response status must be <> 200, got: " + cxfClient.getResponse().getStatus(), cxfClient.getResponse().getStatus() != 200);
+            Assert.assertTrue("Session count should be 0, but is: " + interceptor.getCache().getSize(), interceptor.getCache().getSize() == 0);
+        } catch(Exception ex) {
+            ex.printStackTrace();
+            Assert.assertTrue(false);
+        }
+    }
+    
+    /**
+     * EI PALVELUTUNNUSTA
+     *  CASE:
+     *  - ei olemassa olevaa sessiota, 
+     *  - sessionRequired,
+     *  - ei vaadi kirjautumista
+     */
+    @Test
+    public void testUnprotectedWithoutLoginSessionRequiredRequestGet() {
+        try {
+            CasFriendlyCxfInterceptor<Message> interceptor = this.createInterceptor(
+                    null, null, true, true, false);
+            WebClient cxfClient = createClient(unprotectedTargetUrl, interceptor);
+            cxfClient.get();
+            Assert.assertTrue("Response status must be 200, got: " + cxfClient.getResponse().getStatus(), cxfClient.getResponse().getStatus() == 200);
+            Assert.assertTrue("Session count should be 0, but is: " + interceptor.getCache().getSize(), interceptor.getCache().getSize() == 0);
         } catch(Exception ex) {
             ex.printStackTrace();
             Assert.assertTrue(false);

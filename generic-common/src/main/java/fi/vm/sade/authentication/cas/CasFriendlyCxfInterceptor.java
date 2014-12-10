@@ -153,38 +153,45 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             String targetServiceUrl = resolveTargetServiceUrl(message);
             log.debug("Outbound target URL: " + targetServiceUrl);
             String sessionId = null;
-            String userName = (this.getAppClientUsername() != null)?this.getAppClientUsername():auth.getName();
-            log.debug("Outbound username: " + userName);
-            sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
-            log.debug("Outbound sessionId from cache: " + sessionId);
-            if(sessionId == null && this.isUseBlockingConcurrent()) {
-                log.debug("Outbound uses blocking (useBlockingConcurrent == true).");
-                // Block multiple requests if necessary, lock if no concurrent running
-                this.sessionCache.waitOrFlagForRunningRequest(callerService, targetServiceUrl, userName, this.getMaxWaitTimeMillis(), true);
-                // Might be available now
+            // Try to get userName based on authentication
+            String userName = (this.getAppClientUsername() != null)?this.getAppClientUsername():((auth != null)?auth.getName():null);
+            if(userName != null) {
+                log.debug("Outbound username: " + userName);
                 sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
-                log.debug("Outbound sessionId from cache after blocking: " + sessionId);
-            }
-            // Set sessionId if possible before making the request
-            if(sessionId != null) 
-                setSessionCookie(conn, sessionId);
-            else if(this.isSessionRequired()) {
-                // Do this proactively only if session is required.
-                log.debug("Outbound requiring sessionId, doing proactive authentication.");
-
-                // Do CAS or DEV authentication
-                this.doAuthentication(message, targetServiceUrl, false);
-
-                // Might be available now
-                sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
-                
-                log.debug("Outbound sessionId after authentication process: " + sessionId);
-
+                log.debug("Outbound sessionId from cache: " + sessionId);
+                if(sessionId == null && this.isUseBlockingConcurrent()) {
+                    log.debug("Outbound uses blocking (useBlockingConcurrent == true).");
+                    // Block multiple requests if necessary, lock if no concurrent running
+                    this.sessionCache.waitOrFlagForRunningRequest(callerService, targetServiceUrl, userName, this.getMaxWaitTimeMillis(), true);
+                    // Might be available now
+                    sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
+                    log.debug("Outbound sessionId from cache after blocking: " + sessionId);
+                }
                 // Set sessionId if possible before making the request
                 if(sessionId != null) 
                     setSessionCookie(conn, sessionId);
+                else if(this.isSessionRequired()) {
+                    // Do this proactively only if session is required.
+                    log.debug("Outbound requiring sessionId, doing proactive authentication.");
+    
+                    // Do CAS or DEV authentication
+                    this.doAuthentication(message, targetServiceUrl, false);
+    
+                    // Might be available now
+                    sessionId = this.getSessionIdFromCache(callerService, targetServiceUrl, userName);
+                    
+                    log.debug("Outbound sessionId after authentication process: " + sessionId);
+    
+                    // Set sessionId if possible before making the request
+                    if(sessionId != null) 
+                        setSessionCookie(conn, sessionId);
+                }
+
+            } else {
+                log.debug("No outbound username available. Continuing as unauthenticated.");
             }
 
+            // Set message body to exchange for further use in Inbound
             prepareOutMessage(message);
 
         } catch(Exception ex) {
