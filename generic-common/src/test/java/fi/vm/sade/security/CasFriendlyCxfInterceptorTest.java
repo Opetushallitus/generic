@@ -1,10 +1,8 @@
 package fi.vm.sade.security;
 
 import java.io.InputStream;
-import java.util.Arrays;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 import org.apache.cxf.helpers.IOUtils;
@@ -18,8 +16,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 
 import fi.vm.sade.authentication.cas.CasFriendlyCache;
 import fi.vm.sade.authentication.cas.CasFriendlyCxfInterceptor;
