@@ -1,8 +1,9 @@
 package fi.vm.sade.generic.rest;
 
-import java.io.ByteArrayOutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,8 +19,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import org.apache.commons.io.IOUtils;
-
+import fi.vm.sade.authentication.cas.CasFriendlyHttpClient;
 import fi.vm.sade.security.CasFriendlyCxfInterceptorTest;
 
 /**
@@ -30,6 +30,16 @@ public class CasFriendlyTestResource {
 
     private static Map<String, Integer> testCaseCounts = new HashMap<String, Integer>();
     
+    
+    @Path("/protected2/test")
+    @GET
+    @Produces("text/plain")
+    public Response protectedTestGet(@Context HttpServletRequest request, 
+            @HeaderParam (value="Testcase-Id") String testCaseId,
+            @QueryParam (value="ticket") String ticket) {
+        return this.protectedGet(request, testCaseId, ticket);
+    }
+    
     @Path("/protected")
     @GET
     @Produces("text/plain")
@@ -38,19 +48,29 @@ public class CasFriendlyTestResource {
             @QueryParam (value="ticket") String ticket) {
         try {
             HttpSession session = request.getSession(false);
-            if(session == null && ticket == null)
-                return Response.status(301).location(new URI(CasFriendlyCxfInterceptorTest.getUrl("/cas/login"))).build();
+            if(session == null)
+                return Response.status(302).location(new URI(CasFriendlyCxfInterceptorTest.getUrl(createCasLocation(request)))).build();
             else {
                 session = request.getSession(true);
                 return Response
                     .ok("ok " + getAndIncreaseTestCaseCount(request.getRequestURI() + testCaseId))
                     .build();
             }
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
             return Response.serverError().build();
         }
     }
 
+    @Path("/protected2/test")
+    @POST
+    @Produces("text/plain")
+    public Response protectedTestPost(@Context HttpServletRequest request,
+            @FormParam (value="TESTNAME") String name,
+            @HeaderParam (value="Testcase-Id") String testCaseId,
+            @QueryParam (value="ticket") String ticket) {
+        return this.protectedPost(request, name, testCaseId, ticket);
+    }
+    
     @Path("/protected")
     @POST
     @Produces("text/plain")
@@ -64,8 +84,8 @@ public class CasFriendlyTestResource {
                 throw new Exception("Post body missing.");
             }
             HttpSession session = request.getSession(false);
-            if(session == null && ticket == null)
-                return Response.status(301).location(new URI(CasFriendlyCxfInterceptorTest.getUrl("/cas/login"))).build();
+            if(session == null)
+                return Response.status(302).location(new URI(CasFriendlyCxfInterceptorTest.getUrl(createCasLocation(request)))).build();
             else {
                 session = request.getSession(true);
                 return Response
@@ -93,13 +113,30 @@ public class CasFriendlyTestResource {
     public Response casCheckGet(@Context HttpServletRequest request, 
             @HeaderParam (value="Testcase-Id") String testCaseId,
             @QueryParam (value="ticket") String ticket) {
-        if(ticket == null)
+        if(ticket == null || !ticket.equals(CasFriendlyCasMockResource.fakeSt))
             return Response.status(401).build();
         else {
             HttpSession session = request.getSession(true);
             return Response
                 .ok("spring authenticated")
                 .build();
+        }
+    }
+
+    private static String createCasLocation(HttpServletRequest request) throws UnsupportedEncodingException, MalformedURLException {
+        String fullUrl = getFullURL(request);
+        fullUrl = CasFriendlyHttpClient.resolveTargetServiceUrl(fullUrl);
+        return "/cas/login?service=" + URLEncoder.encode(fullUrl, "UTF-8");
+    }
+    
+    private static String getFullURL(HttpServletRequest request) {
+        StringBuffer requestURL = request.getRequestURL();
+        String queryString = request.getQueryString();
+
+        if (queryString == null) {
+            return requestURL.toString();
+        } else {
+            return requestURL.append('?').append(queryString).toString();
         }
     }
     
