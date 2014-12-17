@@ -22,8 +22,8 @@ import fi.vm.sade.security.CasFriendlyCxfInterceptorTest;
 @Path("/cas")
 public class CasFriendlyCasMockResource {
 
-    final static String fakeTgt = "TGT-whatever";
-    final static String fakeSt = "ST-1-FFDFHDSJKHSDFJKSDHFJKRUEYREWUIFSD2132";
+    public final static String fakeTgt = "TGT-whatever";
+    public final static String fakeSt = "ST-1-FFDFHDSJKHSDFJKSDHFJKRUEYREWUIFSD2132";
     
     @Path("/v1/tickets")
     @POST
