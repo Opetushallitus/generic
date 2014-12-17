@@ -259,6 +259,14 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 
             HttpContext context = null;
 
+            userName = (login != null)?login:auth.getName();
+
+            if(casRedirect) {
+                // Remove invalid session from cache
+                sessionCache.removeSessionId(this.getCallerService(), targetServiceUrl, userName);
+            }
+
+            // Create http context with login+password or with PGT
             if(login != null && password != null) {
                 context = casClient.createHttpContext(
                         login, password, this.sessionCache);
@@ -273,8 +281,6 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
             request = CasFriendlyHttpClient.createRequest(message, !casRedirect, context);
 
             HttpResponse response = casClient.execute(request, context);
-
-            userName = (login != null)?login:auth.getName();
 
             // Set session ids
             CookieStore cookieStore = (CookieStore)context.getAttribute(ClientContext.COOKIE_STORE);
