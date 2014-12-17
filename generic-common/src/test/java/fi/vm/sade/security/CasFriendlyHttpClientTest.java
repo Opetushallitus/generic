@@ -24,7 +24,7 @@ import fi.vm.sade.generic.rest.TestParams;
 public class CasFriendlyHttpClientTest {
 
     String unprotectedTargetUrl = "/casfriendly/unprotected";
-    String protectedTargetUrl = "/casfriendly/protected";
+    String protectedTargetUrl = "/casfriendly/protected2/test";
     String login = "whatever";
     String password = "whatever";
 
