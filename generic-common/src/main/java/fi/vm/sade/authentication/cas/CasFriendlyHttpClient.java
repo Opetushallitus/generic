@@ -78,8 +78,11 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
                     // Target service URL is the service name used for authentication
                     String targetUrl = CasRedirectStrategy.resolveUrl(request);
                     String targetServiceUrl = resolveTargetServiceUrl(targetUrl);
-                    
-                    context.setAttribute(CasRedirectStrategy.ATTRIBUTE_SERVICE_URL, targetServiceUrl);
+
+                    // Do not change serviceUrl for authenticate only requests if serviceUrl is set
+                    if(context.getAttribute(CasRedirectStrategy.ATTRIBUTE_SERVICE_URL) == null 
+                            || !(new Boolean(true).equals(context.getAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_AUTHENTICATE_ONLY))))
+                        setTargetServiceUrl(context, targetServiceUrl);
                     context.setAttribute(CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST, request);
                     context.setAttribute(CasRedirectStrategy.ATTRIBUTE_ORIGINAL_REQUEST_PARAMS, request.getParams());
                 }
@@ -199,7 +202,7 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
             log.debug(one.getName() + ": " + one.getValue());
         }
     }
-    
+
     /**
      * Resolves target service URL from message's endpoint address.
      * @param message
@@ -216,5 +219,9 @@ public class CasFriendlyHttpClient extends DefaultHttpClient {
         String finalUrl = url.getProtocol() + "://" + 
                 url.getHost() + port + path + SPRING_CAS_SUFFIX;
         return finalUrl.toString();
+    }
+
+    public static void setTargetServiceUrl(HttpContext context, String serviceUrl) {
+        context.setAttribute(CasRedirectStrategy.ATTRIBUTE_SERVICE_URL, serviceUrl);
     }
 }

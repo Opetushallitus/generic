@@ -104,7 +104,8 @@ public class CasRedirectStrategy implements RedirectStrategy {
 
                     // Set the service URL to context
                     if(service != null)
-                        context.setAttribute(ATTRIBUTE_SERVICE_URL, service);
+                        CasFriendlyHttpClient.setTargetServiceUrl(context, service);
+
                 } else {
                     service = (String)context.getAttribute(ATTRIBUTE_SERVICE_URL);
                 }
