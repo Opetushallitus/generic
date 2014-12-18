@@ -3,6 +3,7 @@ package fi.vm.sade.generic.rest;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
@@ -102,6 +103,7 @@ public class CasFriendlyTestResource {
     @Produces("text/plain")
     public Response unprotectedGet(@Context HttpServletRequest request,
             @HeaderParam (value="Testcase-Id") String testCaseId) {
+        HttpSession session = request.getSession(true);
         return Response
                 .ok("ok " + getAndIncreaseTestCaseCount(request.getRequestURI() + testCaseId))
                 .build();
@@ -112,14 +114,15 @@ public class CasFriendlyTestResource {
     @Produces("text/plain")
     public Response casCheckGet(@Context HttpServletRequest request, 
             @HeaderParam (value="Testcase-Id") String testCaseId,
-            @QueryParam (value="ticket") String ticket) {
+            @QueryParam (value="ticket") String ticket) throws URISyntaxException {
         if(ticket == null || !ticket.equals(CasFriendlyCasMockResource.fakeSt))
             return Response.status(401).build();
         else {
             HttpSession session = request.getSession(true);
-            return Response
-                .ok("spring authenticated")
-                .build();
+            // TODO CAS actually redirects to the original service stored in session
+            // This is to simulate the "worst" case (possibility to cause endless loop)
+            return Response.status(302).location(
+                    new URI(getFullURL(request))).build();
         }
     }
 
