@@ -375,6 +375,31 @@ public class CasFriendlyCxfInterceptorTest {
         }
     }
     
+    /**
+     * PROXYLLA GET
+     *  CASE:
+     *  - ei sessiota, 
+     *  - sessionRequired,
+     *  - vaatii kirjautumista
+     */
+    @Test
+    public void testProtectedSessionRequiredProxyRequestGet() {
+        try {
+            CasFriendlyCxfInterceptor<Message> interceptor = this.createInterceptor(
+                    null, null, CasFriendlyCasMockResource.fakeTgt, true, true, false);
+//            String targetServiceUrl = CasFriendlyHttpClient.resolveTargetServiceUrl(getUrl(protectedTargetUrl));
+//            interceptor.getCache().setSessionId(callerService, targetServiceUrl, login, "INVALID");
+            WebClient cxfClient = createClient(protectedTargetUrl, interceptor);
+            String response = IOUtils.toString((InputStream) cxfClient.get().getEntity());
+            Assert.assertTrue("Response should be: ok 1, but is: " + response, response.equals("ok 1"));
+            Assert.assertTrue("Session count should be 1, but is: " + interceptor.getCache().getSize(), interceptor.getCache().getSize() == 1);
+//            String sessionId = interceptor.getCache().getSessionId(callerService, targetServiceUrl, login);
+//            Assert.assertTrue("Session Id must not be INVALID any more, but is.", !"INVALID".equals(sessionId));
+        } catch(Exception ex) {
+            ex.printStackTrace();
+            Assert.assertTrue(false);
+        }
+    }
     
     private WebClient createClient(String url, CasFriendlyCxfInterceptor<Message> interceptor) {
         String testCaseId = interceptor.toString();
