@@ -217,11 +217,16 @@ public class CasRedirectStrategy implements RedirectStrategy {
             // PRE auth state
             context.setAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_REQUEST_STATE, CasRedirectStrategy.CAS_REQUEST_STATE_PREAUTH);
             return true;
-        } else {
+        } else if(CasRedirectStrategy.CAS_REQUEST_STATE_TGT.equals(context.getAttribute(CasRedirectStrategy.ATTRIBUTE_CAS_REQUEST_STATE)) &&
+                response.getStatusLine().getStatusCode() == 201) {
+            // TGT phase
+            return true;
+        }else {
             // Otherwise only interested in responses with location header
             Header redirectLocation = response.getFirstHeader("Location");
 
-            if (redirectLocation != null) {
+            // Follow redirect only if not authenticateOnly request
+            if (redirectLocation != null && !authenticateOnly) {
                 // Continue with redirect
                 return true;
             } else
