@@ -448,6 +448,8 @@ public class CasFriendlyCxfInterceptorTest {
         interceptor.setCallerService(callerService);
         interceptor.setUseSessionPerUser(useSessionPerUser);
         interceptor.setUseBlockingConcurrent(useBlockingConcurrent);
+        // Test with dev mode (cas is default)
+//        interceptor.setAuthMode("dev");
 
         return interceptor;
     }

@@ -360,7 +360,7 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
                 return false;
             } else {
                 // Do "normal" cas login with login and password
-                return this.doCasAuthentication(message, targetServiceUrl, login, password, !casRedirect);
+                return this.doCasAuthentication(message, targetServiceUrl, login, password, casRedirect);
             }
         } finally {
             // Release request for someone else
@@ -703,6 +703,19 @@ public class CasFriendlyCxfInterceptor<T extends Message> extends AbstractPhaseI
 
     public void setUseSessionPerUser(boolean useSessionPerUser) {
         this.useSessionPerUser = useSessionPerUser;
+    }
+
+    /**
+     * Authmode is either dev or cas. Dev is used for development purposes only and must not
+     * be used in production. Default is cas (or null).
+     * @return
+     */
+    public String getAuthMode() {
+        return authMode;
+    }
+
+    public void setAuthMode(String authMode) {
+        this.authMode = authMode;
     }
 
 }
