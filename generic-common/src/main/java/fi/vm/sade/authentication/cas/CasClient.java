@@ -44,8 +44,6 @@ public final class CasClient {
     	server = checkUrl(server, CAS_URL_SUFFIX);
         if(addSuffix)
     	    service = checkUrl(service, SERVICE_URL_SUFFIX);
-        else
-            service = checkUrl(service, "");
 
     	notNull(server, "server must not be null");
         notNull(username, "username must not be null");
