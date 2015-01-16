@@ -33,12 +33,20 @@ public final class CasClient {
 
     /** get cas service ticket, throws runtime exception if fails */
     public static String getTicket(String server, final String username, final String password, String service) {
+        return getTicket(server, username, password, service, true);
+    }
+
+    /** get cas service ticket, throws runtime exception if fails */
+    public static String getTicket(String server, final String username, final String password, String service, boolean addSuffix) {
     	
     	logger.debug("getTicket for server:{}, username:{}, service::{} ", new Object[]{server, username, service});
     	
     	server = checkUrl(server, CAS_URL_SUFFIX);
-    	service = checkUrl(service, SERVICE_URL_SUFFIX);
-    	
+        if(addSuffix)
+    	    service = checkUrl(service, SERVICE_URL_SUFFIX);
+        else
+            service = checkUrl(service, "");
+
     	notNull(server, "server must not be null");
         notNull(username, "username must not be null");
         notNull(password, "password must not be null");
