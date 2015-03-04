@@ -1,28 +1,24 @@
 package fi.vm.sade.generic.rest;
 
-import com.sun.jersey.spi.container.ContainerRequest;
-import com.sun.jersey.spi.container.ContainerResponse;
-import com.sun.jersey.spi.container.ContainerResponseFilter;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-/**
- * User: tommiha
- * Date: 6/13/13
- * Time: 2:35 PM
- */
-public class CorsFilter implements ContainerResponseFilter {
-    @Override
-    public ContainerResponse filter(ContainerRequest containerRequest, ContainerResponse containerResponse) {
-        if ( containerRequest.getRequestHeaders().containsKey("access-control-request-method") ) {
-            for ( String value : containerRequest.getRequestHeaders().get("access-control-request-method") ) {
-                containerResponse.getHttpHeaders().add("Access-Control-Allow-Methods", value );
-            }
-        }
-        if ( containerRequest.getRequestHeaders().containsKey("access-control-request-headers") ) {
-            for ( String value : containerRequest.getRequestHeaders().get("access-control-request-headers") ) {
-                containerResponse.getHttpHeaders().add("Access-Control-Allow-Headers", value );
-            }
-        }
-        containerResponse.getHttpHeaders().add("Access-Control-Allow-Origin", "*");
-        return containerResponse;
+@Component
+public abstract class CorsFilter {
+    
+    //Default mode is PRODUCTION
+    private static final String CORSFILTER_MODE_PARAM = "${common.corsfilter.mode:PRODUCTION}";
+
+    protected CorsFilterMode mode;
+    
+    //Multiple values can be provided by using space as a separator, this will be used only in PRODUCTION mode
+    @Value("${common.corsfilter.allowed-domains:}")
+    protected String allowedDomains;
+
+    @Value(CORSFILTER_MODE_PARAM)
+    void setMode(String mode) {
+        this.mode = StringUtils.isNotBlank(mode) && !mode.equalsIgnoreCase(CORSFILTER_MODE_PARAM) ? CorsFilterMode.valueOf(mode) : CorsFilterMode.PRODUCTION;
     }
+    
 }

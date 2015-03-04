@@ -9,6 +9,7 @@ import org.apache.cxf.message.Message;
  * Date: 3.9.2013
  * Time: 9.58
  */
+@Deprecated // korvattava httpsessio/cookie pohjaisella ratkaisulla, esim: SessionBasedCxfAuthInterceptor
 public class SecurityTicketOutInterceptorRest extends AbstractSecurityTicketOutInterceptor<Message> {
     public SecurityTicketOutInterceptorRest() {
     }

@@ -2,13 +2,13 @@ package fi.vm.sade.generic.rest;
 
 import org.apache.commons.codec.binary.Hex;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.EntityTag;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -63,7 +63,7 @@ public class HttpTestResource {
     @Produces("text/plain")
     @Cacheable(maxAgeSeconds = 2)
     public Response cacheableAnnotatedResource() {
-        System.out.println("HttpTest.cacheableAnnotatedResource, counter: "+counter+", now: " + new Date(System.currentTimeMillis()));
+        System.out.println("HttpTest.cacheableAnnotatedResource, counter: " + counter + ", now: " + new Date(System.currentTimeMillis()));
 
         return Response
                 .ok("cacheable " + (counter++))
@@ -104,4 +104,102 @@ public class HttpTestResource {
     public Response status500() {
         return Response.status(500).build();
     }
+
+    @Path("/pingSecuredRedirect/{sthing}")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response pingSecuredRedirect(@Context HttpServletRequest request) throws URISyntaxException {
+        System.out.println("HttpTestResource.pingSecuredRedirect, params: "+request.getParameterMap());
+        if (MockCasResource.isRequestAuthenticated(request) && request.getParameter("SKIP_CAS_FILTER")==null) {
+            String s = "pong " + (counter++);
+            System.out.println("HttpTestResource.pingSecuredRedirect, ok: "+s);
+            return Response.ok(s).build();
+        } else {
+            String url = "/mock_cas/cas?service=" + request.getRequestURL();
+            System.out.println("HttpTestResource.pingSecuredRedirect, redirect: "+url);
+            return Response.status(302).location(new URI(url)).build();
+        }
+    }
+
+    @Path("/pingSecuredRedirect/{sthing}")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response pingSecuredRedirectPost(@Context HttpServletRequest request) throws URISyntaxException {
+        return pingSecuredRedirect(request);
+    }
+
+    @Path("/pingSecured401Unauthorized")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response pingSecured401Unauthorized(@Context HttpServletRequest request) throws URISyntaxException {
+        if (MockCasResource.isRequestAuthenticated(request)) {
+            return Response.ok("pong " + (counter++)).build();
+        }
+        return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    @Path("/testMethod")
+    @GET
+    public Response testMethod(@Context HttpServletRequest request) {
+        if (!MockCasResource.isRequestAuthenticated(request)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+        return Response.ok("testResult").build();
+    }
+
+    @Path("/special-character-resource")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response post(String json) {
+        return pingBackJson(json);
+    }
+
+    @Path("/special-character-resource")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response put(String json) {
+        return pingBackJson(json);
+    }
+
+    private Response pingBackJson(String json) {
+        System.out.println("got json: " + json);
+        return Response.ok(json).build();
+    }
+
+    @Path("/printcookies")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response printcookies(@Context HttpServletRequest request) throws URISyntaxException {
+        Cookie[] cookies = request.getCookies();
+        String result = "";
+        for (Cookie cookie : cookies) {
+            result += ""+cookie.getName()+"="+cookie.getValue()+"(" +
+                    "|domain:"+cookie.getDomain()+"" +
+                    "|path:"+cookie.getPath() +
+                    "|maxage:"+cookie.getMaxAge() +
+                    ")\n";
+        }
+        return Response.ok(result)
+                .header("sessionid", request.getSession(true).getId())
+                .build();
+    }
+
+    @Path("/buildversion.txt")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response j_spring_cas_security_check(@Context HttpServletRequest request) throws URISyntaxException {
+        String ticket = request.getParameter("ticket");
+        //System.out.println("HttpTestResource.j_spring_cas_security_check, ticket: "+ ticket);
+        HttpSession sess = request.getSession(true); // synnyttää JSESSIONID:n
+        String ticketCookie = ticket.replaceAll(":|/", "_");
+//        String ticketCookie = "asdasd";
+        return Response.ok("sessionid: "+sess.getId())
+                .header("sessionid", sess.getId())
+                .cookie(new NewCookie("TIKETTICOOKIE", ticketCookie))
+                .build();
+    }
+
+
 }

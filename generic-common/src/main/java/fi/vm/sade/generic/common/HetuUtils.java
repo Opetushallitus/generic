@@ -1,7 +1,9 @@
 package fi.vm.sade.generic.common;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -16,10 +18,9 @@ public final class HetuUtils {
         separators.put(20, 'A');
         separators.put(21, 'B');
 
-        invertedSeparators.put('+', 18);
-        invertedSeparators.put('-', 19);
-        invertedSeparators.put('A', 20);
-        invertedSeparators.put('B', 21);
+        @SuppressWarnings("unchecked")
+        final Map<Character, Integer> inverted = MapUtils.invertMap(separators);
+        invertedSeparators = inverted;
     }
 
     private HetuUtils() {
@@ -69,7 +70,7 @@ public final class HetuUtils {
         }
 
         final Random rand = new Random();
-        int identifier = rand.nextInt(998) + 1;
+        int identifier = rand.nextInt(99) + 900;
         if ((gender == 0 && identifier % 2 != 0) || (gender == 1 && identifier % 2 == 0)) {
             identifier++;
         }
@@ -97,32 +98,29 @@ public final class HetuUtils {
 
         final String localHetu = hetu.toUpperCase().trim();
 
-        // validate form
-        if (!localHetu.matches("\\d{6}[+-AB]\\d{3}[A-Z0-9]")) {
-            return false;
-        }
+        return isHetuFormatValid(localHetu) && isBirthDateValid(localHetu) && isChecksumCharacterValid(localHetu);
+    }
 
-        final char separator = localHetu.charAt(6);
+    public static boolean isHetuFormatValid(final String hetu) {
+        return hetu.matches("\\d{6}[+-AB]\\d{3}[0123456789ABCDEFHJKLMNPRSTUVWXY]");
+    }
 
+    public static boolean isBirthDateValid(final String hetu)  {
         try {
-            // validate birth date
             final String fullLengthBirthDate = String.format("%d%s-%s-%s",
-                    invertedSeparators.get(separator),
-                    StringUtils.substring(localHetu, 4, 6),
-                    StringUtils.substring(localHetu, 2, 4),
-                    StringUtils.substring(localHetu, 0, 2));
+                    invertedSeparators.get(hetu.charAt(6)),
+                    StringUtils.substring(hetu, 4, 6),
+                    StringUtils.substring(hetu, 2, 4),
+                    StringUtils.substring(hetu, 0, 2));
             new SimpleDateFormat("yyyy-MM-dd").parse(fullLengthBirthDate);
-
-            // validate checksum character
-            final char checksumCharacter = getChecksumCharacter(hetu).charValue();
-            if (checksumCharacter != hetu.charAt(10)) {
-                return false;
-            }
-        } catch (final Exception e) {
+            return true;
+        } catch (final ParseException e) {
             return false;
         }
+    }
 
-        return true;
+    public static boolean isChecksumCharacterValid(final String hetu) {
+        return getChecksumCharacter(hetu).charValue() == hetu.charAt(10);
     }
 
     /**
@@ -153,5 +151,31 @@ public final class HetuUtils {
         final long checkNumber = Long.parseLong(String.format("%s%s", StringUtils.substring(partialHetu, 0, 6),
                 StringUtils.substring(partialHetu, 7, 10)));
         return CHECKSUM_CHARACTERS.charAt((int)(checkNumber % CHECKSUM_CHARACTERS.length()));
+    }
+
+    public static String maskHetu(final String hetu) {
+        if (hetu == null)
+            return null;
+
+        if (hetu.length() > 6) {
+            return maskHetuInternal(hetu, false);
+        }
+
+        return hetu;
+    }
+
+    public static String maskHetuFull(final String hetu) {
+        if (hetu == null)
+            return null;
+
+        return maskHetuInternal(hetu, true);
+    }
+
+    private static String maskHetuInternal(final String hetu, final boolean maskAllChars) {
+        final StringBuilder masked = new StringBuilder(maskAllChars ? "" : hetu.substring(0,6));
+        for (int i = (maskAllChars ? 0 : 6); i < hetu.length(); i++) {
+            masked.append('*');
+        }
+        return masked.toString();
     }
 }

@@ -42,13 +42,18 @@ public final class TestUtils {
     }
 
     public static String getEnvOrSystemProperty(String originalValue, String envVariableName, String systemPropertyName) {
+        String value = null;
         if (System.getenv(envVariableName) != null) {
-            originalValue = System.getenv(envVariableName);
+            value = System.getenv(envVariableName);
         }
         if (System.getProperty(systemPropertyName) != null) {
-            originalValue = System.getProperty(systemPropertyName);
+            value = System.getProperty(systemPropertyName);
         }
-        return originalValue;
+        if (value != null && value.startsWith("${")) {
+            System.err.println("WARNING! prop/env "+systemPropertyName+"/"+envVariableName+" not set correctly: "+value+", using: "+originalValue);
+            return originalValue;
+        }
+        return value != null ? value : originalValue;
     }
 
     public static File getReportDir() {

@@ -8,21 +8,22 @@ import org.slf4j.Logger;
  */
 public class SeleniumContext {
 
-    private static String ophServerUrl = "http://localhost";
     private static ThreadLocal<Logger> log = new ThreadLocal<Logger>();
     private static ThreadLocal<WebDriver> driver = new ThreadLocal<WebDriver>();
     private static ThreadLocal<TestCaseReporter> testCaseReporter = new ThreadLocal<TestCaseReporter>();
     private static ThreadLocal<SeleniumTestCaseSupport> testCase = new ThreadLocal<SeleniumTestCaseSupport>();
     private static ThreadLocal<String> testName = new ThreadLocal<String>();
-    private static ThreadLocal<Integer> httpPort = new ThreadLocal<Integer>();
     private static ThreadLocal<String> baseUrl = new ThreadLocal<String>();
 
     static {
-        SeleniumContext.ophServerUrl = TestUtils.getEnvOrSystemProperty(SeleniumContext.ophServerUrl, "OPH_SERVER_URL", "ophServerUrl");
-        String baseUrl = TestUtils.getEnvOrSystemProperty(SeleniumContext.ophServerUrl, "BASE_URL", "baseUrl");
+        String baseUrl = TestUtils.getEnvOrSystemProperty("http://localhost:8080", "BASE_URL", "baseUrl");
         if (baseUrl != null) {
-            SeleniumContext.baseUrl.set(baseUrl);
+            setBaseUrl(baseUrl);
         }
+    }
+
+    public static void setBaseUrl(String baseUrl) {
+        SeleniumContext.baseUrl.set(baseUrl);
     }
 
     private SeleniumContext() {
@@ -69,29 +70,11 @@ public class SeleniumContext {
     }
 
     public static String getOphServerUrl() {
-        return ophServerUrl;
-    }
-
-    public static int getPort() {
-        Integer port = httpPort.get();
-        if (port == null) {
-            return 8080;
-        } else {
-            return port;
-        }
-    }
-
-    public static void setHttpPort(int port) {
-        SeleniumContext.httpPort.set(port);
+        return getBaseUrl();
     }
 
     public static String getBaseUrl() {
-        String url = baseUrl.get();
-        if (url != null) {
-            return url;
-        } else {
-            return ophServerUrl + ":" + getPort();
-        }
+        return baseUrl.get();
     }
 
 }

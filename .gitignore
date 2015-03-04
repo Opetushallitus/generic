@@ -1,5 +1,9 @@
-.idea/
 target
 generic-events/activemq-data
 *~
 *.iml
+.project
+.idea
+.settings
+.classpath
+/bin

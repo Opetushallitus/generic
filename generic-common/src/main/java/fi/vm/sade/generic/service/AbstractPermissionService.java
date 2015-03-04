@@ -119,7 +119,7 @@ public abstract class AbstractPermissionService implements PermissionService {
             hasAccess = true;
         } catch (Exception e) {
             if (!(e instanceof NotAuthorizedException)) {
-                log.warn("checkAccess failed because exception: " + e + ", auth: " + SecurityContextHolder.getContext().getAuthentication());
+                log.error("checkAccess failed because exception: " + e.getMessage() + ", auth: " + SecurityContextHolder.getContext().getAuthentication(), e);
             }
             hasAccess = false;
         }

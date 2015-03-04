@@ -1,8 +1,6 @@
 package fi.vm.sade.generic.common;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
+import java.io.*;
 import java.util.HashMap;
 import java.util.InvalidPropertiesFormatException;
 import java.util.Map;
@@ -18,7 +16,22 @@ import java.util.regex.Pattern;
  * asd=value of foo-property here: ${foo}
  */
 public class EnhancedProperties extends Properties {
+
+    private static EnhancedProperties commonAndSystemProperties;
+
     public EnhancedProperties() {
+    }
+
+    public static EnhancedProperties getCommonAndSystemProperties() {
+        if (commonAndSystemProperties == null) {
+            try {
+                commonAndSystemProperties = new EnhancedProperties(System.getProperties());
+                commonAndSystemProperties.load(new FileInputStream(new File(System.getProperty("user.home") + "/oph-configuration/common.properties")));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return commonAndSystemProperties;
     }
 
     public EnhancedProperties(Properties defaults) {

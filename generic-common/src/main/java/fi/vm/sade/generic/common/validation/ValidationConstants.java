@@ -27,7 +27,7 @@ public final class ValidationConstants {
     //public static final int YTUNNUS_LENGTH = 9;
     public static final int SHORT_MAX = 10;
     public static final int DESCRIPTION_MAX = 1000;
-    public static final String EMAIL_PATTERN = "^[_A-Za-z0-9-]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$";
+    public static final String EMAIL_PATTERN = "^[_A-Za-z0-9-+!#$%&'*/=?^`{|}~]+(\\.[_A-Za-z0-9-+!#$%&'*/=?^`{|}~]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$";
 
     // http://stackoverflow.com/questions/163360/regular-expresion-to-match-urls-java
     // See: OVT-2178, match also without http(s),ftp,file:// prefixes
