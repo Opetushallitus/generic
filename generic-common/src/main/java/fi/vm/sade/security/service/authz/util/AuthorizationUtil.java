@@ -1,6 +1,7 @@
 package fi.vm.sade.security.service.authz.util;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
@@ -12,7 +13,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 public class AuthorizationUtil { // todo: cas todo, security luokat samaan paikkaan, tämän voisi poistaa kokonaan?
 
     public static String getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        SecurityContext ctx = SecurityContextHolder.getContext();
+        if (ctx == null) {
+            return null;
+        }
+        Authentication authentication = ctx.getAuthentication();
         if (authentication == null) {
             return null;
         }
