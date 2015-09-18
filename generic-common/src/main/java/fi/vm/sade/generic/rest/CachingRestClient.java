@@ -103,6 +103,7 @@ public class CachingRestClient implements HealthChecker {
     private String proxyAuthMode;
     private String requiredVersionRegex;
     private final int timeoutMs;
+    private String callerId;
 
     public CachingRestClient() {
         this(DEFAULT_TIMEOUT_MS, DEFAULT_CONNECTION_TTL_SEC);
@@ -357,6 +358,10 @@ public class CachingRestClient implements HealthChecker {
         if (contentType != null) {
             req.setHeader("Content-Type", contentType);
         }
+        if(this.callerId != null) {
+            req.setHeader("Caller-Id", this.callerId);
+        }
+
         if (postOrPutContent != null && req instanceof HttpEntityEnclosingRequestBase) {
             ((HttpEntityEnclosingRequestBase)req).setEntity(new StringEntity(postOrPutContent, UTF8));
         }
@@ -670,4 +675,9 @@ public class CachingRestClient implements HealthChecker {
             return errorContent;
         }
     }
+
+    public void setCallerId(String callerId) {
+        this.callerId = callerId;
+    }
+
 }
