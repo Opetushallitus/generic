@@ -138,6 +138,13 @@ public class HttpTestResource {
         return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
+    @Path("/testResourceNoContent")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response testResourceNoContent(@Context HttpServletRequest request) throws URISyntaxException {
+        return Response.status(Response.Status.NOT_MODIFIED).build();
+    }
+
     @Path("/testMethod")
     @GET
     public Response testMethod(@Context HttpServletRequest request) {

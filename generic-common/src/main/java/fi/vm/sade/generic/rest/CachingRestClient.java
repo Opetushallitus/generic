@@ -8,10 +8,7 @@ import fi.vm.sade.generic.healthcheck.HealthChecker;
 import fi.vm.sade.generic.ui.portlet.security.ProxyAuthenticator;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolException;
+import org.apache.http.*;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
@@ -229,12 +226,16 @@ public class CachingRestClient implements HealthChecker {
     }
 
     /**
-     * get REST Json resource as string.
+     * get REST JSON resource as string.
      */
     public InputStream get(String url) throws IOException {
         HttpGet req = new HttpGet(url);
         HttpResponse response = execute(req, null, null);
-        return response.getEntity().getContent();
+        HttpEntity responseEntity = response.getEntity();
+        if (responseEntity == null) {
+            logAndThrowHttpException(req, response, "request did not return any content");
+        }
+        return responseEntity.getContent();
     }
 
     private boolean wasRedirectedToCas() {
@@ -411,21 +412,21 @@ public class CachingRestClient implements HealthChecker {
                 localContext.get().removeAttribute(WAS_REDIRECTED_TO_CAS);
                 return execute(req, contentType, postOrPutContent, 1);
             } else { // if already retried, 401 unauthorized is for real!
-                logAndThrowHttpEcxception(req, response, "Unauthorized error calling REST resource, got redirect to cas or 401 unauthorized");
+                logAndThrowHttpException(req, response, "Unauthorized error calling REST resource, got redirect to cas or 401 unauthorized");
             }
         }
 
         if(response.getStatusLine().getStatusCode() == SC_FORBIDDEN) {
-            logAndThrowHttpEcxception(req, response, "Access denied error calling REST resource");
+            logAndThrowHttpException(req, response, "Access denied error calling REST resource");
         }
 
         if(response.getStatusLine().getStatusCode() >= SC_INTERNAL_SERVER_ERROR) {
             clearTicket(); // todo: http500 tapauksissa pitää korjata kohdepalvelu, jos esim http500 johtuu tikettiongelmasta kohdepalvelussa, pitäisi kohdepalvelun antaa http 4xx
-            logAndThrowHttpEcxception(req, response, "Internal error calling REST resource");
+            logAndThrowHttpException(req, response, "Internal error calling REST resource");
         }
 
         if(response.getStatusLine().getStatusCode() >= SC_NOT_FOUND) {
-            logAndThrowHttpEcxception(req, response, "Not found error calling REST resource");
+            logAndThrowHttpException(req, response, "Not found error calling REST resource");
         }
 
         cacheStatus = localContext.get().getAttribute(CACHE_RESPONSE_STATUS);
@@ -434,7 +435,7 @@ public class CachingRestClient implements HealthChecker {
         return response;
     }
 
-    private void logAndThrowHttpEcxception(HttpRequestBase req, HttpResponse response, final String msg) throws CachingRestClient.HttpException {
+    private void logAndThrowHttpException(HttpRequestBase req, HttpResponse response, final String msg) throws CachingRestClient.HttpException {
         String message = msg + ", url: " + req.getURI() + ", status: " + response.getStatusLine()+", userinfo: "+getUserInfo(req);
         logger.error(message);
         throw new CachingRestClient.HttpException(req, response, message);
@@ -657,7 +658,12 @@ public class CachingRestClient implements HealthChecker {
             this.statusCode = response.getStatusLine().getStatusCode();
             this.statusMsg = response.getStatusLine().getReasonPhrase();
             try {
-                this.errorContent = IOUtils.toString(response.getEntity().getContent());
+                if (response.getEntity() != null) {
+                    this.errorContent = IOUtils.toString(response.getEntity().getContent());
+                } else {
+                    this.errorContent = "no content";
+                }
+
             } catch (IOException e) {
                 CachingRestClient.logger.error("error reading errorContent: "+e, e);
             }

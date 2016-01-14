@@ -277,4 +277,10 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         Assert.assertNotSame(orgTicket, TestParams.prevRequestTicketHeaders.get(0));
     }
 
+    @Test(expected = CachingRestClient.HttpException.class)
+    public void testResourceWithoutContentWillNotFail() throws IOException {
+        initClientAuthentication("test");
+        Assert.assertNull(get("/httptest/testResourceNoContent"));
+    }
+
 }
