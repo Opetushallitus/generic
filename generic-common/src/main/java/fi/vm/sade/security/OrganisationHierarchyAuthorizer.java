@@ -81,8 +81,9 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
                 }
             }
         }
-        LOGGER.info("Not authorized! targetOrganisationAndParentsOids: "+targetOrganisationAndParentsOids+", requiredRoles: "+ Arrays.asList(requiredRoles)+", userRoles: "+userRoles);
-        throw new NotAuthorizedException("Not authorized! targetOrganisationAndParentsOids: "+targetOrganisationAndParentsOids+", requiredRoles: "+ Arrays.asList(requiredRoles)+", userRoles: "+userRoles);
+        final String msg = "Not authorized! targetOrganisationAndParentsOids: " + targetOrganisationAndParentsOids + ", requiredRoles: " + Arrays.asList(requiredRoles) + ", userRoles: " + userRoles;
+        LOGGER.info(msg);
+        throw new NotAuthorizedException(msg);
     }
 
     /**
@@ -110,8 +111,9 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
             }
         }
 
-        LOGGER.info("Not authorized! currentUser: "+currentUser+", requiredRoles: "+ Arrays.asList(requiredRoles));
-        throw new NotAuthorizedException("Not authorized! currentUser: "+currentUser+", requiredRoles: "+ Arrays.asList(requiredRoles));
+        final String msg = "Not authorized! currentUser: " + currentUser + ", requiredRoles: " + Arrays.asList(requiredRoles);
+        LOGGER.info(msg);
+        throw new NotAuthorizedException(msg);
     }
 
     private List<String> getSelfAndParentOidsCached(String targetOrganisationOid) {
