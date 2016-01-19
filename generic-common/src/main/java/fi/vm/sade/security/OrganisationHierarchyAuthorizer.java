@@ -117,17 +117,10 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
     }
 
     private List<String> getSelfAndParentOidsCached(String targetOrganisationOid) {
-        //String cacheKey = currentUser.hashCode()+"_"+targetOrganisationOid; // user hash mukana keyssä jotta resultit eläisi vain autentikoidun session
         String cacheKey = targetOrganisationOid; // ei enää user-kohtaista cachea koska organisaatioparentit ei about ikinä muutu
         List<String> cacheResult = cache.get(cacheKey);
         if (cacheResult == null) {
             cacheResult = oidProvider.getSelfAndParentOids(targetOrganisationOid);
-            /* tämäkin hoidettu itse cachessa nyt
-            if (cache.size() > MAX_CACHE_SIZE) {
-                LOGGER.info("cleaning getSelfAndParentOids -cache");
-                cache.clear();
-            }
-            */
             cache.put(cacheKey, cacheResult);
         }
         return cacheResult;
