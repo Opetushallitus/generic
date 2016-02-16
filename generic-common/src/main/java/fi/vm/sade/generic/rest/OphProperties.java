@@ -2,17 +2,78 @@ package fi.vm.sade.generic.rest;
 
 import java.io.*;
 import java.net.URLEncoder;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
-public class UrlProperties {
-    private static Properties systemUrlProperties = resolveSystemProperties();
-    private final Properties urlProperties;
+/**
+ * Reads property values from classpath files, files in filesystem paths and system properties (-D).
+ * Supports parameter replace (index & named) and url generation.
+ * Collects configuration to be used at front (application code can configure separately which files are loaded and which system properties prefixes are used for front).
+ */
+public class OphProperties {
+    public final PropertyLoadingConfig config = new PropertyLoadingConfig();
+    public final PropertyLoadingConfig frontConfig = new PropertyLoadingConfig();
+    public Properties ophProperties = null;
+    public Properties frontProperties = null;
+
     public final Properties defaults = new Properties();
     public final Properties defaultOverrides = new Properties();
 
-    public UrlProperties(String file) {
-        urlProperties = loadPropertiesFromResource(file);
+    class PropertyLoadingConfig {
+        public List<String> classpathPaths = new ArrayList<String>();
+        public List<String> filePaths = new ArrayList<String>();
+        public List<String> systemPropertyFileKeys = new ArrayList<String>();
+
+        public Properties load() {
+            Properties dest = new Properties();
+            for (String path : classpathPaths) {
+                merge(dest, loadPropertiesFromResource(path));
+            }
+            for (String path : filePaths) {
+                merge(dest, loadPropertiesFromPath(path));
+            }
+            Properties system = System.getProperties();
+            for (String key : systemPropertyFileKeys) {
+                if (system.containsKey(key)) {
+                    for (String path : system.getProperty(key).split(".")) {
+                        merge(dest, loadPropertiesFromPath(path));
+                    }
+                }
+            }
+            return dest;
+        }
+    }
+
+    public OphProperties() {
+        config.systemPropertyFileKeys.add("oph-properties");
+        frontConfig.systemPropertyFileKeys.add("front-properties");
+    }
+
+    public OphProperties reload() {
+        ophProperties = merge(new Properties(), config.load(), System.getProperties());
+        merge(ophProperties, getPropertiesWithPrefix(ophProperties, "url."));
+        frontProperties = merge(new Properties(),
+                getPropertiesWithPrefix(ophProperties, "url.", "front."),
+                frontConfig.load(),
+                getPropertiesWithPrefix(System.getProperties(), "url.", "front."));
+        return this;
+    }
+
+    synchronized public void ensureLoad() {
+        if (ophProperties == null) {
+            reload();
+        }
+    }
+
+    private Properties getPropertiesWithPrefix(Properties props, String... prefixes) {
+        Properties dest = new Properties();
+        for (String prefix : prefixes) {
+            for (String key : props.stringPropertyNames()) {
+                if (key.startsWith(prefix)) {
+                    dest.setProperty(key.substring(prefix.length()), props.getProperty(key));
+                }
+            }
+        }
+        return dest;
     }
 
     private Properties loadPropertiesFromResource(String file) {
@@ -34,7 +95,7 @@ public class UrlProperties {
                 properties.load(inputStream);
                 return properties;
             } finally {
-                if(inputStream != null) {
+                if (inputStream != null) {
                     inputStream.close();
                 }
             }
@@ -43,33 +104,42 @@ public class UrlProperties {
         }
     }
 
-    public static Properties resolveSystemProperties() {
-        Properties dest = new Properties();
-        Properties system = System.getProperties();
-        if(system.containsKey("url-properties")) {
-            for(String path: system.getProperty("url-properties").split(",")) {
-                Properties file = loadPropertiesFromPath(path);
-                merge(dest, file);
-            }
+    public String require(String key, Object... params) {
+        String value = ophProperties.getProperty(key);
+        if (value == null) {
+            throw new RuntimeException("'" + key + "' not defined.");
         }
-        merge(dest, getSystemUrlProperties());
-        return dest;
+        return replaceParams(value, params);
     }
 
-    private static Properties getSystemUrlProperties() {
-        Properties system = System.getProperties();
-        Properties dest = new Properties();
-        for(String key: system.stringPropertyNames()) {
-            if(key.startsWith("url.")) {
-                String destKey = key.substring(4);
-                dest.setProperty(destKey, system.getProperty(key));
-            }
+    public String getProperty(String key, Object... params) {
+        String value = ophProperties.getProperty(key);
+        if (value != null) {
+            return replaceParams(value, params);
         }
-        return dest;
+        return null;
     }
 
-    public UrlProperties(Properties urlProperties) {
-        this.urlProperties = urlProperties;
+    private String replaceParams(String url, Object... params) {
+        for (int i = params.length; i > 0; i--) {
+            Object param = params[i - 1];
+            if (param instanceof Map) {
+                Map paramMap = (Map) param;
+                for (Object key : paramMap.keySet()) {
+                    Object o = paramMap.get(key);
+                    String value = enc(o);
+                    String keyString = enc(key);
+                    url = url.replace("$" + keyString, value);
+                }
+            } else {
+                url = url.replace("$" + i, enc(param));
+            }
+        }
+        return url;
+    }
+
+    private String enc(Object param) {
+        return param == null ? "" : param.toString();
     }
 
     public String url(String key, Object... params) {
@@ -78,20 +148,23 @@ public class UrlProperties {
 
     public UrlResolver urls(Object... args) {
         Properties urlsConfig = new Properties();
-        for(Object o: args) {
-            if(o instanceof Map) {
+        for (Object o : args) {
+            if (o instanceof Map) {
                 merge(urlsConfig, (Map) o);
-            } else if(o instanceof String) {
+            } else if (o instanceof String) {
                 urlsConfig.put("baseUrl", o);
             }
         }
         return new UrlResolver(urlsConfig);
     }
 
-    private static void merge(Map dest, Map map) {
-        for(Object key: map.keySet()) {
-            dest.put(key, map.get(key));
+    private static <D extends Map> D merge(D dest, Map... maps) {
+        for (Map map : maps) {
+            for (Object key : map.keySet()) {
+                dest.put(key, map.get(key));
+            }
         }
+        return dest;
     }
 
     public class UrlResolver {
@@ -99,10 +172,12 @@ public class UrlProperties {
         private boolean encode = true;
 
         public UrlResolver(Properties urlsConfig) {
+            this();
             merge(this.urlsConfig, urlsConfig);
         }
 
         public UrlResolver() {
+            ensureLoad();
         }
 
         private Object resolveConfig(String key) {
@@ -110,7 +185,7 @@ public class UrlProperties {
         }
 
         private Object resolveConfig(String key, String defaultValue) {
-            for (Properties props : new Properties[]{urlsConfig, defaultOverrides, urlProperties, defaults, systemUrlProperties, System.getProperties()}) {
+            for (Properties props : new Properties[]{urlsConfig, defaultOverrides, ophProperties, defaults}) {
                 if (props.containsKey(key)) {
                     return props.get(key);
                 }
@@ -131,7 +206,7 @@ public class UrlProperties {
         public String url(String key, Object... params) {
             Object o = resolveConfig(key);
             if (o == null) {
-                throw new RuntimeException("Could not resolve value for '" + key + "'");
+                throw new RuntimeException("'" + key + "' not defined.");
             }
             String url = replaceParams(o.toString(), params);
             Object baseUrl = resolveConfig(parseService(key) + ".baseUrl");

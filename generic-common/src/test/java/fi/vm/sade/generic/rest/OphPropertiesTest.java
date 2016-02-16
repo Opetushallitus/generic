@@ -1,5 +1,6 @@
 package fi.vm.sade.generic.rest;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -8,30 +9,58 @@ import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
-public class UrlPropertiesTest {
+public class OphPropertiesTest {
+    OphProperties ctx = null;
+    Properties props = null;
+
+    @Before
+    public void before() {
+        ctx = new OphProperties();
+        ctx.ophProperties = props = new Properties();
+    }
+
+    @Test
+    public void require() {
+        ctx.ophProperties.setProperty("a.b", "1");
+        ctx.ophProperties.setProperty("b.b", "$1 $param");
+        assertEquals("1", ctx.require("a.b"));
+        assertEquals("A pow!", ctx.require("b.b", "A", new LinkedHashMap() {{
+            put("param", "pow!");
+        }}));
+        try {
+            ctx.require("c.c");
+            throw new RuntimeException("Should not reach here");
+        } catch (RuntimeException e) {
+            assertEquals("'c.c' not defined.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void getProperty() {
+        ctx.ophProperties.setProperty("a.b", "1");
+        assertEquals("1", ctx.getProperty("a.b"));
+        assertEquals(null, ctx.getProperty("b.b"));
+    }
+
     @Test
     public void resolveUrlAndThrowErrorOnUnknown() {
-        Properties props = new Properties();
-        props.setProperty("a.b", "1");
-        UrlProperties ctx = new UrlProperties(props);
+        ctx.ophProperties.setProperty("a.b", "1");
         assertEquals("1", ctx.url("a.b"));
         try {
             ctx.url("b.b");
             throw new RuntimeException("Should not reach here");
         } catch (RuntimeException e) {
-            assertEquals("Could not resolve value for 'b.b'", e.getMessage());
+            assertEquals("'b.b' not defined.", e.getMessage());
         }
     }
 
     @Test
     public void handleBaseUrl() {
-        Properties props = new Properties();
         props.setProperty("a.a", "1");
         props.setProperty("b.b", "2");
         props.setProperty("c.c", "2");
         props.setProperty("a.baseUrl", "http://pow");
         props.setProperty("baseUrl", "http://bar");
-        UrlProperties ctx = new UrlProperties(props);
 
         assertEquals("http://pow/1", ctx.url("a.a"));
         assertEquals("http://bar/2", ctx.url("b.b"));
@@ -42,17 +71,15 @@ public class UrlPropertiesTest {
         assertEquals("http://foo/2", ctx.url("b.b"));
 
         // ctx.urls(baseUrl) overrides baseUrl and ctx.urls.defaults.override
-        UrlProperties.UrlResolver ctx2 = ctx.urls("http://zap");
+        OphProperties.UrlResolver ctx2 = ctx.urls("http://zap");
         assertEquals("http://pow/1", ctx2.url("a.a"));
         assertEquals("http://zap/2", ctx2.url("b.b"));
     }
 
     @Test
     public void parameterReplace() {
-        Properties props = new Properties();
         props.setProperty("a.a", "/a/$1");
         props.setProperty("b.b", "/b/$param");
-        UrlProperties ctx = new UrlProperties(props);
         assertEquals("/a/$1", ctx.url("a.a"));
         assertEquals("/a/1", ctx.url("a.a", 1));
         assertEquals("/b/$param", ctx.url("b.b"));
@@ -71,10 +98,8 @@ public class UrlPropertiesTest {
 
     @Test
     public void parameterEncode() {
-        Properties props = new Properties();
         props.setProperty("a.a", "/a/$1");
         props.setProperty("b.b", "/b/$param");
-        UrlProperties ctx = new UrlProperties(props);
         assertEquals("/a/1%3A", ctx.url("a.a", "1:"));
         assertEquals("/b/pow%3A", ctx.url("b.b", new HashMap() {{
             put("param", "pow:");
@@ -84,7 +109,7 @@ public class UrlPropertiesTest {
             put("query Parameter", "1:23");
             put("query Parameter2", "1:23");
         }}));
-        UrlProperties.UrlResolver ctx2 = ctx.urls().noEncoding();
+        OphProperties.UrlResolver ctx2 = ctx.urls().noEncoding();
         assertEquals("/a/1:", ctx2.url("a.a", "1:"));
         assertEquals("/b/pow:", ctx2.url("b.b", new HashMap() {{
             put("param", "pow:");
@@ -99,18 +124,16 @@ public class UrlPropertiesTest {
 
     @Test
     public void parameterAndUrlLookupOrder() {
-        Properties urlProperties = new Properties();
-        UrlProperties ctx = new UrlProperties(urlProperties);
         ctx.defaults.setProperty("a.a", "b");
         assertEquals("b", ctx.url("a.a"));
 
-        urlProperties.setProperty("a.a", "c");
+        props.setProperty("a.a", "c");
         assertEquals("c", ctx.url("a.a"));
 
         ctx.defaultOverrides.setProperty("a.a", "d");
         assertEquals("d", ctx.url("a.a"));
 
-        UrlProperties.UrlResolver ctx2 = ctx.urls(new HashMap() {{
+        OphProperties.UrlResolver ctx2 = ctx.urls(new HashMap() {{
             put("a.a", "e");
         }});
         assertEquals("e", ctx2.url("a.a"));
