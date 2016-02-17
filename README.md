@@ -7,8 +7,9 @@ Yleisiä java luokkia.
 käytä java-utils moduulin alta sopivaa pakettia tämän sijaan
 
 Jos käytät jotain täältä ja tarvitset muutoksia:
+
 1. katso löytyykö valmiiksi sopiava java-utils alimoduuli [SRP](https://en.wikipedia.org/wiki/Single_responsibility_principle)
-  * jos ei niin luo uusi
+ * jos ei niin luo uusi
 2. tee generics:stä ensin release versio (poista sen versionumerosta SNAPSHOT pääte ja pushaa)
 2. päivitä uusi SNAPSHOT versio
 3. *siirrä* luokka genericista java-utils submoodlin alle
