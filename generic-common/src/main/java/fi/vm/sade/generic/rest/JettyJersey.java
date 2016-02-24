@@ -1,6 +1,7 @@
 package fi.vm.sade.generic.rest;
 
 import com.sun.jersey.spi.container.servlet.ServletContainer;
+import fi.vm.sade.tcp.PortChecker;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.ServletHolder;
@@ -16,8 +17,7 @@ public class JettyJersey {
 
     public static void startServer(String packageContainingJerseyRestResources, String jerseyFilterClasses) throws Exception {
 
-        // randomize port
-        port = (int) (6000 + 1000 * Math.random());
+        port = PortChecker.findFreeLocalPort();
 
         System.setProperty("cas_key", getUrl("testing"));
         System.setProperty("cas_service", getUrl("/httptest"));
