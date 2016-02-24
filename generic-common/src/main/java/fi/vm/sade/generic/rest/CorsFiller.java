@@ -60,7 +60,7 @@ abstract class CorsFiller<R, Q> {
         for (String value : getHeaders("access-control-request-headers", request)) {
             setHeader("Access-Control-Allow-Headers", value, response);
         }
-        setHeader("Access-Control-Allow-Headers", "Caller-Id", response);
+        setHeader("Access-Control-Allow-Headers", "Caller-Id, clientSubSystemCode, CSRF, ID", response);
         setHeader("Access-Control-Allow-Credentials", "true", response);
         setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, HEAD", response);
         setHeader("Access-Control-Max-Age", "604800", response);
