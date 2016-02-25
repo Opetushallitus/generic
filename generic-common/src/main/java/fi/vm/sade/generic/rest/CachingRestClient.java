@@ -365,6 +365,7 @@ public class CachingRestClient implements HealthChecker {
         }
         if(this.ID != null) {
             req.setHeader("ID", this.ID);
+            this.ID = null;
         }
 
         if (postOrPutContent != null && req instanceof HttpEntityEnclosingRequestBase) {
