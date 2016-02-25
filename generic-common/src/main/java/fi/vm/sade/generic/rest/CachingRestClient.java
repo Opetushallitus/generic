@@ -101,6 +101,7 @@ public class CachingRestClient implements HealthChecker {
     private String requiredVersionRegex;
     private final int timeoutMs;
     private String callerId;
+    private String ID;
 
     public CachingRestClient() {
         this(DEFAULT_TIMEOUT_MS, DEFAULT_CONNECTION_TTL_SEC);
@@ -361,6 +362,9 @@ public class CachingRestClient implements HealthChecker {
         }
         if(this.callerId != null) {
             req.setHeader("Caller-Id", this.callerId);
+        }
+        if(this.ID != null) {
+            req.setHeader("ID", this.ID);
         }
 
         if (postOrPutContent != null && req instanceof HttpEntityEnclosingRequestBase) {
@@ -684,6 +688,9 @@ public class CachingRestClient implements HealthChecker {
 
     public void setCallerId(String callerId) {
         this.callerId = callerId;
+    }
+    public void setID(String ID) {
+        this.ID = ID;
     }
 
 }
