@@ -5,7 +5,7 @@
     <parent>
         <artifactId>generic</artifactId>
         <groupId>fi.vm.sade.generic</groupId>
-        <version>9.1-SNAPSHOT</version>
+        <version>9.1</version>
         <relativePath>..</relativePath>
     </parent>
 

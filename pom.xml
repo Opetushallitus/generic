@@ -3,7 +3,7 @@
            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    
+
     <parent>
         <groupId>fi.vm.sade.generic</groupId>
         <artifactId>build-parent</artifactId>
@@ -14,8 +14,8 @@
     <artifactId>generic</artifactId>
     <packaging>pom</packaging>
     <name>Generic :: Parent</name>
-    <version>9.1-SNAPSHOT</version>
-    
+    <version>9.1</version>
+
     <properties>
         <activemq.version>5.5.1</activemq.version>
         <aspectj.version>1.6.3</aspectj.version>
@@ -42,7 +42,7 @@
         <vaadin.version>6.8.12</vaadin.version>
     </properties>
 
-    <!-- Here comes all the dependencies used in modules. Versions can be managed 
+    <!-- Here comes all the dependencies used in modules. Versions can be managed
         from properties. -->
     <dependencyManagement>
         <dependencies>
@@ -324,7 +324,7 @@
         <module>generic-test-support</module>
         <module>generic-test-aspects</module>
 
-        <!-- todo: migratoi vielä tämäkin, mutta ei jms dependencyjä dependencies-* 
+        <!-- todo: migratoi vielä tämäkin, mutta ei jms dependencyjä dependencies-*
             moduuleihin -->
         <module>generic-events</module>
 
