@@ -1,8 +1,6 @@
 package fi.vm.sade.generic.rest;
 
 import fi.vm.sade.generic.ui.portlet.security.ProxyAuthenticator;
-import fi.vm.sade.jetty.HttpTestResource;
-import fi.vm.sade.jetty.TestParams;
 import junit.framework.Assert;
 import org.apache.commons.lang.StringUtils;
 import org.apache.cxf.helpers.IOUtils;

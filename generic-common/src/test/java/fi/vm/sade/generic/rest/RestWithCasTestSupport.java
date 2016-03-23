@@ -1,9 +1,6 @@
 package fi.vm.sade.generic.rest;
 
-import fi.vm.sade.authentication.cas.DefaultTicketCachePolicy;
-import fi.vm.sade.jetty.HttpTestResource;
 import fi.vm.sade.jetty.JettyJersey;
-import fi.vm.sade.jetty.TestParams;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,7 +15,7 @@ public class RestWithCasTestSupport {
 
     @Before
     public void start() throws Exception {
-        JettyJersey.startServer("fi.vm.sade.jetty", null);
+        JettyJersey.startServer("fi.vm.sade.generic.rest", null);
         TestParams.instance = new TestParams();
         HttpTestResource.counter = 1;
         HttpTestResource.someResource = "original value";

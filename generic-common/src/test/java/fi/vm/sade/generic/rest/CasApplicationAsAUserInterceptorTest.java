@@ -3,7 +3,6 @@ package fi.vm.sade.generic.rest;
 import fi.vm.sade.authentication.cas.CasApplicationAsAUserInterceptor;
 import fi.vm.sade.authentication.cas.DefaultTicketCachePolicy;
 import fi.vm.sade.authentication.cas.TicketCachePolicy;
-import fi.vm.sade.jetty.TestParams;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.junit.Assert;
