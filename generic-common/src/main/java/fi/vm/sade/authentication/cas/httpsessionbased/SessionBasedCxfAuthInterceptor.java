@@ -25,6 +25,7 @@ import java.util.List;
  * @author Antti Salonen
  * @see BlockingAuthCookieCache
  */
+@Deprecated //use instead CasFriendlyCxfInterceptor from java-utils/java-cas-cxf
 public class SessionBasedCxfAuthInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private static final Logger log = LoggerFactory.getLogger(SessionBasedCxfAuthInterceptor.class);
