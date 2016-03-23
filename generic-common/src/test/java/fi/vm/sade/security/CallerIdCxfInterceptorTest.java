@@ -4,6 +4,7 @@ import java.io.InputStream;
 
 import javax.ws.rs.core.MediaType;
 
+import fi.vm.sade.jetty.JettyJersey;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.message.Message;
@@ -16,7 +17,6 @@ import org.junit.Test;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import fi.vm.sade.generic.rest.CallerIdCxfInterceptor;
-import fi.vm.sade.generic.rest.JettyJersey;
 
 /**
  * Tests for Caller-Id header insertion interceptor for cxf.

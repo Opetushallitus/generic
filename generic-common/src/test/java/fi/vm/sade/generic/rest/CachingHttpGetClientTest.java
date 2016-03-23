@@ -6,6 +6,9 @@ import java.util.GregorianCalendar;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import fi.vm.sade.jetty.HttpTestResource;
+import fi.vm.sade.jetty.JettyJersey;
+import fi.vm.sade.jetty.TestParams;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.http.client.cache.CacheResponseStatus;
 import org.apache.http.impl.client.cache.CachingHttpClient;

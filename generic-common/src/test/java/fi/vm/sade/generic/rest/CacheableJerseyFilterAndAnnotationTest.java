@@ -1,5 +1,7 @@
 package fi.vm.sade.generic.rest;
 
+import fi.vm.sade.jetty.HttpTestResource;
+import fi.vm.sade.jetty.JettyJersey;
 import junit.framework.Assert;
 import org.apache.cxf.helpers.IOUtils;
 import org.junit.After;
