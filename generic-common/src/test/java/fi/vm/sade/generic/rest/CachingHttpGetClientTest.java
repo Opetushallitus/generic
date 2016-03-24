@@ -19,6 +19,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import junit.framework.Assert;
 
+import static fi.vm.sade.generic.rest.CachingRestClientTest.assertContains;
+
 /**
  * @author Antti Salonen
  * @author Juha Paananen
@@ -95,6 +97,12 @@ public class CachingHttpGetClientTest {
         get("/httptest/status500");
     }
 
+    @Test
+    public void testClientSubSystemCode() throws Exception {
+        // lue resurssi, jossa cache 1 sek
+        assertContains(get("/mirror/headers"), "clientSubSystemCode: CachingHttpGetClientTest");
+    }
+
 
     private String get(String url) throws IOException {
         return IOUtils.toString(client.get(getUrl(url), context));
@@ -111,7 +119,7 @@ public class CachingHttpGetClientTest {
         HttpTestResource.someResource = "original value";
         SecurityContextHolder.clearContext();
 //        DefaultTicketCachePolicy.ticketThreadLocal.remove();
-        client = new CachingHttpGetClient();
+        client = new CachingHttpGetClient().setClientSubSystemCode("CachingHttpGetClientTest");
     }
 
     @After

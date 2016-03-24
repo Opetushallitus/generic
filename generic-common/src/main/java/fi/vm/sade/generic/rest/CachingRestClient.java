@@ -9,6 +9,7 @@ import fi.vm.sade.generic.ui.portlet.security.ProxyAuthenticator;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.*;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
@@ -19,6 +20,7 @@ import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.RedirectLocations;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.impl.conn.SchemeRegistryFactory;
+import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
@@ -61,6 +63,7 @@ public class CachingRestClient implements HealthChecker {
     private static final Charset UTF8 = Charset.forName("UTF-8");
     private static final long DEFAULT_CONNECTION_TTL_SEC = 60; // infran palomuuri katkoo monta minuuttia makaavat connectionit
     public static final String CAS_SECURITY_TICKET = "CasSecurityTicket";
+    private static final String CSRF = "CachingRestClient";
     private static final String CACHE_RESPONSE_STATUS = "http.cache.response.status"; //CachingHttpClient.CACHE_RESPONSE_STATUS
     protected static Logger logger = LoggerFactory.getLogger(CachingRestClient.class);
     private static ThreadLocal<DateFormat> df1 = new ThreadLocal<DateFormat>(){
@@ -77,7 +80,6 @@ public class CachingRestClient implements HealthChecker {
     };
     private boolean reuseConnections = true;
 
-    private PoolingClientConnectionManager connectionManager;
     private HttpClient cachingClient;
     private ThreadLocal<HttpContext> localContext = new ThreadLocal<HttpContext>(){
         @Override
@@ -100,7 +102,9 @@ public class CachingRestClient implements HealthChecker {
     private String proxyAuthMode;
     private String requiredVersionRegex;
     private final int timeoutMs;
-    private String callerId;
+    private String clientSubSystemCode;
+    private HashMap<String, Boolean> csrfCookiesCreateForHost = new HashMap<String, Boolean>();
+    private final CookieStore cookieStore;
 
     public CachingRestClient() {
         this(DEFAULT_TIMEOUT_MS, DEFAULT_CONNECTION_TTL_SEC);
@@ -112,19 +116,7 @@ public class CachingRestClient implements HealthChecker {
 
     public CachingRestClient(int timeoutMs, long connectionTimeToLiveSec) {
         this.timeoutMs = timeoutMs;
-
-        // multithread support + max connections
-        connectionManager = new PoolingClientConnectionManager(SchemeRegistryFactory.createDefault(), connectionTimeToLiveSec, TimeUnit.MILLISECONDS);
-        connectionManager.setDefaultMaxPerRoute(100); // default 2
-        connectionManager.setMaxTotal(1000); // default 20
-
-        // init stuff
-        final DefaultHttpClient actualClient = new DefaultHttpClient(connectionManager);
-
-        HttpParams httpParams = actualClient.getParams();
-        HttpConnectionParams.setConnectionTimeout(httpParams, timeoutMs);
-        HttpConnectionParams.setSoTimeout(httpParams, timeoutMs);
-        HttpConnectionParams.setSoKeepalive(httpParams, true); // prevent firewall to reset idle connections?
+        final DefaultHttpClient actualClient = createDefaultHttpClient(timeoutMs, connectionTimeToLiveSec);
 
         actualClient.setRedirectStrategy(new DefaultRedirectStrategy(){
             // detect redirects to cas
@@ -148,12 +140,30 @@ public class CachingRestClient implements HealthChecker {
             actualClient.setReuseStrategy(new NoConnectionReuseStrategy());
         }
 
+        cookieStore = actualClient.getCookieStore();
         cachingClient = initCachingClient(actualClient);
 
         initGson();
     }
 
-    private HttpClient initCachingClient(DefaultHttpClient actualClient) {
+    public static DefaultHttpClient createDefaultHttpClient(int timeoutMs, long connectionTimeToLiveSec) {
+        // multithread support + max connections
+        PoolingClientConnectionManager connectionManager;
+        connectionManager = new PoolingClientConnectionManager(SchemeRegistryFactory.createDefault(), connectionTimeToLiveSec, TimeUnit.MILLISECONDS);
+        connectionManager.setDefaultMaxPerRoute(100); // default 2
+        connectionManager.setMaxTotal(1000); // default 20
+
+        // init stuff
+        final DefaultHttpClient actualClient = new DefaultHttpClient(connectionManager);
+
+        HttpParams httpParams = actualClient.getParams();
+        HttpConnectionParams.setConnectionTimeout(httpParams, timeoutMs);
+        HttpConnectionParams.setSoTimeout(httpParams, timeoutMs);
+        HttpConnectionParams.setSoKeepalive(httpParams, true); // prevent firewall to reset idle connections?
+        return actualClient;
+    }
+
+    public static HttpClient initCachingClient(DefaultHttpClient actualClient) {
         try {
             org.apache.http.impl.client.cache.CacheConfig cacheConfig = new org.apache.http.impl.client.cache.CacheConfig();
             cacheConfig.setMaxCacheEntries(50 * 1000);
@@ -359,9 +369,11 @@ public class CachingRestClient implements HealthChecker {
         if (contentType != null) {
             req.setHeader("Content-Type", contentType);
         }
-        if(this.callerId != null) {
-            req.setHeader("Caller-Id", this.callerId);
+        if(this.clientSubSystemCode != null) {
+            req.setHeader("clientSubSystemCode", this.clientSubSystemCode);
         }
+        req.setHeader("CSRF",CSRF);
+        ensureCSRFCookie(req);
 
         if (postOrPutContent != null && req instanceof HttpEntityEnclosingRequestBase) {
             ((HttpEntityEnclosingRequestBase)req).setEntity(new StringEntity(postOrPutContent, UTF8));
@@ -433,6 +445,21 @@ public class CachingRestClient implements HealthChecker {
 
         logger.debug("{}, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{req.getMethod(), url, contentType, postOrPutContent, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});
         return response;
+    }
+
+    private void ensureCSRFCookie(HttpRequestBase req) {
+        String host = req.getURI().getHost();
+        if (!csrfCookiesCreateForHost.containsKey(host)) {
+            synchronized (csrfCookiesCreateForHost) {
+                if (!csrfCookiesCreateForHost.containsKey(host)) {
+                    csrfCookiesCreateForHost.put(host, true);
+                    BasicClientCookie cookie = new BasicClientCookie("CSRF", CSRF);
+                    cookie.setDomain(host);
+                    cookie.setPath("/");
+                    cookieStore.addCookie(cookie);
+                }
+            }
+        }
     }
 
     private void logAndThrowHttpException(HttpRequestBase req, HttpResponse response, final String msg) throws CachingRestClient.HttpException {
@@ -682,8 +709,13 @@ public class CachingRestClient implements HealthChecker {
         }
     }
 
+    @Deprecated
     public void setCallerId(String callerId) {
-        this.callerId = callerId;
+        this.clientSubSystemCode = callerId;
     }
 
+    public CachingRestClient setClientSubSystemCode(String clientSubSystemCode) {
+        this.clientSubSystemCode = clientSubSystemCode;
+        return this;
+    }
 }

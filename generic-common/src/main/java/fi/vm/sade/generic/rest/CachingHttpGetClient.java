@@ -44,10 +44,9 @@ public class CachingHttpGetClient {
     private static final Charset UTF8 = Charset.forName("UTF-8");
     private static final long DEFAULT_CONNECTION_TTL_SEC = 60; // infran palomuuri katkoo monta minuuttia makaavat connectionit
 
-    private PoolingClientConnectionManager connectionManager;
     private HttpClient cachingClient;
 
-    private final int timeoutMs;
+    private String clientSubSystemCode = null;
 
     public CachingHttpGetClient() {
         this(DEFAULT_TIMEOUT_MS, DEFAULT_CONNECTION_TTL_SEC);
@@ -58,26 +57,8 @@ public class CachingHttpGetClient {
     }
 
     public CachingHttpGetClient(int timeoutMs, long connectionTimeToLiveSec) {
-        this.timeoutMs = timeoutMs;
-
-        // multithread support + max connections
-        connectionManager = new PoolingClientConnectionManager(SchemeRegistryFactory.createDefault(), connectionTimeToLiveSec, TimeUnit.MILLISECONDS);
-        connectionManager.setDefaultMaxPerRoute(100); // default 2
-        connectionManager.setMaxTotal(1000); // default 20
-
-        // init stuff
-        final DefaultHttpClient actualClient = new DefaultHttpClient(connectionManager);
-
-        HttpParams httpParams = actualClient.getParams();
-        HttpConnectionParams.setConnectionTimeout(httpParams, timeoutMs);
-        HttpConnectionParams.setSoTimeout(httpParams, timeoutMs);
-        HttpConnectionParams.setSoKeepalive(httpParams, true); // prevent firewall to reset idle connections?
-
-
-        org.apache.http.impl.client.cache.CacheConfig cacheConfig = new org.apache.http.impl.client.cache.CacheConfig();
-        cacheConfig.setMaxCacheEntries(50 * 1000);
-        cacheConfig.setMaxObjectSize(10 * 1024 * 1024); // 10M, eg oppilaitosnumero -koodisto is 7,5M
-        cachingClient = new CachingHttpClient(actualClient, cacheConfig);
+        final DefaultHttpClient actualClient = CachingRestClient.createDefaultHttpClient(timeoutMs, connectionTimeToLiveSec);
+        cachingClient = CachingRestClient.initCachingClient(actualClient);
     }
 
     /**
@@ -104,6 +85,9 @@ public class CachingHttpGetClient {
 
     InputStream get(String url, HttpContext context) throws IOException {
         HttpGet request = new HttpGet(url);
+        if(this.clientSubSystemCode != null) {
+            request.setHeader("clientSubSystemCode", this.clientSubSystemCode);
+        }
         final HttpResponse response = cachingClient.execute(request, context);
         if(response.getStatusLine().getStatusCode() == SC_FORBIDDEN) {
             logAndThrow(request, response, "Access denied error calling REST resource");
@@ -119,10 +103,10 @@ public class CachingHttpGetClient {
         return response.getEntity().getContent();
     }
 
-    private void logAndThrow(HttpRequestBase req, HttpResponse response, final String msg) throws HttpException {
+    private void logAndThrow(HttpRequestBase req, HttpResponse response, final String msg) throws CachingRestClient.HttpException {
         String message = msg + ", url: " + req.getURI() + ", status: " + response.getStatusLine();
         logger.error(message);
-        throw new HttpException(req, response, message);
+        throw new CachingRestClient.HttpException(req, response, message);
     }
 
     private <T> T fromJson(Class<? extends T> resultType, InputStream response) throws IOException {
@@ -133,34 +117,9 @@ public class CachingHttpGetClient {
         }
     }
 
-    public static class HttpException extends IOException {
-
-        private int statusCode;
-        private String statusMsg;
-        private String errorContent;
-
-        public HttpException(HttpRequestBase req, HttpResponse response, String message) {
-            super(message);
-            this.statusCode = response.getStatusLine().getStatusCode();
-            this.statusMsg = response.getStatusLine().getReasonPhrase();
-            try {
-                this.errorContent = IOUtils.toString(response.getEntity().getContent());
-            } catch (IOException e) {
-                logger.error("error reading errorContent: "+e, e);
-            }
-        }
-
-        public int getStatusCode() {
-            return statusCode;
-        }
-
-        public String getStatusMsg() {
-            return statusMsg;
-        }
-
-        public String getErrorContent() {
-            return errorContent;
-        }
+    public CachingHttpGetClient setClientSubSystemCode(String clientSubSystemCode) {
+        this.clientSubSystemCode = clientSubSystemCode;
+        return this;
     }
 }
 

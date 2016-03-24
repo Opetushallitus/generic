@@ -53,6 +53,18 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         Assert.assertEquals("pong 2", get("/httptest/pingCached1sec"));
     }
 
+    public static void assertContains(String source, String... args) {
+        for(String arg: args) {
+            Assert.assertTrue("could not find string '" + arg + "' from: " + source, source.indexOf(arg) > -1);
+        }
+    }
+
+    @Test
+    public void testCSRFHeaders() throws Exception {
+        // lue resurssi, jossa cache 1 sek
+        assertContains(get("/mirror/headers"), "CSRF: CachingRestClient", "Cookie: CSRF=CachingRestClient", "clientSubSystemCode: RestWithCasTestSupport");
+    }
+
     @Test
     public void testResourceMirroringUsingEtag() throws Exception {
         // luetaan resurssi
