@@ -4,7 +4,7 @@ Yleisiä java luokkia.
 
 ## DEPREKOITU
 
-käytä java-utils moduulin alta sopivaa pakettia tämän sijaan
+käytä [java-utils](https://github.com/Opetushallitus/java-utils) moduulin alta sopivaa pakettia tämän sijaan
 
 Jos käytät jotain täältä ja tarvitset muutoksia:
 
