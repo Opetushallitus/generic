@@ -28,10 +28,11 @@ public class ProxyAuthenticationChecker implements HealthChecker {
         if (auth == null || auth instanceof AnonymousAuthenticationToken) return "(must be logged in for proxyauth health check to work)";
         String currentUser = auth.getName();
 
-        CachingRestClient restClient = new CachingRestClient();
+        String currentAppId = servletContext.getContextPath().replaceAll("/", "");
+        CachingRestClient restClient = new CachingRestClient().setClientSubSystemCode(currentAppId + ".ProxyAuthenticationChecker");
         restClient.setUseProxyAuthentication(true);
         restClient.setWebCasUrl(getProperty("web.url.cas"));
-        String appurl = getProperty("cas.service." + servletContext.getContextPath().replaceAll("/", ""));
+        String appurl = getProperty("cas.service." + currentAppId);
         restClient.setCasService(appurl);
         try {
             String res = restClient.getAsString(appurl+"/healthcheck?userinfo");
