@@ -10,7 +10,6 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
