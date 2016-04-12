@@ -24,6 +24,7 @@ import java.util.*;
 public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private static final Logger logger = LoggerFactory.getLogger(CasApplicationAsAUserInterceptor.class);
+    private static final Integer HTTP_401_UNAUTHORIZED = Integer.valueOf(401);
 
     private String webCasUrl;
     private String targetService;
@@ -68,20 +69,27 @@ public class CasApplicationAsAUserInterceptor extends AbstractPhaseInterceptor<M
     }
 
     public void handleInbound(Message message) throws Fault {
-        Map<String, List<String>> headers = (Map<String, List<String>>)message.get(Message.PROTOCOL_HEADERS);
-        List<String> locationHeader = headers.get("Location");
-        if(locationHeader != null && locationHeader.size() > 0) {
-            String location = locationHeader.get(0);
-            try {
-                URL url = new URL(location);
-                String path = url.getPath();
-                // We are only interested in CAS redirects
-                if(path.startsWith("/cas/login")) {
-                    logger.warn("Got redirect to cas: removing ticket from cache");
-                    ticketCachePolicy.clearTicket(targetService, appClientUsername);
+        Integer responseCode = (Integer)message.get(Message.RESPONSE_CODE);
+        if (HTTP_401_UNAUTHORIZED.equals(responseCode)) {
+            logger.warn("Got response code " + responseCode +  " -> removing ticket from cache");
+            ticketCachePolicy.clearTicket(targetService, appClientUsername);
+        }
+        else {
+            Map<String, List<String>> headers = (Map<String, List<String>>)message.get(Message.PROTOCOL_HEADERS);
+            List<String> locationHeader = headers.get("Location");
+            if (locationHeader != null && locationHeader.size() > 0) {
+                String location = locationHeader.get(0);
+                try {
+                    URL url = new URL(location);
+                    String path = url.getPath();
+                    // We are only interested in CAS redirects
+                    if(path.startsWith("/cas/login")) {
+                        logger.warn("Got redirect to cas -> removing ticket from cache");
+                        ticketCachePolicy.clearTicket(targetService, appClientUsername);
+                    }
+                } catch(Exception ex) {
+                    logger.warn("Error while parsing redirect location", ex);
                 }
-            } catch(Exception ex) {
-                logger.warn("Error while parsing redirect location", ex);
             }
         }
     }
