@@ -17,27 +17,37 @@ import java.util.Map;
  */
 public class DefaultTicketCachePolicy extends TicketCachePolicy {
 
+    private static class TicketInfo {
+        public final String ticket;
+        public final Long loaded;
+        public TicketInfo(String ticket, Long loaded) {
+            this.ticket = ticket;
+            this.loaded = loaded;
+        }
+    }
+
     private static final Logger log = LoggerFactory.getLogger(DefaultTicketCachePolicy.class);
     private int globalTicketsTimeToLiveSeconds = 10*60; // 10 min default
-    private Map<String, String> globalTickets = new HashMap<String, String>();
-    private Map<String, Long> globalTicketsLoaded = new HashMap<String, Long>();
+    private Map<String, TicketInfo> globalTickets = new HashMap<>();
 
     @Override
     protected String getTicketFromCache(String cacheKey) {
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
-        String cachedTicket;
+        String cachedTicket = null;
         if (requestAttributes != null) {
             cachedTicket = (String) requestAttributes.getAttribute(cacheKey, RequestAttributes.SCOPE_SESSION);
         } else {
-            // expire?
-            Long ticketLoaded = globalTicketsLoaded.get(cacheKey);
-            if (ticketLoaded != null && ticketLoaded + (globalTicketsTimeToLiveSeconds *1000) < System.currentTimeMillis()) {
-                globalTickets.remove(cacheKey);
-                globalTicketsLoaded.remove(cacheKey);
-                log.info("expired ticket from global expiring cache, cacheKey: "+cacheKey);
+            TicketInfo ticketInfo = globalTickets.get(cacheKey);
+            if (ticketInfo != null) {
+                // expire?
+                if (ticketInfo.loaded + (globalTicketsTimeToLiveSeconds * 1000) < System.currentTimeMillis()) {
+                    globalTickets.remove(cacheKey);
+                    log.info("expired ticket from global expiring cache, cacheKey: " + cacheKey);
+                }
+                else {
+                    cachedTicket = ticketInfo.ticket;
+                }
             }
-
-            cachedTicket = globalTickets.get(cacheKey);
         }
         return cachedTicket;
     }
@@ -50,9 +60,13 @@ public class DefaultTicketCachePolicy extends TicketCachePolicy {
             requestAttributes.setAttribute(cacheKey, ticket, RequestAttributes.SCOPE_SESSION);
             log.info("cached ticket to httpsession, cacheKey: "+cacheKey+", ticket: "+ticket);
         } else {
-            globalTickets.put(cacheKey, ticket);
-            globalTicketsLoaded.put(cacheKey, ticket != null ? System.currentTimeMillis() : null);
-            log.info("cached ticket to global expiring cache, cacheKey: "+cacheKey+", ticket: "+ticket);
+            if(ticket == null) {
+                globalTickets.remove(cacheKey);
+                log.info("removed ticket for cacheKey: "+cacheKey);
+            } else {
+                globalTickets.put(cacheKey, new TicketInfo(ticket, System.currentTimeMillis()));
+                log.info("cached ticket to global expiring cache, cacheKey: "+cacheKey+", ticket: "+ticket);
+            }
         }
     }
 
