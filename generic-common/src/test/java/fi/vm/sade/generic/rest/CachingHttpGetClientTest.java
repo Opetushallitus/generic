@@ -12,9 +12,7 @@ import org.apache.http.client.cache.CacheResponseStatus;
 import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import junit.framework.Assert;
@@ -111,9 +109,13 @@ public class CachingHttpGetClientTest {
     CachingHttpGetClient client;
     final HttpContext context = new BasicHttpContext();
 
-    @Before
-    public void start() throws Exception {
+    @BeforeClass
+    public static void start() throws Exception {
         JettyJersey.startServer("fi.vm.sade.generic.rest", null);
+    }
+
+    @Before
+    public void init() {
         TestParams.instance = new TestParams();
         HttpTestResource.counter = 1;
         HttpTestResource.someResource = "original value";
@@ -122,8 +124,8 @@ public class CachingHttpGetClientTest {
         client = new CachingHttpGetClient().setClientSubSystemCode("CachingHttpGetClientTest");
     }
 
-    @After
-    public void stop() throws Exception {
+    @AfterClass
+    public static void stop() throws Exception {
         JettyJersey.stopServer();
     }
 
