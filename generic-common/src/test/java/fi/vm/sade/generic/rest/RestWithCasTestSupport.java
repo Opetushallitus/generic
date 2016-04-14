@@ -1,9 +1,7 @@
 package fi.vm.sade.generic.rest;
 
 import fi.vm.sade.jetty.JettyJersey;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
+import org.junit.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
@@ -13,9 +11,13 @@ public class RestWithCasTestSupport {
 
     CachingRestClient client;
 
-    @Before
-    public void start() throws Exception {
+    @BeforeClass
+    public static void start() throws Exception {
         JettyJersey.startServer("fi.vm.sade.generic.rest", null);
+    }
+
+    @Before
+    public void init() {
         TestParams.instance = new TestParams();
         HttpTestResource.counter = 1;
         HttpTestResource.someResource = "original value";
@@ -25,8 +27,8 @@ public class RestWithCasTestSupport {
         client.setWebCasUrl("N/A");
     }
 
-    @After
-    public void stop() throws Exception {
+    @AfterClass
+    public static void stop() throws Exception {
         JettyJersey.stopServer();
     }
 
