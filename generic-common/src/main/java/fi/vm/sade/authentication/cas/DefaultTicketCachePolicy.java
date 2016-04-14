@@ -40,11 +40,17 @@ public class DefaultTicketCachePolicy extends TicketCachePolicy {
             TicketInfo ticketInfo = globalTickets.get(cacheKey);
             if (ticketInfo != null) {
                 // expire?
-                if (ticketInfo.loaded + (globalTicketsTimeToLiveSeconds * 1000) < System.currentTimeMillis()) {
+                if (System.currentTimeMillis() - ticketInfo.loaded > globalTicketsTimeToLiveSeconds * 1000) {
                     globalTickets.remove(cacheKey);
                     log.info("expired ticket from global expiring cache, cacheKey: " + cacheKey);
                 }
                 else {
+                    // do not return ticket to second user before 1s in order to prevent concurrent CAS validate calls with same new ticket
+                    while (System.currentTimeMillis() - ticketInfo.loaded < 1000) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (Exception ignored) {}
+                    }
                     cachedTicket = ticketInfo.ticket;
                 }
             }
