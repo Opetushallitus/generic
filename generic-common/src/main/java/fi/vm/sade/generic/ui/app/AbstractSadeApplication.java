@@ -218,10 +218,6 @@ public abstract class AbstractSadeApplication extends Application implements Htt
     public void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
         log.debug("onRequestStart()");
 
-        // NO SUPER
-//        User user = new UserLiferayImpl(request);
-//        UserFeature.set(user);
-
         //setLocale(user.getLang());
         String lang = null;
         if (SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof SadeUserDetailsWrapper) {
