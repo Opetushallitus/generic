@@ -29,7 +29,7 @@ public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
 
             // jos ko tiketillä ollaan jo autentikoiduttu sessio, ei tehdä sitä enää
             if (casTicketHeader.equals(getSessionTicket())) {
-                logger.warn("ticket already authenticated in session: " + casTicketHeader); // note! casfiltterin pitäisi oletuksena toimia niin että validoidaan vain kerran per sessio, ainakin CasJettyTest mukaan
+                logger.info("ticket already authenticated in session: " + casTicketHeader); // note! casfiltterin pitäisi oletuksena toimia niin että validoidaan vain kerran per sessio, ainakin CasJettyTest mukaan
                 return null;
             } else {
                 return casTicketHeader;
@@ -39,7 +39,7 @@ public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
         // getParameter -kutsu saattaa hajottaa tietyt post-requestit,
         // siksi ticket-paremeter validointi skipataan, jos a) post-request, ja c) headerissa ei tikettiä
         if ("POST".equals(request.getMethod())) {
-            logger.info("skipping cas obtainArtifact because post and already authenticated");
+            logger.debug("skipping cas obtainArtifact because post and already authenticated");
             return null;
         }
 
