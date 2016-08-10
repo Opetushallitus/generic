@@ -134,6 +134,12 @@
             <groupId>org.dellroad</groupId>
             <artifactId>dellroad-stuff-vaadin</artifactId>
             <version>1.0.550</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
         	<groupId>easymock</groupId>
