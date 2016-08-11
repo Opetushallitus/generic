@@ -19,7 +19,7 @@ public abstract class TicketCachePolicy {
     public final String getCachedTicket(String targetService, Object authenticationOrUsername, TicketLoader ticketLoader) {
         Authentication auth = authenticationOrUsername instanceof Authentication ? (Authentication) authenticationOrUsername : new UsernamePasswordAuthenticationToken("" + authenticationOrUsername, null);
         String cacheKey = getCacheKey(targetService, auth.getName());
-        log.info("blocking get ticket from cache... user: " + auth.getName() + ", cacheKey: "+cacheKey+", targetService: "+targetService+", thread: "+Thread.currentThread().getName());
+        log.debug("blocking get ticket from cache... user: " + auth.getName() + ", cacheKey: "+cacheKey+", targetService: "+targetService+", thread: "+Thread.currentThread().getName());
         synchronized (cacheKey.intern()) {
             // get from cache
             String cachedTicket = this.getTicketFromCache(cacheKey);
@@ -27,7 +27,7 @@ public abstract class TicketCachePolicy {
             if (cachedTicket == null) {
                 // get ticket
                 cachedTicket = ticketLoader.loadTicket();
-                log.warn("blocking loaded new ticket, user: " + auth.getName() + ", cacheKey: "+cacheKey+", ticket: " + cachedTicket+", targetService: "+targetService+", thread: "+Thread.currentThread().getName());
+                log.info("blocking loaded new ticket, user: " + auth.getName() + ", cacheKey: "+cacheKey+", ticket: " + cachedTicket+", targetService: "+targetService+", thread: "+Thread.currentThread().getName());
                 if (cachedTicket == null) throw new NullPointerException("blocking loaded NULL ticket, user: " + auth.getName() + ", targetService: "+targetService);
 
                 // put to cache
@@ -35,7 +35,7 @@ public abstract class TicketCachePolicy {
             }
 
             else {
-                log.warn("blocking got ticket from cache, user: " + auth.getName() + ", ticket: " + cachedTicket+", targetService: "+targetService+", thread: "+Thread.currentThread().getName());
+                log.debug("blocking got ticket from cache, user: " + auth.getName() + ", ticket: " + cachedTicket+", targetService: "+targetService+", thread: "+Thread.currentThread().getName());
             }
 
             return cachedTicket;
