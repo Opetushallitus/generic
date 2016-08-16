@@ -18,7 +18,7 @@
 
     <properties>
         <activemq.version>5.5.1</activemq.version>
-        <aspectj.version>1.6.3</aspectj.version>
+        <aspectj.version>1.8.9</aspectj.version>
         <blackboard.version>2.1.1</blackboard.version>
         <commons-lang.version>2.6</commons-lang.version>
         <cxf.version>2.5.1</cxf.version>
@@ -423,7 +423,7 @@
                   <configuration>
                     <rules>
                       <requireJavaVersion>
-                        <version>1.7</version>
+                        <version>1.8</version>
                       </requireJavaVersion>
                       <dependencyConvergence/>
                     </rules>
