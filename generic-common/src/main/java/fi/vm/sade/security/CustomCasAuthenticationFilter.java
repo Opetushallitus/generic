@@ -29,7 +29,7 @@ public class CustomCasAuthenticationFilter extends CasAuthenticationFilter {
 
             // jos ko tiketillä ollaan jo autentikoiduttu sessio, ei tehdä sitä enää
             if (casTicketHeader.equals(getSessionTicket())) {
-                logger.info("ticket already authenticated in session: " + casTicketHeader); // note! casfiltterin pitäisi oletuksena toimia niin että validoidaan vain kerran per sessio, ainakin CasJettyTest mukaan
+                logger.debug("ticket already authenticated in session: " + casTicketHeader);
                 return null;
             } else {
                 return casTicketHeader;
