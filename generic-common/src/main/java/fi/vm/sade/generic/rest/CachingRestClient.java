@@ -270,7 +270,7 @@ public class CachingRestClient implements HealthChecker {
             //addRequestParameter(req, "ticket", serviceAsAUserTicket);
             req.setHeader(CAS_SECURITY_TICKET, serviceAsAUserTicket);
             PERA.setKayttajaHeaders(req, getCurrentUser(), username);
-            logger.info("set serviceAsAUser ticket to header, service: "+casService+", ticket: "+serviceAsAUserTicket+", currentUser: "+getCurrentUser()+", callAsUser: "+username);
+            logger.debug("set serviceAsAUser ticket to header, service: "+casService+", ticket: "+serviceAsAUserTicket+", currentUser: "+getCurrentUser()+", callAsUser: "+username);
             return true;
         }
 
@@ -289,7 +289,7 @@ public class CachingRestClient implements HealthChecker {
                 @Override
                 public void setRequestHeader(String key, String value) {
                     req.setHeader(key, value);
-                    logger.info("set http header: "+key+"="+value);
+                    logger.debug("set http header: "+key+"="+value);
                 }
                 @Override
                 public void gotNewTicket(Authentication authentication, String proxyTicket) {
@@ -403,8 +403,8 @@ public class CachingRestClient implements HealthChecker {
         boolean isRedirCas = isRedirectToCas(response); // this response is 302 with location header pointing to cas
         boolean wasRedirCas = wasRedirectedToCas(); // this response is from cas after 302 redirect
         boolean isHttp401 = response.getStatusLine().getStatusCode() == SC_UNAUTHORIZED;
-        if (logger.isInfoEnabled()) {
-            logger.info(info(req, response, wasJustAuthenticated, isRedirCas, wasRedirCas, retry));
+        if (logger.isDebugEnabled()) {
+            logger.debug(info(req, response, wasJustAuthenticated, isRedirCas, wasRedirCas, retry));
             logger.debug("    responseString: {}", responseString);
         }
 
