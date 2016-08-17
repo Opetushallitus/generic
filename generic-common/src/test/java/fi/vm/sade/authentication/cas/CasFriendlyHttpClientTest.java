@@ -24,7 +24,8 @@ public class CasFriendlyHttpClientTest {
     String password = "whatever";
 
     @BeforeClass
-    public static void setUpClass() {
+    public static void setUpClass() throws Exception {
+        JettyJersey.startServer("fi.vm.sade.authentication.cas", null);
     }
 
     @AfterClass
@@ -33,7 +34,6 @@ public class CasFriendlyHttpClientTest {
 
     @Before
     public void setUp() throws Exception {
-        JettyJersey.startServer("fi.vm.sade.authentication.cas", null);
         SecurityContextHolder.clearContext();
     }
 
