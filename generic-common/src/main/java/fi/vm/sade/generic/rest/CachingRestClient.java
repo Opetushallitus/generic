@@ -103,6 +103,7 @@ public class CachingRestClient implements HealthChecker {
     private String requiredVersionRegex;
     private final int timeoutMs;
     private String clientSubSystemCode;
+    private boolean allowUrlLogging;
     private HashMap<String, Boolean> csrfCookiesCreateForHost = new HashMap<String, Boolean>();
     private final CookieStore cookieStore;
 
@@ -115,7 +116,12 @@ public class CachingRestClient implements HealthChecker {
     }
 
     public CachingRestClient(int timeoutMs, long connectionTimeToLiveSec) {
+        this(timeoutMs, connectionTimeToLiveSec, true);
+    }
+
+    public CachingRestClient(int timeoutMs, long connectionTimeToLiveSec, boolean allowUrlLogging) {
         this.timeoutMs = timeoutMs;
+        this.allowUrlLogging = allowUrlLogging;
         final DefaultHttpClient actualClient = createDefaultHttpClient(timeoutMs, connectionTimeToLiveSec);
 
         actualClient.setRedirectStrategy(new DefaultRedirectStrategy(){
@@ -331,11 +337,12 @@ public class CachingRestClient implements HealthChecker {
     }
 
     public String postForLocation(String url, String contentType, String content) throws IOException {
-        HttpResponse response = post(url, contentType, content);
+        HttpRequestBase request = new HttpPost(url);
+        HttpResponse response = execute(request, contentType, content);
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
             return response.getFirstHeader("Location").getValue();
         } else {
-            throw new RuntimeException("post didn't result in http 201 created, status: "+response.getStatusLine()+", url: "+url);
+            throw new RuntimeException("post didn't result in http 201 created: " + info(request, response));
         }
     }
 
@@ -463,19 +470,19 @@ public class CachingRestClient implements HealthChecker {
     }
 
     private void logAndThrowHttpException(HttpRequestBase req, HttpResponse response, final String msg) throws CachingRestClient.HttpException {
-        String message = msg + ", url: " + req.getURI() + ", status: " + response.getStatusLine()+", userinfo: "+getUserInfo(req);
+        String message = msg + ", " + info(req, response);
         logger.error(message);
         throw new CachingRestClient.HttpException(req, response, message);
     }
 
-    private String getUserInfo(HttpRequestBase req) {
+    private String getUserInfo(HttpUriRequest req) {
         return header(req, "current", PERA.X_KUTSUKETJU_ALOITTAJA_KAYTTAJA_TUNNUS)
                 + header(req, "caller", PERA.X_PALVELUKUTSU_LAHETTAJA_KAYTTAJA_TUNNUS)
                 + header(req, "proxy", PERA.X_PALVELUKUTSU_LAHETTAJA_PROXY_AUTH)
                 + header(req, "ticket", CAS_SECURITY_TICKET);
     }
 
-    private String header(HttpRequestBase req, String info, String name) {
+    private String header(HttpUriRequest req, String info, String name) {
         Header[] headers = req.getHeaders(name);
         StringBuilder res = new StringBuilder();
         if (headers != null && headers.length > 0) {
@@ -487,18 +494,20 @@ public class CachingRestClient implements HealthChecker {
         return res.toString();
     }
 
-    private String info(HttpRequestBase req, HttpResponse response, boolean wasJustAuthenticated, boolean isRedirCas, boolean wasRedirCas, int retry) {
-        return "url: " + req.getURI()
+    private String info(HttpUriRequest req, HttpResponse response) {
+        return "url: " + (allowUrlLogging ? req.getURI() : "hidden")
                 + ", method: " + req.getMethod()
-                + ", serviceauth: " + useServiceAsAUserAuthentication()
-                + ", proxyauth: " + useProxyAuthentication
-                + ", currentuser: " + getCurrentUser()
+                + ", status: " + (response != null && response.getStatusLine() != null ? response.getStatusLine().getStatusCode() : "?")
+                + ", userInfo: " + getUserInfo(req)
+                + ", timeoutMs: " + timeoutMs;
+    }
+
+    private String info(HttpUriRequest req, HttpResponse response, boolean wasJustAuthenticated, boolean isRedirCas, boolean wasRedirCas, int retry) {
+        return info(req, response)
                 + ", isredircas: " + isRedirCas
                 + ", wasredircas: " + wasRedirCas
-                + ", status: " + (response != null && response.getStatusLine() != null ? response.getStatusLine().getStatusCode() : "?")
                 + ", wasJustAuthenticated: " + wasJustAuthenticated
-                + ", retry: " + retry
-                + ", timeoutMs: " + timeoutMs;
+                + ", retry: " + retry;
     }
 
     private String getCurrentUser() {
@@ -716,6 +725,11 @@ public class CachingRestClient implements HealthChecker {
 
     public CachingRestClient setClientSubSystemCode(String clientSubSystemCode) {
         this.clientSubSystemCode = clientSubSystemCode;
+        return this;
+    }
+
+    public CachingRestClient setAllowUrlLogging(boolean allowUrlLogging) {
+        this.allowUrlLogging = allowUrlLogging;
         return this;
     }
 }
