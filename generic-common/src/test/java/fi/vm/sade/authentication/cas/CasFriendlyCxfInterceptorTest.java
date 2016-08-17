@@ -42,8 +42,9 @@ public class CasFriendlyCxfInterceptorTest {
     static CasFriendlyCache cache = null;
 
     @BeforeClass
-    public static void setUpClass() {
+    public static void setUpClass() throws Exception {
         cache = new CasFriendlyCache(3600, "CasFriendlyCxfInterceptorTest");
+        JettyJersey.startServer("fi.vm.sade.authentication.cas", null);
     }
 
     @AfterClass
@@ -52,7 +53,6 @@ public class CasFriendlyCxfInterceptorTest {
 
     @Before
     public void setUp() throws Exception {
-        JettyJersey.startServer("fi.vm.sade.authentication.cas", null);
         SecurityContextHolder.clearContext();
         cache.clearAll();
     }
