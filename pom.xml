@@ -7,7 +7,7 @@
     <parent>
         <groupId>fi.vm.sade.generic</groupId>
         <artifactId>build-parent</artifactId>
-        <version>15.0-SNAPSHOT</version>
+        <version>16.0-SNAPSHOT</version>
     </parent>
 
     <groupId>fi.vm.sade.generic</groupId>
@@ -21,7 +21,7 @@
         <aspectj.version>1.8.9</aspectj.version>
         <blackboard.version>2.1.1</blackboard.version>
         <commons-lang.version>2.6</commons-lang.version>
-        <cxf.version>2.5.1</cxf.version>
+        <cxf.version>3.1.7</cxf.version>
         <dbunit.version>2.4.8</dbunit.version>
         <!--<ehcache.version>2.6.3</ehcache.version> -->
         <ehcache.version>2.4.8</ehcache.version> <!-- sallii monta samannimista cachemanageria -->
@@ -29,7 +29,7 @@
         <hibernate.version>4.1.0.Final</hibernate.version>
         <javax.validation.version>1.0.0.GA</javax.validation.version>
         <jta.version>1.1</jta.version>
-        <junit.version>4.10</junit.version>
+        <junit.version>4.12</junit.version>
         <liferay.version>6.1.0</liferay.version>
         <portlet.api.version>2.0</portlet.api.version>
         <postgresql.version>9.4.1209</postgresql.version>
@@ -37,7 +37,6 @@
         <selenium.version>2.33.0</selenium.version>
         <servlet.version>3.0.1</servlet.version>
         <slf4j.version>1.7.5</slf4j.version>
-        <spring.version>3.1.3.RELEASE</spring.version>
         <vaadin.formbinder.version>2.1.1</vaadin.formbinder.version>
         <vaadin.version>6.8.12</vaadin.version>
     </properties>
@@ -138,17 +137,7 @@
 
             <dependency>
                 <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-api</artifactId>
-                <version>${cxf.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-bundle</artifactId>
-                <version>${cxf.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-rt-core</artifactId>
                 <version>${cxf.version}</version>
             </dependency>
             <dependency>
@@ -169,6 +158,11 @@
             <dependency>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-rt-transports-local</artifactId>
+                <version>${cxf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.cxf</groupId>
+                <artifactId>cxf-rt-rs-client</artifactId>
                 <version>${cxf.version}</version>
             </dependency>
 
@@ -252,17 +246,17 @@
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-cas</artifactId>
-                <version>${spring.version}</version>
+                <version>${spring.security.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-config</artifactId>
-                <version>${spring.version}</version>
+                <version>${spring.security.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-core</artifactId>
-                <version>${spring.version}</version>
+                <version>${spring.security.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.springframework</groupId>
@@ -273,12 +267,12 @@
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-ldap</artifactId>
-                <version>${spring.version}</version>
+                <version>${spring.security.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-web</artifactId>
-                <version>${spring.version}</version>
+                <version>${spring.security.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.springframework</groupId>
@@ -385,6 +379,17 @@
                 <version>1.10</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.sun.jersey</groupId>
+                <artifactId>jersey-server</artifactId>
+                <version>1.9.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.jersey</groupId>
+                <artifactId>jersey-servlet</artifactId>
+                <version>1.9.1</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -406,7 +411,6 @@
         <module>generic-events</module>
 
         <module>webapp-portal-decorator</module>
-        <module>generic-vaadin-widgetset</module>
     </modules>
 
     <build>

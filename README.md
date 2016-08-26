@@ -15,3 +15,7 @@ Jos käytät jotain täältä ja tarvitset muutoksia:
 3. *siirrä* luokka genericista java-utils submoodlin alle
 4. tee muutokset
 5. vaihda käyttävä projekti riippumaan java.utils:n alimoduulista ja tarvittaessa yhä genericin uudesta versiosta
+
+Huom:
+
+Vanha moduli `generic-vaadin-widgetset` on poistettu.

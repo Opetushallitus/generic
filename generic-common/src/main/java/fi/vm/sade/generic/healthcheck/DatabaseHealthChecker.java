@@ -40,7 +40,7 @@ class DatabaseHealthChecker implements HealthChecker {
             while(rs.next()) {
                 JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
                 String tableName = rs.getString("TABLE_NAME");
-                counts.put(tableName, jdbcTemplate.queryForLong("SELECT COUNT(*) FROM " + tableName));
+                counts.put(tableName, jdbcTemplate.queryForObject("SELECT COUNT(*) FROM " + tableName, Long.class));
             }
             result.put("counts", counts);
 

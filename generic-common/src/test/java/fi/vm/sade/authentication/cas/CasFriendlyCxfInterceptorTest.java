@@ -1,18 +1,20 @@
 package fi.vm.sade.authentication.cas;
 
+import static com.sun.scenario.Settings.set;
+
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import fi.vm.sade.jetty.JettyJersey;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
-import org.apache.cxf.jaxrs.ext.form.Form;
 import org.apache.cxf.message.Message;
 import org.jasig.cas.client.authentication.AttributePrincipal;
 import org.jasig.cas.client.validation.Assertion;
@@ -147,7 +149,7 @@ public class CasFriendlyCxfInterceptorTest {
                     login, password, null, true, true, false);
             WebClient cxfClient = createClient(protectedTargetUrl, interceptor);
             Form form = new Form();
-            form.set("TESTNAME", "TESTVALUE");
+            form.param("TESTNAME", "TESTVALUE");
             Response resp = cxfClient.form(form);
             String response = IOUtils.toString((InputStream) resp.getEntity());
             Assert.assertTrue("Response should be: ok 1, but is: " + response, response.equals("ok 1"));
@@ -282,8 +284,7 @@ public class CasFriendlyCxfInterceptorTest {
             CasFriendlyCxfInterceptor<Message> interceptor = this.createInterceptor(
                     login, password, null, false, true, false);
             WebClient cxfClient = createClient(protectedTargetUrl, interceptor);
-            Form form = new Form();
-            form.set("TESTNAME", "TESTVALUE");
+            Form form = new Form().param("TESTNAME", "TESTVALUE");
             Response resp = cxfClient.form(form);
             String response = IOUtils.toString((InputStream) resp.getEntity());
             Assert.assertTrue("Response should be: ok 1, but is: " + response, response.equals("ok 1"));
