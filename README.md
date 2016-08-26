@@ -15,3 +15,10 @@ Jos käytät jotain täältä ja tarvitset muutoksia:
 3. *siirrä* luokka genericista java-utils submoodlin alle
 4. tee muutokset
 5. vaihda käyttävä projekti riippumaan java.utils:n alimoduulista ja tarvittaessa yhä genericin uudesta versiosta
+
+Muutoslokia:
+
+9.6-SNAPSHOT
+
+* Poistetaan vanha `CustomCasAuthenticationFilter`, sen korvaa [OpintopolkuCasAuthenticationFilter](https://github.com/Opetushallitus/java-utils/blob/5d90fbf956f9b530770fadeff1dcc72937e52dc5/opintopolku-cas-servlet-filter/src/main/java/fi/vm/sade/java_utils/security/OpintopolkuCasAuthenticationFilter.java)
+* Poistetaan vanha `generic-vaadin-widgetset` -moduli

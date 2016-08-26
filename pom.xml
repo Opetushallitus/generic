@@ -7,14 +7,14 @@
     <parent>
         <groupId>fi.vm.sade.generic</groupId>
         <artifactId>build-parent</artifactId>
-        <version>15.0-SNAPSHOT</version>
+        <version>16.0-SNAPSHOT</version>
     </parent>
 
     <groupId>fi.vm.sade.generic</groupId>
     <artifactId>generic</artifactId>
     <packaging>pom</packaging>
     <name>Generic :: Parent</name>
-    <version>9.5-SNAPSHOT</version>
+    <version>9.6-SNAPSHOT</version>
 
     <properties>
         <activemq.version>5.5.1</activemq.version>
@@ -406,7 +406,6 @@
         <module>generic-events</module>
 
         <module>webapp-portal-decorator</module>
-        <module>generic-vaadin-widgetset</module>
     </modules>
 
     <build>
