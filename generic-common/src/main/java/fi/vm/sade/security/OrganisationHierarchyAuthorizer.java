@@ -82,7 +82,6 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
             }
         }
         final String msg = "Not authorized! targetOrganisationAndParentsOids: " + targetOrganisationAndParentsOids + ", requiredRoles: " + Arrays.asList(requiredRoles) + ", userRoles: " + userRoles;
-        LOGGER.info(msg);
         throw new NotAuthorizedException(msg);
     }
 
@@ -112,7 +111,6 @@ public class OrganisationHierarchyAuthorizer { // TODO: cas todo rename?
         }
 
         final String msg = "Not authorized! currentUser: " + currentUser + ", requiredRoles: " + Arrays.asList(requiredRoles);
-        LOGGER.info(msg);
         throw new NotAuthorizedException(msg);
     }
 
