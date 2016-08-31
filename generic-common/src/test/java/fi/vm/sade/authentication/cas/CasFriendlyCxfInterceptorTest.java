@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import fi.vm.sade.authentication.cas.mock.CasFriendlyCasMockResource;
 import fi.vm.sade.jetty.JettyJersey;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
@@ -44,7 +45,7 @@ public class CasFriendlyCxfInterceptorTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         cache = new CasFriendlyCache(3600, "CasFriendlyCxfInterceptorTest");
-        JettyJersey.startServer("fi.vm.sade.authentication.cas", null);
+        JettyJersey.startServer("fi.vm.sade.authentication.cas.mock", null);
     }
 
     @AfterClass
