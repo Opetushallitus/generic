@@ -1,4 +1,4 @@
-package fi.vm.sade.authentication.cas;
+package fi.vm.sade.authentication.cas.mock;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,6 +12,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import fi.vm.sade.authentication.cas.CasFriendlyCxfInterceptorTest;
 import org.apache.commons.lang.StringUtils;
 
 /**

@@ -1,4 +1,4 @@
-package fi.vm.sade.authentication.cas;
+package fi.vm.sade.authentication.cas.mock;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -20,7 +20,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import fi.vm.sade.authentication.cas.CasFriendlyHttpClient;
+import fi.vm.sade.authentication.cas.CasFriendlyCxfInterceptorTest;
+import fi.vm.sade.authentication.cas.CasFriendlyHttpClientTest;
 
 /**
  * @author Jouni Stam
@@ -127,7 +128,7 @@ public class CasFriendlyTestResource {
 
     private static String createCasLocation(HttpServletRequest request) throws UnsupportedEncodingException, MalformedURLException {
         String fullUrl = getFullURL(request);
-        fullUrl = CasFriendlyHttpClient.resolveTargetServiceUrl(fullUrl);
+        fullUrl = CasFriendlyHttpClientTest.resolveTargetServiceUrl(fullUrl);
         return "/cas/login?service=" + URLEncoder.encode(fullUrl, "UTF-8");
     }
     

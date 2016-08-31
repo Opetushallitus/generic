@@ -2,6 +2,7 @@ package fi.vm.sade.authentication.cas;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 
 import fi.vm.sade.jetty.JettyJersey;
 import org.apache.cxf.helpers.IOUtils;
@@ -25,7 +26,7 @@ public class CasFriendlyHttpClientTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        JettyJersey.startServer("fi.vm.sade.authentication.cas", null);
+        JettyJersey.startServer("fi.vm.sade.authentication.cas.mock", null);
     }
 
     @AfterClass
@@ -172,4 +173,7 @@ public class CasFriendlyHttpClientTest {
         return JettyJersey.getUrl(url);
     }
 
+    public static String resolveTargetServiceUrl(String fullUrl) throws MalformedURLException {
+        return CasFriendlyHttpClient.resolveTargetServiceUrl(fullUrl);
+    }
 }
