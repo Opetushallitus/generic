@@ -23,6 +23,8 @@ import java.util.Collection;
  * @author: Tuomas Katva
  * Date: 21.8.2013
  */
+// Siirretty java-utils/java-ldap
+@Deprecated
 public class SadeUserDetailsWrapper implements UserDetails  {
 
     private UserDetails details;

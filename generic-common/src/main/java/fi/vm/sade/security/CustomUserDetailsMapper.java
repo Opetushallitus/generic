@@ -12,6 +12,8 @@ import java.util.Collection;
  *
  * @author Antti Salonen
  */
+// Siirretty java-utils/java-ldap
+@Deprecated
 public class CustomUserDetailsMapper extends LdapUserDetailsMapper {
 
     @Override
