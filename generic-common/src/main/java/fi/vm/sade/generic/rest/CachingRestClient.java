@@ -431,6 +431,7 @@ public class CachingRestClient implements HealthChecker {
         }
 
         if(response.getStatusLine().getStatusCode() >= SC_INTERNAL_SERVER_ERROR) {
+            clearTicket();
             logAndThrowHttpException(req, response, "Internal error calling REST resource");
         }
 
