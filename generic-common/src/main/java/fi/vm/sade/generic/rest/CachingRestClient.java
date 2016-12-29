@@ -387,7 +387,16 @@ public class CachingRestClient implements HealthChecker {
         }
 
         // authenticate if needed
-        boolean wasJustAuthenticated = authenticate(req);
+        boolean wasJustAuthenticated = false;
+        try {
+            wasJustAuthenticated = authenticate(req);
+        } catch (Exception e) {
+            if (retry == 0) {
+                logger.warn("failed to CAS authenticate", e);
+            } else {
+                logger.warn("failed second time to CAS authenticate", e);
+            }
+        }
 
         // do actual request
         HttpResponse response = null;
