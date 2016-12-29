@@ -440,6 +440,7 @@ public class CachingRestClient implements HealthChecker {
         }
 
         if(response.getStatusLine().getStatusCode() >= SC_INTERNAL_SERVER_ERROR) {
+            clearTicket(); // todo: http500 tapauksissa pitää korjata kohdepalvelu, jos esim http500 johtuu tikettiongelmasta kohdepalvelussa, pitäisi kohdepalvelun antaa http 4xx
             logAndThrowHttpException(req, response, "Internal error calling REST resource");
         }
 
