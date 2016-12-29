@@ -259,54 +259,45 @@ public class CachingRestClient implements HealthChecker {
     }
 
     protected boolean authenticate(final HttpRequestBase req) throws IOException {
-
-        // username / password authentication
-
-        if (useServiceAsAUserAuthentication()) {
-            // get ticket
-            if (serviceAsAUserTicket == null) {
-                checkNotNull(username, "username");
-                checkNotNull(password, "password");
+        synchronized (this) {
+            if (useServiceAsAUserAuthentication()) {
+                if (serviceAsAUserTicket == null) {
+                    checkNotNull(username, "username");
+                    checkNotNull(password, "password");
+                    checkNotNull(webCasUrl, "webCasUrl");
+                    checkNotNull(casService, "casService");
+                    serviceAsAUserTicket = obtainNewCasServiceAsAUserTicket();
+                    logger.info("got new serviceAsAUser ticket, service: " + casService + ", ticket: " + serviceAsAUserTicket);
+                }
+                req.setHeader(CAS_SECURITY_TICKET, serviceAsAUserTicket);
+                PERA.setKayttajaHeaders(req, getCurrentUser(), username);
+                logger.debug("set serviceAsAUser ticket to header, service: " + casService + ", ticket: " + serviceAsAUserTicket + ", currentUser: " + getCurrentUser() + ", callAsUser: " + username);
+                return true;
+            } else if (useProxyAuthentication) {
                 checkNotNull(webCasUrl, "webCasUrl");
                 checkNotNull(casService, "casService");
-                serviceAsAUserTicket = obtainNewCasServiceAsAUserTicket();
-                logger.info("got new serviceAsAUser ticket, service: "+casService+", ticket: "+serviceAsAUserTicket);
-            }
-            // attach ticket
-            //addRequestParameter(req, "ticket", serviceAsAUserTicket);
-            req.setHeader(CAS_SECURITY_TICKET, serviceAsAUserTicket);
-            PERA.setKayttajaHeaders(req, getCurrentUser(), username);
-            logger.debug("set serviceAsAUser ticket to header, service: "+casService+", ticket: "+serviceAsAUserTicket+", currentUser: "+getCurrentUser()+", callAsUser: "+username);
-            return true;
-        }
-
-        // proxy authentication
-
-        else if (useProxyAuthentication) {
-
-            checkNotNull(webCasUrl, "webCasUrl");
-            checkNotNull(casService, "casService");
-
-            if (proxyAuthenticator == null) {
-                proxyAuthenticator = new ProxyAuthenticator();
-            }
-            final boolean[] gotNewProxyTicket = {false};
-            proxyAuthenticator.proxyAuthenticate(casService, proxyAuthMode, new ProxyAuthenticator.Callback() {
-                @Override
-                public void setRequestHeader(String key, String value) {
-                    req.setHeader(key, value);
-                    logger.debug("set http header: "+key+"="+value);
+                if (proxyAuthenticator == null) {
+                    proxyAuthenticator = new ProxyAuthenticator();
                 }
-                @Override
-                public void gotNewTicket(Authentication authentication, String proxyTicket) {
-                    logger.info("got new proxy ticket, service: "+casService+", ticket: "+proxyTicket);
-                    gotNewProxyTicket[0] = true;
-                }
-            });
-            return gotNewProxyTicket[0];
-        }
+                final boolean[] gotNewProxyTicket = {false};
+                proxyAuthenticator.proxyAuthenticate(casService, proxyAuthMode, new ProxyAuthenticator.Callback() {
+                    @Override
+                    public void setRequestHeader(String key, String value) {
+                        req.setHeader(key, value);
+                        logger.debug("set http header: " + key + "=" + value);
+                    }
 
-        return false;
+                    @Override
+                    public void gotNewTicket(Authentication authentication, String proxyTicket) {
+                        logger.info("got new proxy ticket, service: " + casService + ", ticket: " + proxyTicket);
+                        gotNewProxyTicket[0] = true;
+                    }
+                });
+                return gotNewProxyTicket[0];
+            }
+
+            return false;
+        }
     }
 
     private void checkNotNull(String value, String name) {
@@ -517,9 +508,11 @@ public class CachingRestClient implements HealthChecker {
 
     /** will force to get new ticket next time */
     public void clearTicket() {
-        serviceAsAUserTicket = null;
-        if (useProxyAuthentication && proxyAuthenticator != null) {
-            proxyAuthenticator.clearTicket(casService);
+        synchronized (this) {
+            serviceAsAUserTicket = null;
+            if (useProxyAuthentication && proxyAuthenticator != null) {
+                proxyAuthenticator.clearTicket(casService);
+            }
         }
     }
 
