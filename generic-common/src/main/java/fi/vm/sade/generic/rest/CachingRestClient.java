@@ -378,7 +378,16 @@ public class CachingRestClient implements HealthChecker {
         }
 
         // authenticate if needed
-        boolean wasJustAuthenticated = authenticate(req);
+        boolean wasJustAuthenticated = false;
+        try {
+            wasJustAuthenticated = authenticate(req);
+        } catch (Exception e) {
+            if (retry == 0) {
+                logger.warn("failed to CAS authenticate", e);
+            } else {
+                logger.warn("failed second time to CAS authenticate", e);
+            }
+        }
 
         // do actual request
         HttpResponse response = null;
@@ -431,7 +440,6 @@ public class CachingRestClient implements HealthChecker {
         }
 
         if(response.getStatusLine().getStatusCode() >= SC_INTERNAL_SERVER_ERROR) {
-            clearTicket(); // todo: http500 tapauksissa pitää korjata kohdepalvelu, jos esim http500 johtuu tikettiongelmasta kohdepalvelussa, pitäisi kohdepalvelun antaa http 4xx
             logAndThrowHttpException(req, response, "Internal error calling REST resource");
         }
 
