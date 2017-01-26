@@ -15,6 +15,8 @@ import fi.vm.sade.authentication.cas.DefaultTicketCachePolicy;
 import fi.vm.sade.authentication.cas.TicketCachePolicy;
 import fi.vm.sade.generic.PERA;
 
+import javax.validation.constraints.NotNull;
+
 /**
  * @author Antti Salonen
  */
@@ -37,6 +39,8 @@ public class ProxyAuthenticator {
                 proxyAuthenticateCas(casTargetService, callback, authentication);
             }
 
+        } catch (CasProxyAuthenticationException cpae) {
+            throw cpae;
         } catch (Throwable e) {
             throw new RuntimeException("Could not attach security ticket to SOAP message, user: "
                     + (authentication != null ? authentication.getName() : "null") + ", authmode: " + authMode
@@ -90,7 +94,7 @@ public class ProxyAuthenticator {
         String ticket = ((CasAuthenticationToken) authentication).getAssertion().getPrincipal()
                 .getProxyTicketFor(casTargetService);
         if (ticket == null) {
-            throw new NullPointerException(
+            throw new CasProxyAuthenticationException(
                     "obtainNewCasProxyTicket got null proxyticket, there must be something wrong with cas proxy authentication -scenario! check proxy callback works etc, targetService: "
                             + casTargetService + ", user: " + authentication.getName());
         }
@@ -113,5 +117,13 @@ public class ProxyAuthenticator {
 
     public void setTicketCachePolicy(TicketCachePolicy ticketCachePolicy) {
         this.ticketCachePolicy = ticketCachePolicy;
+    }
+
+    public static class CasProxyAuthenticationException extends RuntimeException {
+        CasProxyAuthenticationException() {}
+
+        CasProxyAuthenticationException(@NotNull String message) {
+            super(message);
+        }
     }
 }
