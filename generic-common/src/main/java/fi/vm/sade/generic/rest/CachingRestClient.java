@@ -14,6 +14,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
@@ -21,6 +22,7 @@ import org.apache.http.impl.client.RedirectLocations;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.impl.conn.SchemeRegistryFactory;
 import org.apache.http.impl.cookie.BasicClientCookie;
+import org.apache.http.message.BasicStatusLine;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
@@ -377,8 +379,19 @@ public class CachingRestClient implements HealthChecker {
             ((HttpEntityEnclosingRequestBase)req).setEntity(new StringEntity(postOrPutContent, UTF8));
         }
 
+        boolean wasJustAuthenticated = false;
         // authenticate if needed
-        boolean wasJustAuthenticated = authenticate(req);
+        try {
+            wasJustAuthenticated = authenticate(req);
+        } catch (ProxyAuthenticator.CasProxyAuthenticationException e) {
+            if (retry == 0) {
+                logger.warn("failed to CAS authenticate", e);
+            } else {
+                logger.warn("failed second time to CAS authenticate", e);
+                // CAS didn't likely recognise TGT (One can't be completely sure since Cas20ProxyRetriever just returns null)
+                throw new HttpException(req, getEmptyHttpResponse(SC_UNAUTHORIZED), e.getMessage());
+            }
+        }
 
         // do actual request
         HttpResponse response = null;
@@ -442,6 +455,11 @@ public class CachingRestClient implements HealthChecker {
 
         logger.debug("{}, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{req.getMethod(), url, contentType, postOrPutContent, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});
         return response;
+    }
+
+    private HttpResponse getEmptyHttpResponse(int statusCode) {
+        return new DefaultHttpResponseFactory()
+                .newHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, statusCode, null), null);
     }
 
     private void ensureCSRFCookie(HttpRequestBase req) {
