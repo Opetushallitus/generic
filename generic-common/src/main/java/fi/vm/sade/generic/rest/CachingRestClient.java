@@ -394,9 +394,11 @@ public class CachingRestClient implements HealthChecker {
             wasJustAuthenticated = authenticate(req);
         } catch (Exception e) {
             if (retry == 0) {
-                logger.warn("failed to CAS authenticate", e);
+                logger.warn("Failed to CAS authenticate. Renewing proxy ticket.");
+                logger.debug("Failed to CAS authenticate. Renewing proxy ticket.", e);
             } else {
-                logger.warn("failed second time to CAS authenticate", e);
+                logger.warn("Failed second time to CAS authenticate");
+                logger.debug("Failed second time to CAS authenticate", e);
                 // CAS didn't likely recognise TGT (One can't be completely sure since Cas20ProxyRetriever just returns null)
                 if(e instanceof ProxyAuthenticator.CasProxyAuthenticationException) {
                     throw new HttpException(req, getEmptyHttpResponse(SC_UNAUTHORIZED), e.getMessage());
