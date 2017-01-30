@@ -14,7 +14,7 @@
     <artifactId>generic</artifactId>
     <packaging>pom</packaging>
     <name>Generic :: Parent</name>
-    <version>9.6-SNAPSHOT</version>
+    <version>9.6</version>
 
     <properties>
         <activemq.version>5.5.1</activemq.version>
