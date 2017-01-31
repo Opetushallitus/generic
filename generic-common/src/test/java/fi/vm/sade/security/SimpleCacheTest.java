@@ -38,7 +38,7 @@ public class SimpleCacheTest {
         }
         // assert cache - first entry must be evicted
         Assert.assertTrue(cache.containsKey("key_0"));
-        Assert.assertTrue(cache.containsKey("key_"+(OrganisationHierarchyAuthorizer.MAX_CACHE_SIZE-1)));
+        Assert.assertTrue(cache.containsKey("key_"+(9999)));
         Assert.assertFalse(cache.containsKey("key_first"));
     }
 

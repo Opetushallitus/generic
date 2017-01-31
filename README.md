@@ -22,3 +22,10 @@ Muutoslokia:
 
 * Poistetaan vanha `CustomCasAuthenticationFilter`, sen korvaa [OpintopolkuCasAuthenticationFilter](https://github.com/Opetushallitus/java-utils/blob/5d90fbf956f9b530770fadeff1dcc72937e52dc5/opintopolku-cas-servlet-filter/src/main/java/fi/vm/sade/java_utils/security/OpintopolkuCasAuthenticationFilter.java)
 * Poistetaan vanha `generic-vaadin-widgetset` -moduli
+
+9.7-SNAPSHOT
+
+* Siirretty OrganisationHierarchyAuthorizer java-utilsiin
+ * Poistettu siihen liittyvät luokat
+ * Java-utilsiin ei lisätty Spring-tukea. Jos se tarvitaan, pitää tehdä oma moduuli, jotta Spring ei valu esim. valinta-tulos-serviceen
+
