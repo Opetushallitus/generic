@@ -29,3 +29,6 @@ Muutoslokia:
  * Poistettu siihen liittyvät luokat
  * Java-utilsiin ei lisätty Spring-tukea. Jos se tarvitaan, pitää tehdä oma moduuli, jotta Spring ei valu esim. valinta-tulos-serviceen
 
+* Poistetaan `/generic-common/pom.xml`:stä dependenssi `jgroups`.
+* Poistetaan luokat `JGroupsCustomLog` ja `GroupsLoggerFactory`
+
