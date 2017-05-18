@@ -380,7 +380,6 @@ public class CachingRestClient implements HealthChecker {
         }
 
         boolean wasJustAuthenticated = false;
-        // authenticate if needed
         try {
             wasJustAuthenticated = authenticate(req);
         } catch (ProxyAuthenticator.CasProxyAuthenticationException e) {
@@ -428,15 +427,14 @@ public class CachingRestClient implements HealthChecker {
         }
 
         // authentication: was redirected to cas OR http 401 -> get ticket and retry once (but do it only once, hence 'retry')
-        // todo: onko hyvä että aina koitetaan kerran uusiksi 401 virheen jälkeen? jos esim ticket vanhentunut, tuleeko sieltä edes 401 koskaan?
         if (isRedirCas || wasRedirCas || isHttp401) {
             if (retry == 0) {
                 logger.warn("warn! got redirect to cas or 401 unauthorized, re-getting ticket and retrying request");
-                clearTicket(); // will force to get new ticket on execute
+                clearTicket();
                 logger.debug("set redirected_to_cas=false");
                 localContext.get().removeAttribute(WAS_REDIRECTED_TO_CAS);
                 return execute(req, contentType, postOrPutContent, 1);
-            } else { // if already retried, 401 unauthorized is for real!
+            } else {
                 clearTicket();
                 logAndThrowHttpException(req, response, "Unauthorized error calling REST resource, got redirect to cas or 401 unauthorized");
             }
