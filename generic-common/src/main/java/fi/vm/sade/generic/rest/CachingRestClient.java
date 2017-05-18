@@ -437,6 +437,7 @@ public class CachingRestClient implements HealthChecker {
                 localContext.get().removeAttribute(WAS_REDIRECTED_TO_CAS);
                 return execute(req, contentType, postOrPutContent, 1);
             } else { // if already retried, 401 unauthorized is for real!
+                clearTicket();
                 logAndThrowHttpException(req, response, "Unauthorized error calling REST resource, got redirect to cas or 401 unauthorized");
             }
         }
