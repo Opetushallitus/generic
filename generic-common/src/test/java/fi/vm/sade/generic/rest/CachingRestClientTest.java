@@ -102,6 +102,11 @@ public class CachingRestClientTest extends RestWithCasTestSupport {
         get("/httptest/status500");
     }
 
+    @Test(expected = IOException.class)
+    public void testErrorStatus400() throws IOException {
+        get("/httptest/status400");
+    }
+
     @Test
     public void testAuthenticationWithGetRedirect() throws Exception {
         initClientAuthentication("test");

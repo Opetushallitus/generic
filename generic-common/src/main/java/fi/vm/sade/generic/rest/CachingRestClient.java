@@ -452,6 +452,10 @@ public class CachingRestClient implements HealthChecker {
             logAndThrowHttpException(req, response, "Not found error calling REST resource");
         }
 
+        if(response.getStatusLine().getStatusCode() == SC_BAD_REQUEST) {
+            logAndThrowHttpException(req, response, "Bad request error calling REST resource");
+        }
+
         cacheStatus = localContext.get().getAttribute(CACHE_RESPONSE_STATUS);
 
         logger.debug("{}, url: {}, contentType: {}, content: {}, status: {}, headers: {}", new Object[]{req.getMethod(), url, contentType, postOrPutContent, response.getStatusLine(), Arrays.asList(response.getAllHeaders())});

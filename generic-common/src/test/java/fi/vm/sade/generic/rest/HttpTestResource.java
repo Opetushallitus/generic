@@ -105,6 +105,13 @@ public class HttpTestResource {
         return Response.status(500).build();
     }
 
+    @Path("/status400")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response status400() {
+        return Response.status(400).build();
+    }
+
     @Path("/pingSecuredRedirect/{sthing}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
