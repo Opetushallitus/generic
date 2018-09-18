@@ -22,7 +22,7 @@ install:
 
 deploy:
 - provider: script
-  script: mvn deploy -pl tarjonta-api -DskipTests --settings ci-tools/common/maven-settings.xml
+  script: mvn clean deploy --settings ci-tools/common/maven-settings.xml
   skip_cleanup: true
   on:
     branch: master
