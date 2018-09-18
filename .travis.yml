@@ -20,9 +20,12 @@ install:
 - git clone https://github.com/Opetushallitus/ci-tools.git
 - source ci-tools/common/setup-tools.sh
 
+script:
+- mvn clean package
+
 deploy:
-- provider: script
-  script: mvn clean deploy --settings ci-tools/common/maven-settings.xml
+  provider: script
+  script: "mvn deploy -DskipTests --settings ci-tools/common/maven-settings.xml"
   skip_cleanup: true
   on:
     branch: master
