@@ -1,7 +1,5 @@
 package fi.vm.sade.generic.service.exception;
 
-import fi.vm.sade.generic.service.exception.SadeBusinessException;
-
 /**
  * @author Eetu Blomqvist
  */
