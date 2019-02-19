@@ -1,12 +1,9 @@
 package fi.vm.sade.security;
 
-import fi.vm.sade.generic.ui.feature.UserFeature;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-import org.apache.commons.logging.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.aop.interceptor.CustomizableTraceInterceptor;
 
 import java.util.HashMap;
 import java.util.Map;
