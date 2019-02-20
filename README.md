@@ -32,3 +32,18 @@ Muutoslokia:
 * Poistetaan `/generic-common/pom.xml`:stä dependenssi `jgroups`.
 * Poistetaan luokat `JGroupsCustomLog` ja `GroupsLoggerFactory`
 
+9.9-SNAPSHOT
+* Siirretään java-utilsiin seuraavat luokat (uusi java-utilsin alimoduli suluissa perässä)
+  * SimpleCache (java-cache)
+  * CachingRestClient (legacy-caching-rest-client)
+  * CasApplicationAsAUserInterceptor , DefaultTicketCachePolicy , TicketCachePolicy , PERA , ProxyAuthenticator (legacy-cxf-cas)
+  * Authorizer , NotAuthorizedException , SadeBusinessException , OidProvider , OrganisationHierarchyAuthorizer , ThreadLocalAuthorizer (opintopolku-spring-security)
+  * BuildVersionHealthChecker , DatabaseHealthChecker , ProxyAuthenticationChecker , SpringAwareHealthCheckServlet (spring-aware-health-check-servlet)
+  * HealthChecker (opintopolku-healthcheck-api)
+  * TraceInterceptor (java-tracing)
+* Poistetaan AuthorizationUtil , jonka toiminnallisuus on nyt suoraan sitä käyttävissä valintalaskentakoostepalvelu- ja valintalaskenta-service -moduleissa
+* Poistetaan seuraavat luokat, jotka eivät ole enää käytössä:
+  * CachingHttpGetClient
+  * Cacheable
+  * CacheableJerseyFilter
+  * Role
