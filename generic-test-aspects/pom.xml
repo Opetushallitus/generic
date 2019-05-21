@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>generic</artifactId>
 		<groupId>fi.vm.sade.generic</groupId>
-		<version>9.4-SNAPSHOT</version>
+		<version>9.4.1-SNAPSHOT</version>
 		<relativePath>..</relativePath>
 	</parent>
 	<artifactId>generic-test-aspects</artifactId>
