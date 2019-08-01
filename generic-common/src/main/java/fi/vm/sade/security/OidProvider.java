@@ -24,6 +24,9 @@ public class OidProvider {
     @Value("${root.organisaatio.oid}")
     private String rootOrganisaatioOid;
 
+    private final String callerIdHeaderName = "Caller-Id";
+    private final String callerIdHeaderValue = "generic-common-9.5.callerid-for-haku-app";
+
     public OidProvider() {
     }
 
@@ -45,6 +48,7 @@ public class OidProvider {
     private String httpGet(String url, int expectedStatus) {
         HttpClient client = new HttpClient();
         GetMethod get = new GetMethod(url);
+        get.setRequestHeader(callerIdHeaderName, callerIdHeaderValue);
         try {
             client.executeMethod(get);
             final String response = get.getResponseBodyAsString();
