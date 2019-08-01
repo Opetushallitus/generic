@@ -11,6 +11,7 @@
 
     <artifactId>generic-common</artifactId>
     <name>Generic :: Generic Common</name>
+    <version>9.5.callerid-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -81,13 +82,13 @@
         <dependency>
             <groupId>fi.vm.sade.generic</groupId>
             <artifactId>dependencies-vaadin</artifactId>
-            <version>${project.version}</version>
+            <version>${parent.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>fi.vm.sade.generic</groupId>
             <artifactId>dependencies-service</artifactId>
-            <version>${project.version}</version>
+            <version>${parent.version}</version>
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
