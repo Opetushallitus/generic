@@ -30,4 +30,4 @@ deploy:
   script: "mvn deploy -DskipTests --settings ci-tools/common/maven-settings.xml"
   skip_cleanup: true
   on:
-    branch: master
+    branch: release_9.5.callerid
