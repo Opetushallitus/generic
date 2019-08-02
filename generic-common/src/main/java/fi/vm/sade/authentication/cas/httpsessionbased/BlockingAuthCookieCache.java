@@ -1,7 +1,7 @@
 package fi.vm.sade.authentication.cas.httpsessionbased;
 
 import com.google.common.cache.*;
-import fi.vm.sade.authentication.cas.CasClient;
+import fi.vm.sade.javautils.cas.CasClient;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;

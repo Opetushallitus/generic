@@ -1,5 +1,6 @@
 package fi.vm.sade.authentication.cas;
 
+import fi.vm.sade.javautils.cas.CasClient;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
