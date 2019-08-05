@@ -27,7 +27,7 @@ script:
 
 deploy:
   provider: script
-  script: "mvn deploy -DskipTests --settings ci-tools/common/maven-settings.xml"
+  script: "mvn deploy -DskipTests --settings ci-tools/common/maven-settings.xml --quiet"
   skip_cleanup: true
   on:
     branch: release_9.5.callerid
