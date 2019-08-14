@@ -25,7 +25,7 @@ public class OidProvider {
     private String rootOrganisaatioOid;
 
     private final String callerIdHeaderName = "Caller-Id";
-    private final String callerIdHeaderValue = "generic-common-9.5.callerid-for-haku-app";
+    private final String callerIdHeaderValue = "generic-common-9.5.1-for-haku-app";
 
     public OidProvider() {
     }
