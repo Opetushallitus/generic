@@ -14,7 +14,7 @@
 
 
     <logger name="fi.vm.sade.events">
-        <level value="DEBUG"/>
+        <level value="INFO"/>
     </logger>
 
     <root>
