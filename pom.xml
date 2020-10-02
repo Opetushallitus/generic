@@ -39,7 +39,7 @@
         <slf4j.version>1.7.5</slf4j.version>
         <spring.version>3.1.3.RELEASE</spring.version>
         <vaadin.formbinder.version>2.1.1</vaadin.formbinder.version>
-        <vaadin.version>6.8.12</vaadin.version>
+        <vaadin.version>10.0.0</vaadin.version>
     </properties>
 
     <!-- Here comes all the dependencies used in modules. Versions can be managed
