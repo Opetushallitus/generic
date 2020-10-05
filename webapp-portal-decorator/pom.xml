@@ -7,7 +7,7 @@
     <parent>
         <groupId>fi.vm.sade.generic</groupId>
         <artifactId>generic</artifactId>
-        <version>9.6</version>
+        <version>9.6.1-TARJONTA-SNAPSHOT</version>
     </parent>
 
     <artifactId>webapp-portal-decorator</artifactId>

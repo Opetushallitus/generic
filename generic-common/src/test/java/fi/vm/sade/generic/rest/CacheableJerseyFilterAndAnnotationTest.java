@@ -5,6 +5,7 @@ import junit.framework.Assert;
 import org.apache.cxf.helpers.IOUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.io.IOException;
 /**
  * @author Antti Salonen
  */
+@Ignore
 public class CacheableJerseyFilterAndAnnotationTest {
 
     CachingRestClient client = new CachingRestClient();

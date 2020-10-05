@@ -2,7 +2,7 @@ package fi.vm.sade.generic.rest;
 
 import com.google.gson.*;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
-import fi.vm.sade.authentication.cas.CasClient;
+import fi.vm.sade.javautils.cas.CasClient;
 import fi.vm.sade.generic.PERA;
 import fi.vm.sade.generic.healthcheck.HealthChecker;
 import fi.vm.sade.generic.ui.portlet.security.ProxyAuthenticator;
