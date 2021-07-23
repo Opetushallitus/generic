@@ -22,7 +22,7 @@
         <blackboard.version>2.1.1</blackboard.version>
         <commons-lang.version>2.6</commons-lang.version>
         <cxf.version>2.5.1</cxf.version>
-        <dbunit.version>2.4.8</dbunit.version>
+        <dbunit.version>2.7.1</dbunit.version>
         <!--<ehcache.version>2.6.3</ehcache.version> -->
         <ehcache.version>2.4.8</ehcache.version> <!-- sallii monta samannimista cachemanageria -->
         <gwt.version>2.3.0</gwt.version>
