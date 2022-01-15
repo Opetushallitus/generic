@@ -72,7 +72,7 @@
         <dependency>
             <groupId>com.bsb.common.vaadin</groupId>
             <artifactId>com.bsb.common.vaadin.embed</artifactId>
-            <version>0.4</version>
+            <version>0.5</version>
         </dependency>
 
         <dependency>
@@ -85,7 +85,7 @@
         <dependency>
             <groupId>com.github.detro.ghostdriver</groupId>
             <artifactId>phantomjsdriver</artifactId>
-            <version>1.0.4</version>
+            <version>1.1.0</version>
         </dependency>
         <!-- parempi kuin com.github.detro.ghostdriver koska hoitaa myös binääririippuvuudet? - ei tunnu toimivan -->
         <!--<dependency>-->
