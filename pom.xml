@@ -17,7 +17,7 @@
     <version>9.9-SNAPSHOT</version>
 
     <properties>
-        <activemq.version>5.5.1</activemq.version>
+        <activemq.version>5.6.0</activemq.version>
         <aspectj.version>1.8.9</aspectj.version>
         <blackboard.version>2.1.1</blackboard.version>
         <commons-lang.version>2.6</commons-lang.version>
