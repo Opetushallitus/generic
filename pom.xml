@@ -21,7 +21,7 @@
         <aspectj.version>1.8.9</aspectj.version>
         <blackboard.version>2.1.1</blackboard.version>
         <commons-lang.version>2.6</commons-lang.version>
-        <cxf.version>2.5.1</cxf.version>
+        <cxf.version>3.4.10</cxf.version>
         <dbunit.version>2.4.8</dbunit.version>
         <!--<ehcache.version>2.6.3</ehcache.version> -->
         <ehcache.version>2.4.8</ehcache.version> <!-- sallii monta samannimista cachemanageria -->
